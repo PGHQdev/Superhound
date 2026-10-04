@@ -1,0 +1,7 @@
+.DS_Store
+spikes/install-permissions/.build/
+spikes/install-permissions/.evidence/
+
+.worktrees/
+.build/
+.superpowers/

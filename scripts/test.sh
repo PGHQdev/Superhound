@@ -1,0 +1,15 @@
+#!/bin/bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+mkdir -p .build/tests
+flags=(-fobjc-arc -fmodules -Wall -Wextra -Werror -g -O1 -mmacosx-version-min=15.0 -Icore -Iapp -fsanitize=address,undefined)
+xcrun clang "${flags[@]}" tests/search.m core/SHSearchSnapshot.m core/SHQueryController.m core/sh_match.c -framework Foundation -o .build/tests/search
+.build/tests/search
+if [[ -f tests/catalog.m ]]; then
+ xcrun clang "${flags[@]}" tests/catalog.m core/SHCatalog.m core/SHScanner.m app/SHFolderAccess.m -framework Foundation -lsqlite3 -o .build/tests/catalog
+ .build/tests/catalog
+fi
+
+xcrun clang "${flags[@]}" tests/library.m core/*.m core/sh_match.c app/SHFolderAccess.m -framework Foundation -framework CoreServices -lsqlite3 -o .build/tests/library
+.build/tests/library > .build/tests/library.log 2>&1 || { cat .build/tests/library.log; exit 1; }
+tail -1 .build/tests/library.log
