@@ -37,6 +37,8 @@ scripts/build.sh      # release build, -Wall -Wextra -Werror, ad-hoc signing ver
 # Quit the resident prototype before installer tests.
 tests/install.sh      # isolated temporary-directory installation and upgrade checks
 scripts/benchmark.sh  # synthetic 10k/100k exhaustive queries; scan/SQLite measurements
+.build/bench/search 100000 --check-memory    # reference snapshot memory budget
+.build/bench/search 100000 --unique-parents  # less favorable directory layout
 ```
 
 The benchmark uses 360 queries across exact/prefix, abbreviation, accent folding, Japanese, multi-term paths, substring, miss, and empty-input cases. It reports query percentiles separately from preparation/replacement time. It does not read user documents. Optional local UI timing instructions are in the validation report.

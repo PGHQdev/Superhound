@@ -5,26 +5,48 @@
 NSString *SHFold(NSString *text) {
  return [[text precomposedStringWithCanonicalMapping] stringByFoldingWithOptions:NSCaseInsensitiveSearch|NSDiacriticInsensitiveSearch|NSWidthInsensitiveSearch locale:[NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"]];
 }
-typedef struct { SHText name,alias,path; } SHRecord;
+// Names are usually unique; aliases and parent paths commonly repeat across entries.
+// Store those shared texts once and keep compact indexes in each record.
+typedef struct { SHText name; uint32_t alias,path; } SHRecord;
+static const uint32_t EmptyPoint=0;
+static const uint8_t EmptyBoundary=0;
 static SHText Text(NSString *value) {
  NSData *data=[SHFold(value) dataUsingEncoding:NSUTF32LittleEndianStringEncoding];
  size_t n=data.length/4;
- if(n>SIZE_MAX/sizeof(uint32_t)) return (SHText){0};
- uint32_t *p=malloc(MAX(data.length,1)); uint8_t *b=calloc(MAX(n,1),1);
- if(!p||!b){free(p);free(b);return (SHText){0};}
+ if(!n)return (SHText){&EmptyPoint,&EmptyBoundary,0};
+ if(n>SIZE_MAX/(sizeof(uint32_t)+sizeof(uint8_t)))return (SHText){0};
+ uint32_t *p=malloc(n*(sizeof(uint32_t)+sizeof(uint8_t)));
+ if(!p)return (SHText){0};
+ uint8_t *b=(uint8_t *)(p+n);
  memcpy(p,data.bytes,data.length);
  NSCharacterSet *letters=NSCharacterSet.alphanumericCharacterSet;
  for(size_t i=0;i<n;i++) b[i]=i==0 || ![letters longCharacterIsMember:p[i-1]];
  return (SHText){p,b,n};
 }
-static void FreeText(SHText t) {free((void *)t.points);free((void *)t.boundaries);}
+static void FreeText(SHText t) {if(t.length)free((void *)t.points);}
 typedef struct { NSUInteger index; unsigned worst,total,pathTerms; size_t compactness; } Ranked;
 @implementation SHSearchSnapshot {
  NSArray<NSDictionary *> *_entries;
  SHRecord *_records;
+ SHText *_sharedTexts;
+ size_t _sharedCount,_sharedCapacity;
  SHSearchSnapshot *_storageOwner;
  NSSet *_excludedRoots;
  NSDictionary *_rootCounts;
+}
+- (BOOL)intern:(NSString *)value indexes:(NSMutableDictionary<NSString *,NSNumber *> *)indexes result:(uint32_t *)index {
+ NSNumber *existing=indexes[value];
+ if(existing){*index=existing.unsignedIntValue;return YES;}
+ if(_sharedCount==UINT32_MAX)return NO;
+ if(_sharedCount==_sharedCapacity){
+  size_t capacity=MIN((size_t)UINT32_MAX,MAX((size_t)16,_sharedCapacity*2));
+  if(capacity>SIZE_MAX/sizeof(SHText))return NO;
+  SHText *grown=realloc(_sharedTexts,capacity*sizeof(SHText));
+  if(!grown)return NO;
+  _sharedTexts=grown;_sharedCapacity=capacity;
+ }
+ SHText text=Text(value);if(!text.points)return NO;
+ *index=(uint32_t)_sharedCount;_sharedTexts[_sharedCount++]=text;indexes[value]=@(*index);return YES;
 }
 - (instancetype)initWithEntries:(NSArray<NSDictionary *> *)entries generation:(uint64_t)generation {
  if(!(self=[super init])) return nil;
@@ -41,23 +63,31 @@ typedef struct { NSUInteger index; unsigned worst,total,pathTerms; size_t compac
  _rootCounts=[counts copy];_excludedRoots=NSSet.set;
  if(_count>SIZE_MAX/sizeof(SHRecord)) return nil;
  _records=calloc(MAX(_count,1),sizeof(SHRecord)); if(!_records)return nil;
+ NSMutableDictionary<NSString *,NSNumber *> *indexes=NSMutableDictionary.dictionary;
  for(NSUInteger i=0;i<_count;i++) {@autoreleasepool {
   NSDictionary *e=_entries[i];
   NSString *relative=e[@"relative"]?:e[@"path"];
   // A basename already matched by name cannot improve its class as a path match.
   // Avoid storing its normalized code points twice; preserve differing app bundle names.
   if([SHFold(relative.lastPathComponent) isEqual:SHFold(e[@"name"])])relative=relative.stringByDeletingLastPathComponent;
-  _records[i]=(SHRecord){Text(e[@"name"]),Text(e[@"alias"]?:@""),Text(relative)};
-  if(!_records[i].name.points || !_records[i].alias.points || !_records[i].path.points) return nil;
+  _records[i].name=Text(e[@"name"]);
+  if(!_records[i].name.points ||
+     ![self intern:e[@"alias"]?:@"" indexes:indexes result:&_records[i].alias] ||
+     ![self intern:relative indexes:indexes result:&_records[i].path])return nil;
  }}
  return self;
 }
 - (SHSearchSnapshot *)snapshotByExcludingRoots:(NSSet<NSString *> *)roots {
  BOOL relevant=NO;for(NSString *root in roots)if([_rootCounts[root] unsignedIntegerValue] && ![_excludedRoots containsObject:root]){relevant=YES;break;}if(!relevant)return self;
- SHSearchSnapshot *s=[SHSearchSnapshot new];s->_storageOwner=self;s->_records=_records;s->_entries=_entries;s->_rootCounts=_rootCounts;s->_generation=_generation;
+ SHSearchSnapshot *s=[SHSearchSnapshot new];s->_storageOwner=self;s->_records=_records;s->_sharedTexts=_sharedTexts;s->_entries=_entries;s->_rootCounts=_rootCounts;s->_generation=_generation;
  NSMutableSet *all=[_excludedRoots mutableCopy];[all unionSet:roots];s->_excludedRoots=[all copy];s->_count=_entries.count;for(NSString *root in all)s->_count-=[_rootCounts[root] unsignedIntegerValue];return s;
 }
-- (void)dealloc {if(_records && !_storageOwner){for(NSUInteger i=0;i<_entries.count;i++){FreeText(_records[i].name);FreeText(_records[i].alias);FreeText(_records[i].path);}free(_records);}}
+- (void)dealloc {
+ if(!_storageOwner){
+  if(_records){for(NSUInteger i=0;i<_entries.count;i++)FreeText(_records[i].name);free(_records);}
+  for(size_t i=0;i<_sharedCount;i++)FreeText(_sharedTexts[i]);free(_sharedTexts);
+ }
+}
 - (BOOL)rank:(Ranked)a precedes:(Ranked)b {
  if(a.worst!=b.worst)return a.worst<b.worst;
  if(a.total!=b.total)return a.total<b.total;
@@ -79,15 +109,15 @@ typedef struct { NSUInteger index; unsigned worst,total,pathTerms; size_t compac
  if(valid)for(NSUInteger i=0;i<_entries.count;i++) {
   if(_excludedRoots.count && [_excludedRoots containsObject:_entries[i][@"root"]?:@""])continue;
   if((i&255)==0 && cancelled && cancelled()){found=0;break;}
-  SHRecord rec=_records[i]; Ranked rank={i,0,0,0,0}; BOOL match=YES;
+  SHRecord rec=_records[i];SHText path=_sharedTexts[rec.path]; Ranked rank={i,0,0,0,0}; BOOL match=YES;
   for(NSUInteger j=0;j<terms.count;j++) {
-   SHMatch m=sh_match(rec.name,texts[j]),alias=sh_match(rec.alias,texts[j]);
+   SHMatch m=sh_match(rec.name,texts[j]),alias=sh_match(_sharedTexts[rec.alias],texts[j]);
    if(alias.rank<m.rank || (alias.rank==m.rank && alias.compactness<m.compactness))m=alias;
    if(m.rank==9) {
     // A term may match a relative path component, never cross a slash boundary.
-    for(size_t start=0;start<rec.path.length;) {
-     size_t end=start;while(end<rec.path.length && rec.path.points[end]!='/')end++;
-     SHMatch p=sh_match((SHText){rec.path.points+start,rec.path.boundaries+start,end-start},texts[j]);
+    for(size_t start=0;start<path.length;) {
+     size_t end=start;while(end<path.length && path.points[end]!='/')end++;
+     SHMatch p=sh_match((SHText){path.points+start,path.boundaries+start,end-start},texts[j]);
      if(p.rank<9){m=(SHMatch){4,p.compactness};break;}start=end+1;
     }
    }

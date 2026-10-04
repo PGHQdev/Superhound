@@ -13,3 +13,8 @@ fi
 xcrun clang "${flags[@]}" tests/library.m core/*.m core/sh_match.c app/SHFolderAccess.m -framework Foundation -framework CoreServices -lsqlite3 -o .build/tests/library
 .build/tests/library > .build/tests/library.log 2>&1 || { cat .build/tests/library.log; exit 1; }
 tail -1 .build/tests/library.log
+
+xcrun clang "${flags[@]}" tests/snapshot-equivalence.m core/SHSearchSnapshot.m core/sh_match.c -framework Foundation -o .build/tests/snapshot-equivalence
+.build/tests/snapshot-equivalence > .build/tests/snapshot-equivalence.txt
+cmp tests/snapshot-equivalence.expected .build/tests/snapshot-equivalence.txt
+echo 'PASS snapshot regression: 40 mixed-query/root-mask result sets match the original implementation'
