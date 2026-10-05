@@ -17,6 +17,14 @@ int main(void) { @autoreleasepool {
  assert([[[s search:@"CAFÉ" cancelled:nil] firstObject][@"id"] isEqual:@6]);
  assert([[[s search:@"日本 東京" cancelled:nil] firstObject][@"id"] isEqual:@7]);
  assert([s search:@"code missing" cancelled:nil].count == 0);
+ NSArray *typos=@[E(1,@"Claude",@"/apps/Claude.app",@"app"),E(2,@"claude.js",@"/work/claude.js",@"file"),E(3,@"Visual Studio Code",@"/apps/vsc.app",@"app"),E(4,@"mail",@"/work/mail",@"file"),E(5,@"main.c",@"/work/main.c",@"file"),E(6,@"Maps",@"/apps/Maps.app",@"app"),E(7,@"documentation",@"/work/documentation",@"file")];
+ SHSearchSnapshot *t=[[SHSearchSnapshot alloc] initWithEntries:typos generation:1];
+ for(NSString *q in @[@"calude",@"cluade",@"claide",@"clude",@"claudee",@"lcaude"])assert(([[[t search:q cancelled:nil] valueForKey:@"id"] isEqual:@[@1,@2]]));
+ assert(([[[t search:@"studoi" cancelled:nil] valueForKey:@"id"] isEqual:@[@3]]));
+ assert(([[[t search:@"documantaton" cancelled:nil] valueForKey:@"id"] isEqual:@[@7]]));
+ assert([t search:@"cxyude" cancelled:nil].count==0);assert([t search:@"mpa" cancelled:nil].count==0);
+ // An exact file match stays above an application reached only through a typing error.
+ assert(([[[t search:@"main" cancelled:nil] valueForKey:@"id"] isEqual:@[@5,@4]]));
  NSURL *usageURL=[NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingPathComponent:[NSUUID.UUID.UUIDString stringByAppendingString:@".plist"]]];
  SHUsage *usage=[[SHUsage alloc] initWithURL:usageURL];
  assert([usage preferredForQuery:@"code"].count==0);
@@ -60,6 +68,8 @@ int main(void) { @autoreleasepool {
   uint32_t a[64],b[64]; uint8_t boundaries[64]; size_t n=arc4random_uniform(64),m=arc4random_uniform(64);
   for(size_t i=0;i<64;i++){a[i]=arc4random_uniform(0x110000);b[i]=arc4random_uniform(0x110000);boundaries[i]=i%3==0;}
   sh_match((SHText){a,boundaries,n},(SHText){b,boundaries,m});
+  for(size_t i=0;i<64;i++){a[i]=97+arc4random_uniform(3);b[i]=97+arc4random_uniform(3);}
+  sh_match_typo((SHText){a,boundaries,n},(SHText){b,boundaries,m});
  }
  puts("PASS search: ranking, Unicode, paths, cancellation, exhaustive scan, latest query, 20000 random inputs");
 } return 0; }

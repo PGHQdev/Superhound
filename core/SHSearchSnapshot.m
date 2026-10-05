@@ -91,7 +91,9 @@ typedef struct { NSUInteger index; unsigned learned,worst,total,pathTerms; size_
 - (BOOL)rank:(Ranked)a precedes:(Ranked)b {
  if(a.learned!=b.learned)return a.learned>b.learned;
  // An application matched by its name or alias precedes every file, folder, and link.
- BOOL aa=a.worst<4 && [_entries[a.index][@"type"] isEqual:@"app"],ba=b.worst<4 && [_entries[b.index][@"type"] isEqual:@"app"];
+ // Exact matches precede typing-error matches; within each group, applications come first.
+ BOOL aa=a.worst!=4 && [_entries[a.index][@"type"] isEqual:@"app"],ba=b.worst!=4 && [_entries[b.index][@"type"] isEqual:@"app"];
+ if((a.worst>4)!=(b.worst>4))return a.worst<=4;
  if(aa!=ba)return aa;
  if(a.worst!=b.worst)return a.worst<b.worst;
  if(a.total!=b.total)return a.total<b.total;
@@ -138,6 +140,11 @@ typedef struct { NSUInteger index; unsigned learned,worst,total,pathTerms; size_
      SHMatch p=sh_match((SHText){path.points+start,path.boundaries+start,end-start},texts[j]);
      if(p.rank<9){m=(SHMatch){4,p.compactness};break;}start=end+1;
     }
+   }
+   if(m.rank==9) {
+    // Typing errors are accepted in names only, and rank below every exact match.
+    m=sh_match_typo(rec.name,texts[j]);alias=sh_match_typo(_sharedTexts[rec.alias],texts[j]);
+    if(alias.rank<m.rank || (alias.rank==m.rank && alias.compactness<m.compactness))m=alias;
    }
    if(m.rank==9){match=NO;break;}
    rank.worst=MAX(rank.worst,m.rank);rank.total+=m.rank;rank.pathTerms+=m.rank==4;rank.compactness+=m.compactness;
