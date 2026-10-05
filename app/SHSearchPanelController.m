@@ -86,8 +86,7 @@
  double requested=SHTime();
  _pending=YES;
  if(changedQuery){_navigated=NO;_selectedID=nil;}
- // Clear obsolete query results immediately so Return cannot open the previous query.
- if(changedQuery){_results=@[];_reloading=YES;[_table reloadData];[_table deselectAll:nil];_reloading=NO;}
+ // The previous rows stay visible until the new results arrive; _pending stops Return opening them.
  __weak typeof(self) weak=self;
  [_queries submit:_field.stringValue completion:^(NSArray<NSDictionary *> *results){
   SHSearchPanelController *self=weak;if(!self || !self.window.isVisible)return;
