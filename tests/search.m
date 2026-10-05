@@ -29,6 +29,10 @@ int main(void) { @autoreleasepool {
  assert(([[[s search:@"code" preferred:[usage preferredForQuery:@"code"] cancelled:nil] valueForKey:@"id"] isEqual:@[@5,@2,@1,@3,@4]]));
  assert(([[[s search:@"cod" preferred:[usage preferredForQuery:@"cod"] cancelled:nil] valueForKey:@"id"] isEqual:@[@2,@5,@1,@3,@4]]));
  assert([[[s search:@"vsc" preferred:[usage preferredForQuery:@"vsc"] cancelled:nil] firstObject][@"id"] isEqual:@3]);
+ assert(([[[s search:@"" preferred:[usage preferredForQuery:@""] cancelled:nil] valueForKey:@"id"] isEqual:@[@1,@3]]));
+ [usage recordQuery:@"" result:entries[2]];
+ assert(([[[s search:@"" preferred:[usage preferredForQuery:@""] cancelled:nil] valueForKey:@"id"] isEqual:@[@3,@1]]));
+ assert(([[[s search:@"code" preferred:[usage preferredForQuery:@"code"] cancelled:nil] valueForKey:@"id"] isEqual:@[@5,@2,@1,@3,@4]]));
  [NSFileManager.defaultManager removeItemAtURL:usageURL error:nil];
  assert([s search:[@"a" stringByPaddingToLength:100000 withString:@"a" startingAtIndex:0] cancelled:nil].count == 0);
  assert([s search:@"code" cancelled:^BOOL {return YES;}].count == 0);

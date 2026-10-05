@@ -112,7 +112,14 @@ typedef struct { NSUInteger index; unsigned learned,worst,total,pathTerms; size_
  NSArray *raw=[query componentsSeparatedByCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
  NSMutableArray *terms=NSMutableArray.array; for(NSString *t in raw)if(t.length)[terms addObject:t];
  if(cancelled && cancelled())return @[];
- if(!terms.count){NSMutableArray *apps=NSMutableArray.array;for(NSDictionary *e in _entries){if([e[@"type"] isEqual:@"app"] && ![_excludedRoots containsObject:e[@"root"]?:@""])[apps addObject:e];if(apps.count==8)break;}return apps;}
+ if(!terms.count){
+  // The most opened applications lead; applications by name fill the remaining rows.
+  NSMutableArray *apps=NSMutableArray.array;NSMutableArray *candidates=NSMutableArray.array;
+  for(NSDictionary *p in preferred){NSUInteger i=[self indexOfName:p[@"name"] path:p[@"path"]];if(i!=NSNotFound)[candidates addObject:_entries[i]];}
+  [candidates addObjectsFromArray:_entries];
+  for(NSDictionary *e in candidates){if(apps.count==8)break;if([e[@"type"] isEqual:@"app"] && ![_excludedRoots containsObject:e[@"root"]?:@""] && [apps indexOfObjectIdenticalTo:e]==NSNotFound)[apps addObject:e];}
+  return apps;
+ }
  if(terms.count>SIZE_MAX/sizeof(SHText))return @[];
  SHText *texts=calloc(terms.count,sizeof(SHText)); if(!texts)return @[];
  BOOL valid=YES; for(NSUInteger j=0;j<terms.count;j++){texts[j]=Text(terms[j]);if(!texts[j].points)valid=NO;}
