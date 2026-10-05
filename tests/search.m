@@ -10,8 +10,8 @@ int main(void) { @autoreleasepool {
  NSArray *entries = @[E(1,@"Code",@"/apps/Code.app",@"app"),E(2,@"Code notes",@"/work/Code notes",@"file"),E(3,@"Visual Studio Code",@"/apps/vsc.app",@"app"),E(4,@"decode",@"/work/decode",@"file"),E(5,@"readme",@"/code/readme",@"file"),E(6,@"Café",@"/work/Café",@"file"),E(7,@"東京旅行",@"/日本/東京旅行",@"file")];
  SHSearchSnapshot *s = [[SHSearchSnapshot alloc] initWithEntries:entries generation:1];
  NSArray *r = [s search:@"code" cancelled:nil];
- assert(([[r valueForKey:@"id"] isEqual:@[@1,@2,@4,@3,@5]]));
- assert([r[0][@"id"] isEqual:@1]); assert([r[1][@"id"] isEqual:@2]);
+ assert(([[r valueForKey:@"id"] isEqual:@[@1,@3,@2,@4,@5]]));
+ assert([r[0][@"id"] isEqual:@1]); assert([r[1][@"id"] isEqual:@3]);
  assert([[[s search:@"vsc" cancelled:nil] firstObject][@"id"] isEqual:@3]);
  assert([[[s search:@"CAFÉ" cancelled:nil] firstObject][@"id"] isEqual:@6]);
  assert([[[s search:@"日本 東京" cancelled:nil] firstObject][@"id"] isEqual:@7]);

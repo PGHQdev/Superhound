@@ -17,4 +17,4 @@ tail -1 .build/tests/library.log
 xcrun clang "${flags[@]}" tests/snapshot-equivalence.m core/SHSearchSnapshot.m core/sh_match.c -framework Foundation -o .build/tests/snapshot-equivalence
 .build/tests/snapshot-equivalence > .build/tests/snapshot-equivalence.txt
 cmp tests/snapshot-equivalence.expected .build/tests/snapshot-equivalence.txt
-echo 'PASS snapshot regression: 40 mixed-query/root-mask result sets match the original implementation'
+echo 'PASS snapshot regression: 40 mixed-query/root-mask result sets match the recorded ranking'

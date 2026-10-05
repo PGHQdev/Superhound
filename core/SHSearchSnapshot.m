@@ -89,12 +89,13 @@ typedef struct { NSUInteger index; unsigned worst,total,pathTerms; size_t compac
  }
 }
 - (BOOL)rank:(Ranked)a precedes:(Ranked)b {
+ // An application matched by its name or alias precedes every file, folder, and link.
+ BOOL aa=a.worst<4 && [_entries[a.index][@"type"] isEqual:@"app"],ba=b.worst<4 && [_entries[b.index][@"type"] isEqual:@"app"];
+ if(aa!=ba)return aa;
  if(a.worst!=b.worst)return a.worst<b.worst;
  if(a.total!=b.total)return a.total<b.total;
  if(a.pathTerms!=b.pathTerms)return a.pathTerms<b.pathTerms;
  if(a.compactness!=b.compactness)return a.compactness<b.compactness;
- BOOL aa=[_entries[a.index][@"type"] isEqual:@"app"],ba=[_entries[b.index][@"type"] isEqual:@"app"];
- if(aa!=ba)return aa;
  return a.index<b.index;
 }
 - (NSArray<NSDictionary *> *)search:(NSString *)query cancelled:(BOOL (^)(void))cancelled {
