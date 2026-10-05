@@ -7,6 +7,8 @@ xcrun clang "${flags[@]}" tests/search.m core/SHSearchSnapshot.m core/SHQueryCon
 .build/tests/search
 xcrun clang "${flags[@]}" tests/answer.m core/SHAnswer.m -framework Foundation -o .build/tests/answer
 .build/tests/answer
+xcrun clang "${flags[@]}" tests/emoji.m core/SHEmoji.m core/SHSearchSnapshot.m core/sh_match.c -framework Foundation -framework CoreText -o .build/tests/emoji
+.build/tests/emoji app/emoji.tsv
 if [[ -f tests/catalog.m ]]; then
  xcrun clang "${flags[@]}" tests/catalog.m core/SHCatalog.m core/SHScanner.m app/SHFolderAccess.m -framework Foundation -lsqlite3 -o .build/tests/catalog
  .build/tests/catalog

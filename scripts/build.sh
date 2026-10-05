@@ -9,7 +9,8 @@ mkdir -p .build
 stage="$(mktemp -d .build/stage.XXXXXX)"
 trap 'rm -rf -- "$stage"' EXIT
 bundle="$stage/Superhound.app"
-mkdir -p "$bundle/Contents/MacOS"
+mkdir -p "$bundle/Contents/MacOS" "$bundle/Contents/Resources"
+cp app/emoji.tsv "$bundle/Contents/Resources/emoji.tsv"
 cat > "$bundle/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -28,7 +29,7 @@ cat > "$bundle/Contents/Info.plist" <<PLIST
 PLIST
 /usr/bin/time -lp xcrun clang -arch arm64 -fobjc-arc -fmodules -O2 -Wall -Wextra -Werror \
  -mmacosx-version-min=15.0 -fmodules-cache-path=.build/module-cache -Iapp -Icore \
- app/*.m core/*.m core/*.c -framework AppKit -framework Carbon -framework CoreServices -framework ServiceManagement -lsqlite3 \
+ app/*.m core/*.m core/*.c -framework AppKit -framework Carbon -framework CoreServices -framework CoreText -framework ServiceManagement -lsqlite3 \
  -o "$bundle/Contents/MacOS/Superhound" 2> "$stage/build-metrics.txt" || { cat "$stage/build-metrics.txt" >&2; exit 1; }
 plutil -lint "$bundle/Contents/Info.plist"
 codesign --force --sign - --timestamp=none "$bundle"

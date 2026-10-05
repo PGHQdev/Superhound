@@ -91,10 +91,17 @@
  if(changedQuery){_navigated=NO;_selectedID=nil;}
  // The previous rows stay visible until the new results arrive; _pending stops Return opening them.
  __weak typeof(self) weak=self;NSDictionary *answer=[SHAnswer answerForQuery:_field.stringValue];
- [_queries submit:_field.stringValue preferred:[_usage preferredForQuery:_field.stringValue] completion:^(NSArray<NSDictionary *> *results){
+ NSArray<NSDictionary *> *preferred=[_usage preferredForQuery:_field.stringValue],*emoji=[_emoji search:_field.stringValue limit:8];
+ [_queries submit:_field.stringValue preferred:preferred completion:^(NSArray<NSDictionary *> *results){
   SHSearchPanelController *self=weak;if(!self || !self.window.isVisible)return;
   // A calculation or conversion takes the first of the eight rows.
-  if(answer){NSArray *rest=results.count>7?[results subarrayWithRange:NSMakeRange(0,7)]:results;results=[@[answer] arrayByAddingObjectsFromArray:rest];}
+  // Emoji the user copied before for this query lead; other emoji take up to 3 of the last rows.
+  NSMutableArray *rows=NSMutableArray.array,*otherEmoji=[emoji mutableCopy];if(answer)[rows addObject:answer];
+  for(NSDictionary *p in preferred)for(NSDictionary *e in emoji)if([e[@"path"] isEqual:p[@"path"]]){[rows addObject:e];[otherEmoji removeObjectIdenticalTo:e];}
+  NSUInteger reserved=MIN((NSUInteger)3,otherEmoji.count);
+  for(NSDictionary *r in results){if(rows.count+reserved>=8)break;[rows addObject:r];}
+  for(NSDictionary *e in otherEmoji){if(rows.count>=8)break;[rows addObject:e];}
+  results=rows;
   self->_pending=NO;self->_results=results;NSInteger selection=-1;
   if(self->_navigated){for(NSUInteger i=0;i<results.count;i++)if([results[i][@"id"] isEqual:self->_selectedID]){selection=(NSInteger)i;break;}}
   else if(results.count)selection=0;
@@ -109,12 +116,13 @@
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView {(void)tableView;return (NSInteger)_results.count;}
 - (NSView *)tableView:(NSTableView *)tableView viewForTableColumn:(NSTableColumn *)column row:(NSInteger)row {
  (void)tableView;(void)column;
- NSDictionary *result=_results[(NSUInteger)row];NSString *path=result[@"path"];BOOL answer=[result[@"type"] isEqual:@"answer"];
+ NSDictionary *result=_results[(NSUInteger)row];NSString *path=result[@"path"];BOOL emoji=[result[@"type"] isEqual:@"emoji"],answer=emoji || [result[@"type"] isEqual:@"answer"];
  NSTableCellView *cell=[[NSTableCellView alloc] initWithFrame:NSMakeRect(0,0,616,48)];
- NSImageView *icon=[[NSImageView alloc] initWithFrame:NSMakeRect(10,8,32,32)];icon.image=answer?[NSImage imageWithSystemSymbolName:@"equal.circle" accessibilityDescription:nil]:[_icons objectForKey:path];icon.contentTintColor=NSColor.secondaryLabelColor;cell.imageView=icon;[cell addSubview:icon];
+ NSImageView *icon=[[NSImageView alloc] initWithFrame:NSMakeRect(10,8,32,32)];icon.image=emoji?nil:answer?[NSImage imageWithSystemSymbolName:@"equal.circle" accessibilityDescription:nil]:[_icons objectForKey:path];icon.contentTintColor=NSColor.secondaryLabelColor;cell.imageView=icon;[cell addSubview:icon];
+ if(emoji){NSTextField *glyph=[NSTextField labelWithString:result[@"emoji"]];glyph.frame=NSMakeRect(8,6,38,36);glyph.font=[NSFont systemFontOfSize:26];glyph.alignment=NSTextAlignmentCenter;[cell addSubview:glyph];}
  NSTextField *name=[NSTextField labelWithString:result[@"name"]];name.frame=NSMakeRect(54,24,550,21);name.font=[NSFont systemFontOfSize:15 weight:NSFontWeightMedium];name.lineBreakMode=NSLineBreakByTruncatingMiddle;cell.textField=name;[cell addSubview:name];
  NSString *type=[@{@"app":@"Application",@"folder":@"Folder",@"link":@"Link",@"file":@"File"} objectForKey:result[@"type"]];
- NSTextField *detail=[NSTextField labelWithString:answer?[result[@"detail"] stringByAppendingString:@" · Return to copy"]:[NSString stringWithFormat:@"%@ · %@",[path.stringByDeletingLastPathComponent stringByAbbreviatingWithTildeInPath],type]];detail.frame=NSMakeRect(54,6,550,17);detail.font=[NSFont systemFontOfSize:11];detail.textColor=NSColor.secondaryLabelColor;detail.lineBreakMode=NSLineBreakByTruncatingMiddle;[cell addSubview:detail];cell.accessibilityLabel=[NSString stringWithFormat:@"%@, %@",result[@"name"],detail.stringValue];
+ NSTextField *detail=[NSTextField labelWithString:emoji?@"Emoji · Return to copy":answer?[result[@"detail"] stringByAppendingString:@" · Return to copy"]:[NSString stringWithFormat:@"%@ · %@",[path.stringByDeletingLastPathComponent stringByAbbreviatingWithTildeInPath],type]];detail.frame=NSMakeRect(54,6,550,17);detail.font=[NSFont systemFontOfSize:11];detail.textColor=NSColor.secondaryLabelColor;detail.lineBreakMode=NSLineBreakByTruncatingMiddle;[cell addSubview:detail];cell.accessibilityLabel=[NSString stringWithFormat:@"%@, %@",result[@"name"],detail.stringValue];
  if(!answer && !icon.image && ![_loadingIcons containsObject:path]){[_loadingIcons addObject:path];__weak typeof(self) weak=self;
   dispatch_async(_iconQueue,^{NSImage *image=[NSWorkspace.sharedWorkspace iconForFile:path];dispatch_async(dispatch_get_main_queue(),^{SHSearchPanelController *self=weak;if(!self)return;[self->_loadingIcons removeObject:path];if(image)[self->_icons setObject:image forKey:path];for(NSUInteger i=0;i<self->_results.count;i++)if([self->_results[i][@"path"] isEqual:path]){NSTableCellView *visible=[self->_table viewAtColumn:0 row:(NSInteger)i makeIfNecessary:NO];visible.imageView.image=image;}});});
  }
@@ -132,7 +140,8 @@
  if(_pending){NSBeep();return;}
  NSInteger row=_table.selectedRow;if(row<0 || row>=(NSInteger)_results.count){NSBeep();return;}
  NSDictionary *result=_results[(NSUInteger)row];
- if([result[@"type"] isEqual:@"answer"]){[NSPasteboard.generalPasteboard clearContents];[NSPasteboard.generalPasteboard setString:result[@"copy"] forType:NSPasteboardTypeString];[self dismiss:YES];return;}
+ if([result[@"type"] isEqual:@"emoji"])[_usage recordQuery:_field.stringValue result:result];
+ if(result[@"copy"]){[NSPasteboard.generalPasteboard clearContents];[NSPasteboard.generalPasteboard setString:result[@"copy"] forType:NSPasteboardTypeString];[self dismiss:YES];return;}
  [_usage recordQuery:_field.stringValue result:result];[self dismiss:NO];if(self.openResult)self.openResult(result,reveal);
 }
 - (BOOL)control:(NSControl *)control textView:(NSTextView *)textView doCommandBySelector:(SEL)selector {
