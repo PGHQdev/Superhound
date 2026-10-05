@@ -4,8 +4,7 @@ A native macOS launcher: one panel on a global shortcut that finds apps, files, 
 
 ## Where the work is
 
-- All code is on the branch `feat/first-search-prototype`, in the worktree `.worktrees/first-search`. Work there.
-- `main` (the checkout at the repo root) holds the docs and the install spike only. Do not merge into `main` unless the user asks.
+- All code is on `main`, merged from `feat/first-search-prototype` on 2026-10-05.
 - The installed app is `~/Applications/Superhound.app`, bundle ID `com.superhound.app`.
 
 ## Commands
@@ -82,8 +81,8 @@ All in `~/Library/Application Support/Superhound/`:
 | `docs/prototype-validation.md` | Measured results and open acceptance checks for the prototype |
 | `docs/superpowers/specs/2026-10-04-first-search-prototype-design.md` | The design of the first prototype |
 | `docs/superpowers/plans/2026-10-04-first-search-prototype.md` | The implementation plan of the first prototype |
-| `docs/product.md`, `docs/architecture.md`, `docs/distribution.md`, `docs/validation.md`, `docs/decisions-and-research.md` | Early research and proposals from before the code existed. Not committed to git. Check them against the code before use. |
-| `spikes/install-permissions/` (on `main` only) | The disposable install and folder-permission probe, with its findings |
+| `docs/early-planning-notes.md`, `docs/product.md`, `docs/architecture.md`, `docs/distribution.md`, `docs/validation.md`, `docs/decisions-and-research.md` | Early research and proposals from before the code existed. Not committed to git. Check them against the code before use. |
+| `spikes/install-permissions/` (not committed to git) | The disposable install and folder-permission probe, with its findings |
 
 ## Conventions
 
