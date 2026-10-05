@@ -83,7 +83,8 @@
  self->_message=self->_catalog.rebuilt?@"Rebuilding a damaged or older catalog. Your selected folders are preserved.":@"Only selected folders are searched. Add a folder in Search Locations.";
  NSDictionary *settings=[NSDictionary dictionaryWithContentsOfURL:self.settingsURL];
  if(settings[@"excludeGenerated"])self->_exclude=[settings[@"excludeGenerated"] boolValue];
- for(NSString *path in @[@"/Applications",@"/System/Applications",[@"~/Applications" stringByExpandingTildeInPath]]){
+ // Safari lives in the Cryptex folder; its link in /Applications is hidden from directory listings.
+ for(NSString *path in @[@"/Applications",@"/System/Applications",@"/System/Cryptexes/App/System/Applications",[@"~/Applications" stringByExpandingTildeInPath]]){
   SHRoot *r=SHRoot.new;r.identifier=[@"apps:" stringByAppendingString:path];r.path=path;r.apps=YES;[self->_roots addObject:r];
  }
  for(NSDictionary *saved in settings[@"roots"]){if(![saved[@"id"] isKindOfClass:NSString.class]||![saved[@"bookmark"] isKindOfClass:NSData.class])continue;SHRoot *r=SHRoot.new;r.identifier=saved[@"id"];r.path=saved[@"path"]?:@"Selected folder";r.bookmark=saved[@"bookmark"];[self->_roots addObject:r];}
