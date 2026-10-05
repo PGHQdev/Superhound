@@ -5,6 +5,8 @@ mkdir -p .build/tests
 flags=(-fobjc-arc -fmodules -Wall -Wextra -Werror -g -O1 -mmacosx-version-min=15.0 -Icore -Iapp -fsanitize=address,undefined)
 xcrun clang "${flags[@]}" tests/search.m core/SHSearchSnapshot.m core/SHQueryController.m core/SHUsage.m core/sh_match.c -framework Foundation -o .build/tests/search
 .build/tests/search
+xcrun clang "${flags[@]}" tests/answer.m core/SHAnswer.m -framework Foundation -o .build/tests/answer
+.build/tests/answer
 if [[ -f tests/catalog.m ]]; then
  xcrun clang "${flags[@]}" tests/catalog.m core/SHCatalog.m core/SHScanner.m app/SHFolderAccess.m -framework Foundation -lsqlite3 -o .build/tests/catalog
  .build/tests/catalog

@@ -20,6 +20,7 @@ The installer retains the previous bundle in a `.superhound-backup.*` directory 
 
 ## Use
 
+- Type a calculation (`48*12`, `15% of 240`, `240 + 15%`) or a conversion (`5 km to mi`, `72f to c`) to see the answer in the first row; Return copies the number. Units cover length, weight, temperature, volume, data size, and time, all offline.
 - Open **Search** from the magnifying-glass menu-bar icon. Type an app or filename, use arrows to select, Return to open, Command-Return to reveal in Finder, and Escape to dismiss.
 - Add folders in **Search Locations…**. App directories are included automatically. No personal folders are selected automatically.
 - Command-Space is the requested default. On the validation Mac, setup required both steps in **System Settings → Keyboard → Keyboard Shortcuts**: add an **App Shortcut** for **Superhound**, menu title **Search**, shortcut **⌘Space**; then disable Spotlight’s **Show Spotlight search**. Use **Retry** in Superhound and test from another app. Enabling the new shortcut does not replace or disable the existing Spotlight binding. To restore Spotlight later, quit Superhound and re-enable that shortcut.
