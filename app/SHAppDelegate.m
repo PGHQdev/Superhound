@@ -14,7 +14,7 @@
  NSURL *base=[NSFileManager.defaultManager URLsForDirectory:NSApplicationSupportDirectory inDomains:NSUserDomainMask].firstObject;
  NSURL *state=[base URLByAppendingPathComponent:@"Superhound" isDirectory:YES];
  _library=[[SHLibrary alloc] initWithStateURL:state];_hotKey=SHHotKey.new;[_hotKey registerSaved];
- _panel=[[SHSearchPanelController alloc] initWithQueries:SHQueryController.new];_settings=[[SHSettingsController alloc] initWithLibrary:_library hotKey:_hotKey];
+ _panel=[[SHSearchPanelController alloc] initWithQueries:SHQueryController.new];_panel.usage=[[SHUsage alloc] initWithURL:[state URLByAppendingPathComponent:@"usage.plist"]];_settings=[[SHSettingsController alloc] initWithLibrary:_library hotKey:_hotKey];
  __weak typeof(self) weak=self;
  _hotKey.invoked=^{[weak search:nil];};
  _panel.openResult=^(NSDictionary *result,BOOL reveal){[SHResultActions open:result reveal:reveal completion:^(NSString *error){SHAppDelegate *self=weak;if(error){[self->_panel showError:error];[self->_library refresh];}}];};

@@ -1,6 +1,7 @@
 #import <Foundation/Foundation.h>
 #import "SHSearchSnapshot.h"
 #import "SHQueryController.h"
+#import "SHUsage.h"
 #include "sh_match.h"
 #include <assert.h>
 static NSDictionary *E(NSInteger i, NSString *name, NSString *path, NSString *type) {
@@ -16,6 +17,19 @@ int main(void) { @autoreleasepool {
  assert([[[s search:@"CAFÉ" cancelled:nil] firstObject][@"id"] isEqual:@6]);
  assert([[[s search:@"日本 東京" cancelled:nil] firstObject][@"id"] isEqual:@7]);
  assert([s search:@"code missing" cancelled:nil].count == 0);
+ NSURL *usageURL=[NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingPathComponent:[NSUUID.UUID.UUIDString stringByAppendingString:@".plist"]]];
+ SHUsage *usage=[[SHUsage alloc] initWithURL:usageURL];
+ assert([usage preferredForQuery:@"code"].count==0);
+ [usage recordQuery:@" DeCo " result:entries[3]];
+ assert([[[s search:@"de" cancelled:nil] firstObject][@"id"] isEqual:@1]);
+ assert([[[s search:@"de" preferred:[usage preferredForQuery:@"de"] cancelled:nil] firstObject][@"id"] isEqual:@4]);
+ assert(([[[s search:@"code" preferred:[usage preferredForQuery:@"code"] cancelled:nil] valueForKey:@"id"] isEqual:@[@1,@3,@2,@4,@5]]));
+ [usage recordQuery:@"code" result:entries[4]];[usage recordQuery:@"cod" result:entries[1]];[usage recordQuery:@"cod" result:entries[1]];
+ usage=[[SHUsage alloc] initWithURL:usageURL];
+ assert(([[[s search:@"code" preferred:[usage preferredForQuery:@"code"] cancelled:nil] valueForKey:@"id"] isEqual:@[@5,@2,@1,@3,@4]]));
+ assert(([[[s search:@"cod" preferred:[usage preferredForQuery:@"cod"] cancelled:nil] valueForKey:@"id"] isEqual:@[@2,@5,@1,@3,@4]]));
+ assert([[[s search:@"vsc" preferred:[usage preferredForQuery:@"vsc"] cancelled:nil] firstObject][@"id"] isEqual:@3]);
+ [NSFileManager.defaultManager removeItemAtURL:usageURL error:nil];
  assert([s search:[@"a" stringByPaddingToLength:100000 withString:@"a" startingAtIndex:0] cancelled:nil].count == 0);
  assert([s search:@"code" cancelled:^BOOL {return YES;}].count == 0);
  assert([s search:@"" cancelled:nil].count == 2);
@@ -26,8 +40,8 @@ int main(void) { @autoreleasepool {
  assert([[[s search:@"needle" cancelled:nil] firstObject][@"id"] isEqual:@20000]);
  SHQueryController *q = SHQueryController.new; q.snapshot = s;
  __block BOOL delivered = NO;
- [q submit:@"noise" completion:^(NSArray *results) {(void)results; assert(!"obsolete query delivered");}];
- [q submit:@"needle" completion:^(NSArray *results) {assert([results.firstObject[@"id"] isEqual:@20000]); delivered=YES;}];
+ [q submit:@"noise" preferred:nil completion:^(NSArray *results) {(void)results; assert(!"obsolete query delivered");}];
+ [q submit:@"needle" preferred:nil completion:^(NSArray *results) {assert([results.firstObject[@"id"] isEqual:@20000]); delivered=YES;}];
  NSDate *deadline=[NSDate dateWithTimeIntervalSinceNow:5];
  while (!delivered && deadline.timeIntervalSinceNow>0) [NSRunLoop.currentRunLoop runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.01]];
  assert(delivered);

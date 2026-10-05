@@ -24,7 +24,7 @@ static SHText Text(NSString *value) {
  return (SHText){p,b,n};
 }
 static void FreeText(SHText t) {if(t.length)free((void *)t.points);}
-typedef struct { NSUInteger index; unsigned worst,total,pathTerms; size_t compactness; } Ranked;
+typedef struct { NSUInteger index; unsigned learned,worst,total,pathTerms; size_t compactness; } Ranked;
 @implementation SHSearchSnapshot {
  NSArray<NSDictionary *> *_entries;
  SHRecord *_records;
@@ -89,6 +89,7 @@ typedef struct { NSUInteger index; unsigned worst,total,pathTerms; size_t compac
  }
 }
 - (BOOL)rank:(Ranked)a precedes:(Ranked)b {
+ if(a.learned!=b.learned)return a.learned>b.learned;
  // An application matched by its name or alias precedes every file, folder, and link.
  BOOL aa=a.worst<4 && [_entries[a.index][@"type"] isEqual:@"app"],ba=b.worst<4 && [_entries[b.index][@"type"] isEqual:@"app"];
  if(aa!=ba)return aa;
@@ -98,7 +99,16 @@ typedef struct { NSUInteger index; unsigned worst,total,pathTerms; size_t compac
  if(a.compactness!=b.compactness)return a.compactness<b.compactness;
  return a.index<b.index;
 }
-- (NSArray<NSDictionary *> *)search:(NSString *)query cancelled:(BOOL (^)(void))cancelled {
+- (NSArray<NSDictionary *> *)search:(NSString *)query cancelled:(BOOL (^)(void))cancelled {return [self search:query preferred:nil cancelled:cancelled];}
+- (NSUInteger)indexOfName:(NSString *)name path:(NSString *)path {
+ NSString *folded=SHFold(name);
+ NSUInteger i=[_entries indexOfObject:@{@"name":name} inSortedRange:NSMakeRange(0,_entries.count) options:NSBinarySearchingFirstEqual usingComparator:^NSComparisonResult(NSDictionary *a,NSDictionary *b){return [SHFold(a[@"name"]) compare:SHFold(b[@"name"])];}];
+ for(;i!=NSNotFound && i<_entries.count && [SHFold(_entries[i][@"name"]) isEqual:folded];i++)if([_entries[i][@"path"] isEqual:path])return i;
+ return NSNotFound;
+}
+- (NSArray<NSDictionary *> *)search:(NSString *)query preferred:(NSArray<NSDictionary *> *)preferred cancelled:(BOOL (^)(void))cancelled {
+ NSUInteger learned[8],learnedCount=0;
+ for(NSDictionary *p in preferred){if(learnedCount==8)break;learned[learnedCount]=[self indexOfName:p[@"name"] path:p[@"path"]];learnedCount++;}
  NSArray *raw=[query componentsSeparatedByCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
  NSMutableArray *terms=NSMutableArray.array; for(NSString *t in raw)if(t.length)[terms addObject:t];
  if(cancelled && cancelled())return @[];
@@ -110,7 +120,7 @@ typedef struct { NSUInteger index; unsigned worst,total,pathTerms; size_t compac
  if(valid)for(NSUInteger i=0;i<_entries.count;i++) {
   if(_excludedRoots.count && [_excludedRoots containsObject:_entries[i][@"root"]?:@""])continue;
   if((i&255)==0 && cancelled && cancelled()){found=0;break;}
-  SHRecord rec=_records[i];SHText path=_sharedTexts[rec.path]; Ranked rank={i,0,0,0,0}; BOOL match=YES;
+  SHRecord rec=_records[i];SHText path=_sharedTexts[rec.path]; Ranked rank={i,0,0,0,0,0}; BOOL match=YES;
   for(NSUInteger j=0;j<terms.count;j++) {
    SHMatch m=sh_match(rec.name,texts[j]),alias=sh_match(_sharedTexts[rec.alias],texts[j]);
    if(alias.rank<m.rank || (alias.rank==m.rank && alias.compactness<m.compactness))m=alias;
@@ -126,6 +136,7 @@ typedef struct { NSUInteger index; unsigned worst,total,pathTerms; size_t compac
    rank.worst=MAX(rank.worst,m.rank);rank.total+=m.rank;rank.pathTerms+=m.rank==4;rank.compactness+=m.compactness;
   }
   if(!match)continue;
+  for(NSUInteger k=0;k<learnedCount;k++)if(learned[k]==i){rank.learned=(unsigned)(8-k);break;}
   NSUInteger pos=0;while(pos<found && ![self rank:rank precedes:top[pos]])pos++;
   if(pos<8){for(NSUInteger k=MIN(found,7);k>pos;k--)top[k]=top[k-1];top[pos]=rank;found=MIN(found+1,8);}
  }

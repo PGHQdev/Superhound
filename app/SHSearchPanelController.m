@@ -90,7 +90,7 @@
  if(changedQuery){_navigated=NO;_selectedID=nil;}
  // The previous rows stay visible until the new results arrive; _pending stops Return opening them.
  __weak typeof(self) weak=self;
- [_queries submit:_field.stringValue completion:^(NSArray<NSDictionary *> *results){
+ [_queries submit:_field.stringValue preferred:[_usage preferredForQuery:_field.stringValue] completion:^(NSArray<NSDictionary *> *results){
   SHSearchPanelController *self=weak;if(!self || !self.window.isVisible)return;
   self->_pending=NO;self->_results=results;NSInteger selection=-1;
   if(self->_navigated){for(NSUInteger i=0;i<results.count;i++)if([results[i][@"id"] isEqual:self->_selectedID]){selection=(NSInteger)i;break;}}
@@ -128,7 +128,7 @@
 - (void)openSelected:(BOOL)reveal {
  if(_pending){NSBeep();return;}
  NSInteger row=_table.selectedRow;if(row<0 || row>=(NSInteger)_results.count){NSBeep();return;}
- NSDictionary *result=_results[(NSUInteger)row];[self dismiss:NO];if(self.openResult)self.openResult(result,reveal);
+ NSDictionary *result=_results[(NSUInteger)row];[_usage recordQuery:_field.stringValue result:result];[self dismiss:NO];if(self.openResult)self.openResult(result,reveal);
 }
 - (BOOL)control:(NSControl *)control textView:(NSTextView *)textView doCommandBySelector:(SEL)selector {
  (void)control;if(textView.hasMarkedText)return NO;
