@@ -27,7 +27,7 @@ The installer retains the previous bundle in a `.superhound-backup.*` directory 
 
 Only names and application metadata are indexed. Hidden descendants, package contents, non-local placeholders, and Superhound’s mutable data are skipped. Symbolic links are listed without traversal. Generated-directory exclusions can be switched off. Removing a location never deletes source files.
 
-Settings/bookmarks and a rebuildable catalog live under `~/Library/Application Support/Superhound/`, separate from the disposable installation probe. There is no launch-at-login, updater, licensing, or cloud search in this slice.
+Settings/bookmarks and a rebuildable catalog live under `~/Library/Application Support/Superhound/`, separate from the disposable installation probe. Superhound registers itself to open at login on first launch; the menu item **Open at Login** turns this off. There is no updater, licensing, or cloud search in this slice.
 
 ## Verify and measure
 
