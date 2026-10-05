@@ -95,12 +95,17 @@
  [_queries submit:_field.stringValue preferred:preferred completion:^(NSArray<NSDictionary *> *results){
   SHSearchPanelController *self=weak;if(!self || !self.window.isVisible)return;
   // A calculation or conversion takes the first of the eight rows.
-  // Emoji the user copied before for this query lead; other emoji take up to 3 of the last rows.
+  // Order: answer, results the user chose before, applications, up to 3 emoji, then files and folders.
   NSMutableArray *rows=NSMutableArray.array,*otherEmoji=[emoji mutableCopy];if(answer)[rows addObject:answer];
+  NSSet *chosen=[NSSet setWithArray:[preferred valueForKey:@"path"]];
   for(NSDictionary *p in preferred)for(NSDictionary *e in emoji)if([e[@"path"] isEqual:p[@"path"]]){[rows addObject:e];[otherEmoji removeObjectIdenticalTo:e];}
-  NSUInteger reserved=MIN((NSUInteger)3,otherEmoji.count);
-  for(NSDictionary *r in results){if(rows.count+reserved>=8)break;[rows addObject:r];}
-  for(NSDictionary *e in otherEmoji){if(rows.count>=8)break;[rows addObject:e];}
+  NSUInteger lead=0;while(lead<results.count && ([results[lead][@"type"] isEqual:@"app"] || [chosen containsObject:results[lead][@"path"]]))lead++;
+  NSUInteger shown=MIN((NSUInteger)3,otherEmoji.count);
+  for(NSUInteger i=0;i<lead && rows.count+shown<8;i++)[rows addObject:results[i]];
+  for(NSUInteger i=0;i<shown;i++)[rows addObject:otherEmoji[i]];
+  for(NSUInteger i=lead;i<results.count && rows.count<8;i++)[rows addObject:results[i]];
+  // With few other results, more emoji fill the free rows.
+  for(NSUInteger i=shown;i<otherEmoji.count && rows.count<8;i++)[rows addObject:otherEmoji[i]];
   results=rows;
   self->_pending=NO;self->_results=results;NSInteger selection=-1;
   if(self->_navigated){for(NSUInteger i=0;i<results.count;i++)if([results[i][@"id"] isEqual:self->_selectedID]){selection=(NSInteger)i;break;}}
