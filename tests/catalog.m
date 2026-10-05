@@ -16,12 +16,15 @@ int main(void){@autoreleasepool{
  NSURL *root=[tmp URLByAppendingPathComponent:@"tree"];
  Write(root,@"normal/東京.txt");Write(root,@"node_modules/ignored.txt");Write(root,@"node_modules-ok/visible.txt");Write(root,@".hidden/no.txt");Write(root,@"Demo.app/Contents/no.txt");
  assert([fm createSymbolicLinkAtPath:[[root URLByAppendingPathComponent:@"loop"] path] withDestinationPath:root.path error:nil]);
+ assert([fm createSymbolicLinkAtPath:[[root URLByAppendingPathComponent:@"Linked.app"] path] withDestinationPath:[[root URLByAppendingPathComponent:@"Demo.app"] path] error:nil]);
  NSError *error=nil;
  NSArray *scan=[SHScanner scanURL:root applicationsOnly:NO excludeGenerated:YES progress:nil error:&error];
  assert(scan && !error);NSArray *paths=[scan valueForKey:@"relative"];
  assert([paths containsObject:@"normal/東京.txt"]);assert([paths containsObject:@"node_modules-ok/visible.txt"]);
  assert(![paths containsObject:@"node_modules/ignored.txt"]);assert(![paths containsObject:@".hidden/no.txt"]);
  assert(![paths containsObject:@"Demo.app/Contents/no.txt"]);assert([paths containsObject:@"loop"]);
+ NSArray *linked=[SHScanner scanURL:root applicationsOnly:YES excludeGenerated:YES progress:nil error:&error];
+ assert(([[NSSet setWithArray:[linked valueForKey:@"relative"]] isEqual:[NSSet setWithArray:@[@"Demo.app",@"Linked.app"]]]));assert(([[NSSet setWithArray:[linked valueForKey:@"type"]] isEqual:[NSSet setWithObject:@"app"]]));
  NSArray *all=[SHScanner scanURL:root applicationsOnly:NO excludeGenerated:NO progress:nil error:&error];
  assert([[all valueForKey:@"relative"] containsObject:@"node_modules/ignored.txt"]);
  assert(![SHScanner scanURL:[tmp URLByAppendingPathComponent:@"missing"] applicationsOnly:NO excludeGenerated:YES progress:nil error:&error]);

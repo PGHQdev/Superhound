@@ -32,10 +32,12 @@
   if(link && dir)[enumerator skipDescendants];
   if(dir && exclude && [excluded containsObject:name]){[enumerator skipDescendants];continue;}
   BOOL application=dir && !link && [name.pathExtension.lowercaseString isEqual:@"app"];
-  if(application || [values[NSURLIsPackageKey] boolValue])[enumerator skipDescendants];
+  // macOS installs Safari as a symbolic link to its bundle; a linked application is still an application.
+  if(link && [name.pathExtension.lowercaseString isEqual:@"app"]){NSNumber *target=nil;[entry.URLByResolvingSymlinksInPath getResourceValue:&target forKey:NSURLIsDirectoryKey error:nil];application=target.boolValue;}
+  if(dir && (application || [values[NSURLIsPackageKey] boolValue]))[enumerator skipDescendants];
   if(!apps || application){
    NSString *alias=@"",*display=application?name.stringByDeletingPathExtension:name;
-   if(application){NSBundle *bundle=[NSBundle bundleWithURL:entry];id label=[bundle objectForInfoDictionaryKey:@"CFBundleDisplayName"]?:[bundle objectForInfoDictionaryKey:@"CFBundleName"];if([label isKindOfClass:NSString.class] && [label length]){alias=display;display=label;}}
+   if(application){NSBundle *bundle=[NSBundle bundleWithURL:entry.URLByResolvingSymlinksInPath];id label=[bundle objectForInfoDictionaryKey:@"CFBundleDisplayName"]?:[bundle objectForInfoDictionaryKey:@"CFBundleName"];if([label isKindOfClass:NSString.class] && [label length]){alias=display;display=label;}}
    NSArray *components=entry.path.pathComponents;
    NSString *relative=[NSString pathWithComponents:[components subarrayWithRange:NSMakeRange(components.count-enumerator.level,enumerator.level)]];
    [entries addObject:@{@"relative":relative,@"name":display,@"path":entry.path,@"type":application?@"app":link?@"link":dir?@"folder":@"file",@"alias":alias}];
