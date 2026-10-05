@@ -20,11 +20,11 @@
 @implementation SHResultsTable
 - (void)keyDown:(NSEvent *)event {if(!self.command || !self.command(event))[super keyDown:event];}
 @end
-@interface SHSearchPanelController () <NSSearchFieldDelegate,NSTableViewDataSource,NSTableViewDelegate,NSWindowDelegate>
+@interface SHSearchPanelController () <NSTextFieldDelegate,NSTableViewDataSource,NSTableViewDelegate,NSWindowDelegate>
 @end
 @implementation SHSearchPanelController {
  SHQueryController *_queries;
- NSSearchField *_field;
+ NSTextField *_field;
  NSTableView *_table;
  NSTextField *_status;
  NSArray<NSDictionary *> *_results;
@@ -43,7 +43,9 @@
  panel.title=@"Superhound";panel.titleVisibility=NSWindowTitleHidden;panel.titlebarAppearsTransparent=YES;panel.level=NSFloatingWindowLevel;panel.hidesOnDeactivate=NO;panel.collectionBehavior=NSWindowCollectionBehaviorCanJoinAllSpaces|NSWindowCollectionBehaviorFullScreenAuxiliary;panel.delegate=self;panel.releasedWhenClosed=NO;
  panel.backgroundColor=NSColor.windowBackgroundColor;panel.accessibilityIdentifier=@"superhound.search.panel";
  NSView *view=panel.contentView;
- _field=[[NSSearchField alloc] initWithFrame:NSMakeRect(20,452,600,40)];_field.font=[NSFont systemFontOfSize:24];_field.placeholderString=@"Search apps and files";_field.delegate=self;_field.sendsSearchStringImmediately=YES;_field.accessibilityIdentifier=@"superhound.search.input";_field.accessibilityLabel=@"Search apps and selected folders";[view addSubview:_field];
+ // The system search bezel has a fixed height that clips 24-point text, so the field draws no bezel.
+ NSImageView *glass=[NSImageView imageViewWithImage:[[NSImage imageWithSystemSymbolName:@"magnifyingglass" accessibilityDescription:nil] imageWithSymbolConfiguration:[NSImageSymbolConfiguration configurationWithPointSize:20 weight:NSFontWeightRegular]]];glass.frame=NSMakeRect(22,456,26,32);glass.contentTintColor=NSColor.secondaryLabelColor;[view addSubview:glass];
+ _field=[[NSTextField alloc] initWithFrame:NSMakeRect(56,456,564,32)];_field.bordered=NO;_field.drawsBackground=NO;_field.focusRingType=NSFocusRingTypeNone;_field.usesSingleLineMode=YES;_field.cell.scrollable=YES;_field.font=[NSFont systemFontOfSize:24];_field.placeholderString=@"Search apps and files";_field.delegate=self;_field.accessibilityIdentifier=@"superhound.search.input";_field.accessibilityLabel=@"Search apps and selected folders";[view addSubview:_field];
  NSScrollView *scroll=[[NSScrollView alloc] initWithFrame:NSMakeRect(12,62,616,384)];scroll.hasVerticalScroller=NO;scroll.drawsBackground=NO;
  _table=[[SHResultsTable alloc] initWithFrame:scroll.bounds];
  __weak typeof(self) weak=self;
