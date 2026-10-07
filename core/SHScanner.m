@@ -8,6 +8,9 @@
  return [self scanURL:url applicationsOnly:apps excludeGenerated:exclude excludingURLs:@[] cancelled:cancelled progress:progress error:error];
 }
 + (NSArray<NSDictionary *> *)scanURL:(NSURL *)url applicationsOnly:(BOOL)apps excludeGenerated:(BOOL)exclude excludingURLs:(NSArray<NSURL *> *)ignored cancelled:(BOOL (^)(void))cancelled progress:(void (^)(NSUInteger))progress error:(NSError **)error {
+ return [self scanURL:url applicationsOnly:apps excludeGenerated:exclude excludingURLs:ignored shallow:NO cancelled:cancelled progress:progress error:error];
+}
++ (NSArray<NSDictionary *> *)scanURL:(NSURL *)url applicationsOnly:(BOOL)apps excludeGenerated:(BOOL)exclude excludingURLs:(NSArray<NSURL *> *)ignored shallow:(BOOL)shallow cancelled:(BOOL (^)(void))cancelled progress:(void (^)(NSUInteger))progress error:(NSError **)error {
  if(error)*error=nil;
  url=url.URLByResolvingSymlinksInPath;
  NSFileManager *fm=NSFileManager.defaultManager;
@@ -15,7 +18,7 @@
  if(![url getResourceValue:&directory forKey:NSURLIsDirectoryKey error:error] || !directory.boolValue || ![fm isReadableFileAtPath:url.path]){if(error && !*error)*error=[NSError errorWithDomain:NSPOSIXErrorDomain code:EACCES userInfo:nil];return nil;}
  NSArray *keys=@[NSURLIsDirectoryKey,NSURLIsSymbolicLinkKey,NSURLIsPackageKey,NSURLIsHiddenKey,NSURLIsUbiquitousItemKey,NSURLUbiquitousItemDownloadingStatusKey];
  __block NSError *failure=nil;
- NSDirectoryEnumerator *enumerator=[fm enumeratorAtURL:url includingPropertiesForKeys:keys options:NSDirectoryEnumerationSkipsHiddenFiles|NSDirectoryEnumerationSkipsPackageDescendants errorHandler:^BOOL(NSURL *bad,NSError *e){(void)bad;failure=e;return NO;}];
+ NSDirectoryEnumerator *enumerator=[fm enumeratorAtURL:url includingPropertiesForKeys:keys options:NSDirectoryEnumerationSkipsHiddenFiles|NSDirectoryEnumerationSkipsPackageDescendants|(shallow?NSDirectoryEnumerationSkipsSubdirectoryDescendants:0) errorHandler:^BOOL(NSURL *bad,NSError *e){(void)bad;failure=e;return NO;}];
  if(!enumerator){if(error)*error=[NSError errorWithDomain:NSPOSIXErrorDomain code:EIO userInfo:nil];return nil;}
  NSMutableSet *ignoredPaths=NSMutableSet.set;for(NSURL *ignoredURL in ignored)[ignoredPaths addObject:ignoredURL.URLByResolvingSymlinksInPath.path];
  if([ignoredPaths containsObject:url.path])return @[];

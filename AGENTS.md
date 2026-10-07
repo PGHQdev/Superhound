@@ -34,7 +34,7 @@ To see a change in the live app: build with a build number one above the install
 | `SHLibrary.m` | Owns the search locations: the fixed app folders, the user's folders, scans, overlap between folders, and snapshot publication. |
 | `SHScanner.m` | Walks one folder and makes entries. Holds the skip rules (hidden items, packages, generated folders, online-only files). |
 | `SHCatalog.m` | The SQLite cache of scanned entries. |
-| `SHChangeMonitor.m` | FSEvents watcher that requests a rescan after file changes. |
+| `SHChangeMonitor.m` | FSEvents watcher. Reports the changed directories so the library lists only those; a dropped or root event requests a full rescan. |
 | `SHMetrics.m` | Writes timing records to `performance.jsonl`. |
 
 ### `app/`: windows and macOS integration

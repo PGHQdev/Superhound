@@ -5,6 +5,7 @@
 #import "SHFolderAccess.h"
 #import "SHMetrics.h"
 #import <sys/stat.h>
+#import <errno.h>
 @interface SHRoot : NSObject
 @property NSString *identifier;
 @property NSString *path;
@@ -101,13 +102,46 @@
  r.url=url;r.scoped=scoped;r.path=url.URLByResolvingSymlinksInPath.path;r.state=@"Waiting";
  if(stale && !r.apps){NSData *fresh=[SHFolderAccess bookmarkForURL:url error:nil];if(fresh){r.bookmark=fresh;[self save];}}
  NSString *identifier=r.identifier;__weak typeof(self) weak=self;
- r.monitor=[[SHChangeMonitor alloc] initWithURL:url excludingURLs:@[_stateURL] changed:^(BOOL invalidated){
+ r.monitor=[[SHChangeMonitor alloc] initWithURL:url excludingURLs:@[_stateURL] changed:^(BOOL invalidated,NSSet *listed,NSSet *walked){
   SHLibrary *self=weak;if(!self)return;
   if(invalidated){[self invalidateRoot:identifier];dispatch_async(self->_worker,^{SHRoot *root=[self root:identifier];if(root){root.entries=nil;root.state=@"Rechecking changed location";[self clearCancellation:identifier];[self reconcileCoverage];[self publish:YES];}});}
-  [self request:identifier];
+  if(listed)[self update:identifier listed:listed walked:walked];else [self request:identifier];
  }];
  return YES;
 }
+// Resolves links in the longest existing ancestor; a removed path keeps its unresolved tail.
+static NSString *Resolve(NSString *path){
+ NSMutableArray *tail=NSMutableArray.array;NSString *cursor=path;
+ while(cursor.length>1 && ![NSFileManager.defaultManager fileExistsAtPath:cursor]){[tail insertObject:cursor.lastPathComponent atIndex:0];cursor=cursor.stringByDeletingLastPathComponent;}
+ NSString *resolved=[NSURL fileURLWithPath:cursor].URLByResolvingSymlinksInPath.path;for(NSString *part in tail)resolved=[resolved stringByAppendingPathComponent:part];return resolved;
+}
+// Rescans only the changed directories of a ready root; anything unexpected falls back to a full rescan.
+- (void)update:(NSString *)identifier listed:(NSSet<NSString *> *)listed walked:(NSSet<NSString *> *)walked {dispatch_async(_worker,^{@autoreleasepool{
+ SHRoot *r=[self root:identifier];if(!r || !r.url || ![r.state isEqual:@"Ready"] || [self cancelled:identifier])return;
+ if(r.apps){[self request:identifier];return;}
+ NSTimeInterval started=NSProcessInfo.processInfo.systemUptime;NSMutableArray *directories=NSMutableArray.array;NSString *prefix=[r.path stringByAppendingString:@"/"];
+ for(NSString *changed in [walked setByAddingObjectsFromSet:listed]){
+  BOOL deep=[walked containsObject:changed];NSString *path=Resolve(changed),*relative;
+  if([path isEqual:r.path] || [r.path hasPrefix:[path stringByAppendingString:@"/"]])relative=@"";
+  else if([path hasPrefix:prefix])relative=[path substringFromIndex:prefix.length];
+  else {[self request:identifier];return;}
+  if(deep && !relative.length){[self request:identifier];return;}
+  if(relative.length && ![self root:r reaches:relative])continue;
+  NSError *error=nil;NSURL *url=relative.length?[r.url URLByAppendingPathComponent:relative]:r.url;
+  NSArray *found=[SHScanner scanURL:url applicationsOnly:NO excludeGenerated:self->_exclude excludingURLs:@[self->_stateURL] shallow:!deep cancelled:^BOOL{return [self cancelled:identifier];} progress:nil error:&error];
+  if([self cancelled:identifier])return;
+  if(!found){BOOL gone=([error.domain isEqual:NSCocoaErrorDomain] && error.code==NSFileReadNoSuchFileError) || ([error.domain isEqual:NSPOSIXErrorDomain] && error.code==ENOENT);if(gone)found=@[];else {[self request:identifier];return;}}
+  NSMutableArray *entries=[NSMutableArray arrayWithCapacity:found.count];
+  for(NSDictionary *e in found){NSMutableDictionary *m=[e mutableCopy];if(relative.length)m[@"relative"]=[relative stringByAppendingPathComponent:e[@"relative"]];[entries addObject:m];}
+  [directories addObject:@{@"relative":relative,@"deep":@(deep),@"entries":entries}];
+ }
+ if(!directories.count)return;
+ NSUInteger changed=0;NSError *error=nil;
+ if(![self->_catalog updateRoot:identifier directories:directories changed:&changed error:&error]){[self request:identifier];return;}
+ NSLog(@"Catalog update: %lu directories, %lu changed rows, %.3f seconds",(unsigned long)directories.count,(unsigned long)changed,NSProcessInfo.processInfo.systemUptime-started);
+ if(!changed)return;
+ r.entries=[self->_catalog entriesForRoot:identifier];r.count=r.entries.count;[self reconcileCoverage];[self publish:YES];
+}});}
 - (void)request:(NSString *)identifier {
  [_scheduleLock lock];if([_scheduled containsObject:identifier]){[_again addObject:identifier];[_scheduleLock unlock];return;}[_scheduled addObject:identifier];[_scheduleLock unlock];
  dispatch_async(_worker,^{@autoreleasepool{
@@ -120,9 +154,12 @@ static BOOL Covered(NSString *path,NSString *parent){return [path isEqual:parent
 - (BOOL)root:(SHRoot *)r coveredBy:(SHRoot *)other {
  if(other==r || other.apps || ![other.state isEqual:@"Ready"] || !other.entries || !Covered(r.path,other.path))return NO;
  if([r.path isEqual:other.path])return [_roots indexOfObject:other]<[_roots indexOfObject:r];
- NSString *relative=[r.path substringFromIndex:other.path.length+1];
+ return [self root:other reaches:[r.path substringFromIndex:other.path.length+1]];
+}
+// YES when a scan of root would descend to relative: no hidden, generated, package, or linked component on the way.
+- (BOOL)root:(SHRoot *)root reaches:(NSString *)relative {
  NSSet *excluded=[NSSet setWithArray:@[@".git",@"node_modules",@"vendor",@"build",@"dist",@"DerivedData"]];
- NSURL *cursor=other.url;
+ NSURL *cursor=root.url;
  for(NSString *part in relative.pathComponents){
   if([part hasPrefix:@"."] || (_exclude && [excluded containsObject:part]))return NO;
   cursor=[cursor URLByAppendingPathComponent:part];NSNumber *package=nil,*hidden=nil,*link=nil;

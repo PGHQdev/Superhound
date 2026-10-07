@@ -37,6 +37,24 @@ static void Bind(sqlite3_stmt *s,int col,NSString *v){sqlite3_bind_text(s,col,v.
  if(!ok){if(error)*error=[self failure];[self sql:"ROLLBACK"];}
  return ok;
 }
+- (BOOL)updateRoot:(NSString *)root directories:(NSArray<NSDictionary *> *)directories changed:(NSUInteger *)changed error:(NSError **)error {
+ NSUInteger total=0;
+ if(![self sql:"BEGIN IMMEDIATE; CREATE TEMP TABLE IF NOT EXISTS staged (relative TEXT PRIMARY KEY,name TEXT,path TEXT,type TEXT,alias TEXT);"]){if(error)*error=[self failure];[self sql:"ROLLBACK"];return NO;}
+ BOOL ok=YES;
+ for(NSDictionary *d in directories){if(!ok)break;
+  ok=[self sql:"DELETE FROM staged"];sqlite3_stmt *s=NULL;
+  if(ok)ok=sqlite3_prepare_v2(_db,"INSERT INTO staged VALUES (?,?,?,?,?)",-1,&s,NULL)==SQLITE_OK;
+  for(NSDictionary *e in d[@"entries"]){if(!ok)break;sqlite3_reset(s);sqlite3_clear_bindings(s);Bind(s,1,e[@"relative"]);Bind(s,2,e[@"name"]);Bind(s,3,e[@"path"]);Bind(s,4,e[@"type"]);Bind(s,5,e[@"alias"]?:@"");ok=sqlite3_step(s)==SQLITE_DONE;}sqlite3_finalize(s);s=NULL;
+  // Identical rows are left alone so an unchanged directory counts as no change.
+  if(ok){ok=sqlite3_prepare_v2(_db,"INSERT INTO entries(root,relative,name,path,type,alias) SELECT ?,relative,name,path,type,alias FROM staged WHERE true ON CONFLICT(root,relative) DO UPDATE SET name=excluded.name,path=excluded.path,type=excluded.type,alias=excluded.alias WHERE name IS NOT excluded.name OR path IS NOT excluded.path OR type IS NOT excluded.type OR alias IS NOT excluded.alias",-1,&s,NULL)==SQLITE_OK;if(ok){Bind(s,1,root);ok=sqlite3_step(s)==SQLITE_DONE;total+=sqlite3_changes(_db);}sqlite3_finalize(s);s=NULL;}
+  NSString *prefix=[d[@"relative"] length]?[d[@"relative"] stringByAppendingString:@"/"]:@"";
+  if(ok){ok=sqlite3_prepare_v2(_db,"DELETE FROM entries WHERE root=?1 AND substr(relative,1,length(?2))=?2 AND (?3 OR instr(substr(relative,length(?2)+1),'/')=0) AND relative NOT IN (SELECT relative FROM staged)",-1,&s,NULL)==SQLITE_OK;if(ok){Bind(s,1,root);Bind(s,2,prefix);sqlite3_bind_int(s,3,[d[@"deep"] boolValue]);ok=sqlite3_step(s)==SQLITE_DONE;total+=sqlite3_changes(_db);}sqlite3_finalize(s);}
+ }
+ if(ok)ok=[self sql:"COMMIT"];
+ if(!ok){if(error)*error=[self failure];[self sql:"ROLLBACK"];}
+ if(changed)*changed=ok?total:0;
+ return ok;
+}
 - (NSArray<NSDictionary *> *)entriesForRoot:(NSString *)root {
  sqlite3_stmt *s=NULL;NSMutableArray *rows=NSMutableArray.array;
  if(sqlite3_prepare_v2(_db,"SELECT id,relative,name,path,type,alias FROM entries WHERE root=? ORDER BY id",-1,&s,NULL)==SQLITE_OK){Bind(s,1,root);while(sqlite3_step(s)==SQLITE_ROW){NSMutableDictionary *r=[@{@"id":@(sqlite3_column_int64(s,0)),@"root":root} mutableCopy];NSArray *keys=@[@"relative",@"name",@"path",@"type",@"alias"];for(int i=0;i<5;i++){const char *p=(const char *)sqlite3_column_text(s,i+1);r[keys[i]]=p?@(p):@"";}[rows addObject:r];}}sqlite3_finalize(s);return rows;

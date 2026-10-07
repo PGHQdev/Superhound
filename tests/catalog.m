@@ -42,6 +42,17 @@ int main(void){@autoreleasepool{
  // Duplicate rows fail atomically; the previous generation survives.
  assert((![c replaceRoot:@"r" entries:@[scan[0],scan[0]] error:&error]));
  assert([[before valueForKey:@"id"] isEqual:[[c entriesForRoot:@"r"] valueForKey:@"id"]]);
+ // Directory updates: identical rows count as no change, shallow keeps deeper rows, deep removes them, other directories stay.
+ NSDictionary *(^E)(NSString *)=^(NSString *rel){return @{@"relative":rel,@"name":rel.lastPathComponent,@"path":[root.URLByResolvingSymlinksInPath.path stringByAppendingPathComponent:rel],@"type":@"file",@"alias":@""};};
+ NSUInteger changed=1;NSArray *top=[scan filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:@"NOT relative CONTAINS '/'"]],*normal=[scan filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:@"relative BEGINSWITH 'normal/'"]];
+ assert(([c updateRoot:@"r" directories:@[@{@"relative":@"",@"deep":@NO,@"entries":top},@{@"relative":@"normal",@"deep":@NO,@"entries":normal}] changed:&changed error:&error] && changed==0));
+ assert([[before valueForKey:@"id"] isEqual:[[c entriesForRoot:@"r"] valueForKey:@"id"]]);
+ assert(([c updateRoot:@"r" directories:@[@{@"relative":@"normal",@"deep":@YES,@"entries":@[E(@"normal/sub"),E(@"normal/sub/deep.txt")]}] changed:&changed error:&error] && changed==3));
+ assert(([c updateRoot:@"r" directories:@[@{@"relative":@"normal",@"deep":@NO,@"entries":@[E(@"normal/sub")]}] changed:&changed error:&error] && changed==0));
+ assert([[[c entriesForRoot:@"r"] valueForKey:@"relative"] containsObject:@"normal/sub/deep.txt"]);
+ assert(([c updateRoot:@"r" directories:@[@{@"relative":@"normal",@"deep":@YES,@"entries":@[]}] changed:&changed error:&error] && changed==2));
+ assert([c entriesForRoot:@"r"].count==before.count-1 && ![[[c entriesForRoot:@"r"] valueForKey:@"relative"] containsObject:@"normal/東京.txt"]);
+ assert([c replaceRoot:@"r" entries:scan error:&error] && [c entriesForRoot:@"r"].count==before.count);
  // A process interrupted inside a transaction leaves the committed root intact.
  c=nil;const char *dbPath=db.fileSystemRepresentation;pid_t child=fork();assert(child>=0);
  if(child==0){sqlite3 *crashDB=NULL;if(sqlite3_open(dbPath,&crashDB)!=SQLITE_OK)_exit(2);if(sqlite3_exec(crashDB,"BEGIN IMMEDIATE; DELETE FROM entries",NULL,NULL,NULL)!=SQLITE_OK)_exit(3);_exit(0);}
@@ -57,5 +68,5 @@ int main(void){@autoreleasepool{
  NSData *bookmark=[SHFolderAccess bookmarkForURL:root error:&error];assert(bookmark);
  NSURL *resolved=[SHFolderAccess resolveBookmark:bookmark stale:NULL error:&error];assert([resolved.URLByResolvingSymlinksInPath.path isEqual:root.URLByResolvingSymlinksInPath.path]);
  [fm removeItemAtURL:tmp error:nil];
- puts("PASS catalog: exclusions, symlinks, missing root, stable IDs, atomic rollback, corrupt cache, bookmarks");
+ puts("PASS catalog: exclusions, symlinks, missing root, stable IDs, directory updates, atomic rollback, corrupt cache, bookmarks");
 }return 0;}
