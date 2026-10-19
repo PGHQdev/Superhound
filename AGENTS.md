@@ -12,7 +12,7 @@ A native macOS launcher: one panel on a global shortcut that finds apps, files, 
 | Command | Function |
 |---|---|
 | `scripts/build.sh [build number]` | Compiles and signs `.build/Superhound.app`. Also writes the bundle's `Info.plist`. |
-| `scripts/test.sh` | Builds and runs the six Objective-C test suites with sanitizers. Run it before each commit. |
+| `scripts/test.sh` | Builds and runs the seven Objective-C test suites with sanitizers. Run it before each commit. |
 | `scripts/install.sh .build/Superhound.app` | Replaces the installed app. It refuses while Superhound is in operation, and it keeps the previous bundle. |
 | `scripts/benchmark.sh` | Measures query time, memory, and catalog speed at 10,000 and 100,000 records. |
 | `scripts/update-emoji.py` | Rebuilds `app/emoji.tsv` from Unicode data. The only script that uses the internet. |
@@ -31,6 +31,7 @@ To see a change in the live app: build with a build number one above the install
 | `SHUsage.m` | Learned ranking. Records which result the user opened for which query, in `usage.plist`. |
 | `SHAnswer.m` | Quick answers: the arithmetic parser, percent rules, and the unit table. |
 | `SHEmoji.m` | Emoji search by name and keyword over `app/emoji.tsv`. |
+| `SHClipboard.m` | The clipboard history: the last 500 text copies, the skip rules for concealed and password copies, search, and `clipboard.plist`. |
 | `SHCommands.m` | The system commands (Lock Screen, Sleep, Restart, Toggle Mute, Empty Trash, and others) as search entries. `SHLibrary` adds them to each snapshot. |
 | `SHLibrary.m` | Owns the search locations: the fixed app folders, the user's folders, scans, overlap between folders, and snapshot publication. |
 | `SHScanner.m` | Walks one folder and makes entries. Holds the skip rules (hidden items, packages, generated folders, online-only files). |
@@ -42,12 +43,12 @@ To see a change in the live app: build with a build number one above the install
 
 | File | Function |
 |---|---|
-| `SHAppDelegate.m` | Start-up wiring, the menu bar item and its menu, Open at Login. |
-| `SHSearchPanelController.m` | The search panel: field, result rows, row order (answer, chosen before, apps, settings panes, and commands, emoji, files), keys, the action menu (⌘K and right-click), Quick Look, copy and open. |
-| `SHSettingsController.m` | The Search Locations window and the shortcut recorder. |
-| `SHHotKey.m` | Global shortcut registration. |
+| `SHAppDelegate.m` | Start-up wiring, the menu bar item and its menu, Open at Login, and the pasteboard check twice a second for the clipboard history. |
+| `SHSearchPanelController.m` | The search panel and its clipboard history mode: field, result rows, row order (answer, chosen before, apps, settings panes, and commands, emoji, files), keys, the action menu (⌘K and right-click), Quick Look, copy and open. |
+| `SHSettingsController.m` | The Search Locations window and the two shortcut recorders. |
+| `SHHotKey.m` | Global shortcut registration, one object for each shortcut. |
 | `SHFolderAccess.m` | Security-scoped bookmarks for the user's folders. |
-| `SHResultActions.m` | Opens a result, opens it with another app, shows it in Finder, moves it to the Trash, and runs the system commands. |
+| `SHResultActions.m` | Opens a result, opens it with another app, shows it in Finder, moves it to the Trash, runs the system commands, and pastes with a ⌘V key press. |
 | `emoji.tsv` | Generated emoji data: emoji, name, keywords. Do not edit by hand. |
 
 ### `tests/` and `bench/`
@@ -57,6 +58,7 @@ To see a change in the live app: build with a build number one above the install
 | `tests/search.m` | Ranking, typing errors, learned ranking, the query controller |
 | `tests/answer.m` | Calculator and unit conversion |
 | `tests/emoji.m` | Emoji search |
+| `tests/clipboard.m` | Clipboard history rules, search, limits, and its file |
 | `tests/catalog.m` | Scanner rules and the SQLite cache |
 | `tests/library.m` | Search locations with live file changes |
 | `tests/snapshot-equivalence.m` | 40 result sets compared with `snapshot-equivalence.expected`. A ranking change needs a reviewed update of that file. |
@@ -72,6 +74,7 @@ All in `~/Library/Application Support/Superhound/`:
 | `folders.plist` | The user's search locations and their bookmarks |
 | `catalog.sqlite` | The scan cache; safe to delete, the app rebuilds it |
 | `usage.plist` | Learned ranking history: opened paths and their queries |
+| `clipboard.plist` | Clipboard history: copied text, its time, and the source app. Private; do not print it. |
 | `performance.jsonl` | Timing records |
 
 ## Docs

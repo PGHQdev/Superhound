@@ -2,6 +2,13 @@
 #import "SHMetrics.h"
 #import "SHAnswer.h"
 #import <Quartz/Quartz.h>
+NSString *const SHOwnCopyType=@"com.superhound.copy";
+static NSString *Copied(NSDictionary *result){
+ static NSRelativeDateTimeFormatter *format;if(!format){format=NSRelativeDateTimeFormatter.new;format.unitsStyle=NSRelativeDateTimeFormatterUnitsStyleShort;}
+ NSString *when=[format localizedStringForDate:[NSDate dateWithTimeIntervalSince1970:[result[@"date"] doubleValue]] relativeToDate:NSDate.date];
+ return [NSString stringWithFormat:@"%@%@ · Return to paste",[result[@"source"] length]?[result[@"source"] stringByAppendingString:@" · "]:@"",when];
+}
+static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPasteboard;[board clearContents];[board setString:text forType:NSPasteboardTypeString];[board setString:@"" forType:SHOwnCopyType];}
 @interface SHPanel : NSPanel
 @property(copy) BOOL (^shortcut)(NSEvent *);
 @end
@@ -25,10 +32,10 @@
  SHQueryController *_queries;
  NSTextField *_field;
  NSTableView *_table;
- NSTextField *_status;
+ NSTextField *_status,*_help;
  NSArray<NSDictionary *> *_results;
  NSRunningApplication *_previous;
- BOOL _navigated,_reloading,_pending;
+ BOOL _navigated,_reloading,_pending,_history;
  id _selectedID;
  NSString *_coverage;
  NSCache *_icons;
@@ -53,15 +60,21 @@
  ((SHResultsTable *)_table).command=^BOOL(NSEvent *event){if(event.keyCode==53){[weak dismiss:YES];return YES;}if(event.keyCode==36 || event.keyCode==76){[weak openSelected:(event.modifierFlags&NSEventModifierFlagCommand)!=0];return YES;}return NO;};_table.headerView=nil;_table.rowHeight=48;_table.intercellSpacing=NSMakeSize(0,0);_table.backgroundColor=NSColor.clearColor;_table.selectionHighlightStyle=NSTableViewSelectionHighlightStyleRegular;_table.delegate=self;_table.dataSource=self;_table.allowsEmptySelection=YES;_table.target=self;_table.doubleAction=@selector(openClicked:);_table.menu=NSMenu.new;_table.menu.delegate=self;_table.accessibilityIdentifier=@"superhound.search.results";_table.accessibilityLabel=@"Search results";
  NSTableColumn *column=[[NSTableColumn alloc] initWithIdentifier:@"result"];column.width=616;[_table addTableColumn:column];scroll.documentView=_table;[view addSubview:scroll];
  _status=[NSTextField labelWithString:_coverage];_status.frame=NSMakeRect(22,37,596,20);_status.font=[NSFont systemFontOfSize:11];_status.textColor=NSColor.secondaryLabelColor;_status.lineBreakMode=NSLineBreakByTruncatingTail;_status.accessibilityIdentifier=@"superhound.search.status";[view addSubview:_status];
- NSTextField *help=[NSTextField labelWithString:@"↑ ↓ Move    ↩ Open    ⌘↩ Reveal in Finder    ⌘K Actions    Esc Close"];help.frame=NSMakeRect(22,14,456,18);help.font=[NSFont systemFontOfSize:11];help.textColor=NSColor.secondaryLabelColor;[view addSubview:help];
+ _help=[NSTextField labelWithString:@""];_help.frame=NSMakeRect(22,14,456,18);_help.font=[NSFont systemFontOfSize:11];_help.textColor=NSColor.secondaryLabelColor;[view addSubview:_help];
  NSMutableParagraphStyle *right=NSMutableParagraphStyle.new;right.alignment=NSTextAlignmentRight;
  NSTextField *mark=[NSTextField labelWithAttributedString:[[NSAttributedString alloc] initWithString:@"SUPERHOUND" attributes:@{NSFontAttributeName:[NSFont systemFontOfSize:10 weight:NSFontWeightSemibold],NSKernAttributeName:@2,NSForegroundColorAttributeName:NSColor.tertiaryLabelColor,NSParagraphStyleAttributeName:right}]];mark.frame=NSMakeRect(478,14,140,18);mark.accessibilityElement=NO;[view addSubview:mark];
  return self;
 }
-- (void)toggle {
- double activated=SHTime();
- if(self.window.isVisible && self.window.isKeyWindow){[self dismiss:YES];return;}
- _previous=NSWorkspace.sharedWorkspace.frontmostApplication;
+- (void)toggle {[self show:NO];}
+- (void)toggleHistory {[self show:YES];}
+// The other shortcut switches the open panel to its mode and keeps the app to return to.
+- (void)show:(BOOL)history {
+ double activated=SHTime();BOOL open=self.window.isVisible && self.window.isKeyWindow;
+ if(open && _history==history){[self dismiss:YES];return;}
+ if(!open)_previous=NSWorkspace.sharedWorkspace.frontmostApplication;
+ if(_history!=history){_history=history;_field.stringValue=@"";[_queries cancel];}
+ _field.placeholderString=history?@"Search clipboard history":@"Search apps and files";_field.accessibilityLabel=history?@"Search clipboard history":@"Search apps and selected folders";
+ _help.stringValue=history?@"↑ ↓ Move    ↩ Paste    ⌘↩ Copy    ⌘K Actions    Esc Close":@"↑ ↓ Move    ↩ Open    ⌘↩ Reveal in Finder    ⌘K Actions    Esc Close";
  NSScreen *screen=NSScreen.mainScreen?:NSScreen.screens.firstObject;
  NSPoint mouse=NSEvent.mouseLocation;for(NSScreen *candidate in NSScreen.screens)if(NSPointInRect(mouse,candidate.frame)){screen=candidate;break;}
  NSRect frame=screen.visibleFrame;[self.window setFrameOrigin:NSMakePoint(NSMidX(frame)-320,NSMaxY(frame)-MIN(frame.size.height-20,100+516))];
@@ -77,10 +90,11 @@
 - (void)updateSnapshot:(SHSearchSnapshot *)snapshot status:(NSString *)status {
  _coverage=status;BOOL changed=_queries.snapshot!=snapshot;
  if(changed)_queries.snapshot=snapshot;
- if(self.window.isVisible){if(changed)[self search:NO];else [self updateStatus];}
+ if(self.window.isVisible){if(changed && !_history)[self search:NO];else [self updateStatus];}
 }
-- (void)showError:(NSString *)error {if(!self.window.isVisible)[self toggle];_status.stringValue=error;NSAccessibilityPostNotification(_status,NSAccessibilityValueChangedNotification);}
+- (void)showError:(NSString *)error {if(!self.window.isVisible)[self show:_history];_status.stringValue=error;NSAccessibilityPostNotification(_status,NSAccessibilityValueChangedNotification);}
 - (void)updateStatus {
+ if(_history){_status.stringValue=!_clipboard.count?@"The clipboard history is empty. Text you copy in any app comes here.":_results.count?[NSString stringWithFormat:@"%lu copied items · Kept on this Mac only",(unsigned long)_clipboard.count]:@"No matches in the clipboard history.";return;}
  NSString *prompt=_field.stringValue.length?(_results.count?@"":@"No matches. "):@"Type to search files. ";
  _status.stringValue=[prompt stringByAppendingString:_coverage?:@""];
 }
@@ -89,11 +103,12 @@
  double requested=SHTime();
  _pending=YES;
  if(changedQuery){_navigated=NO;_selectedID=nil;}
+ if(_history){_pending=NO;[self present:[_clipboard search:_field.stringValue limit:100]];return;}
  // The previous rows stay visible until the new results arrive; _pending stops Return opening them.
  __weak typeof(self) weak=self;NSDictionary *answer=[SHAnswer answerForQuery:_field.stringValue];
  NSArray<NSDictionary *> *preferred=[_usage preferredForQuery:_field.stringValue],*emoji=[_emoji search:_field.stringValue limit:8];
  [_queries submit:_field.stringValue preferred:preferred completion:^(NSArray<NSDictionary *> *results){
-  SHSearchPanelController *self=weak;if(!self || !self.window.isVisible)return;
+  SHSearchPanelController *self=weak;if(!self || !self.window.isVisible || self->_history)return;
   // A calculation or conversion takes the first of the eight rows.
   // Order: answer, results the user chose before, applications, settings panes, and commands, up to 3 emoji, then files and folders.
   NSMutableArray *rows=NSMutableArray.array,*otherEmoji=[emoji mutableCopy];if(answer)[rows addObject:answer];
@@ -106,28 +121,31 @@
   for(NSUInteger i=lead;i<results.count && rows.count<8;i++)[rows addObject:results[i]];
   // With few other results, more emoji fill the free rows.
   for(NSUInteger i=shown;i<otherEmoji.count && rows.count<8;i++)[rows addObject:otherEmoji[i]];
-  results=rows;
-  self->_pending=NO;self->_results=results;NSInteger selection=-1;
-  if(self->_navigated){for(NSUInteger i=0;i<results.count;i++)if([results[i][@"id"] isEqual:self->_selectedID]){selection=(NSInteger)i;break;}}
-  else if(results.count)selection=0;
-  self->_reloading=YES;[self->_table reloadData];
-  if(selection>=0)[self->_table selectRowIndexes:[NSIndexSet indexSetWithIndex:(NSUInteger)selection] byExtendingSelection:NO];else [self->_table deselectAll:nil];
-  self->_reloading=NO;self->_selectedID=selection>=0?results[(NSUInteger)selection][@"id"]:nil;
-  [self updateStatus];
+  self->_pending=NO;[self present:rows];
   if([NSUserDefaults.standardUserDefaults boolForKey:@"measurePerformance"])[self.window displayIfNeeded];
   SHMeasure(@"query_to_text_presentation",requested);
  }];
 }
+// Shows the rows and keeps the selection on the same item after the user moved it.
+- (void)present:(NSArray<NSDictionary *> *)results {
+ _results=results;NSInteger selection=-1;
+ if(_navigated){for(NSUInteger i=0;i<results.count;i++)if([results[i][@"id"] isEqual:_selectedID]){selection=(NSInteger)i;break;}}
+ else if(results.count)selection=0;
+ _reloading=YES;[_table reloadData];
+ if(selection>=0){[_table selectRowIndexes:[NSIndexSet indexSetWithIndex:(NSUInteger)selection] byExtendingSelection:NO];[_table scrollRowToVisible:selection];}else [_table deselectAll:nil];
+ _reloading=NO;_selectedID=selection>=0?results[(NSUInteger)selection][@"id"]:nil;
+ [self updateStatus];
+}
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView {(void)tableView;return (NSInteger)_results.count;}
 - (NSView *)tableView:(NSTableView *)tableView viewForTableColumn:(NSTableColumn *)column row:(NSInteger)row {
  (void)tableView;(void)column;
- NSDictionary *result=_results[(NSUInteger)row];NSString *path=result[@"path"];BOOL emoji=[result[@"type"] isEqual:@"emoji"],answer=emoji || [result[@"type"] isEqual:@"answer"];
+ NSDictionary *result=_results[(NSUInteger)row];NSString *path=result[@"path"];BOOL emoji=[result[@"type"] isEqual:@"emoji"],clip=[result[@"type"] isEqual:@"clipboard"],answer=emoji || clip || [result[@"type"] isEqual:@"answer"];
  NSTableCellView *cell=[[NSTableCellView alloc] initWithFrame:NSMakeRect(0,0,616,48)];
- NSImageView *icon=[[NSImageView alloc] initWithFrame:NSMakeRect(10,8,32,32)];icon.image=emoji?nil:answer?[NSImage imageWithSystemSymbolName:@"equal.circle" accessibilityDescription:nil]:result[@"symbol"]?[NSImage imageWithSystemSymbolName:result[@"symbol"] accessibilityDescription:nil]:[_icons objectForKey:path];icon.contentTintColor=NSColor.secondaryLabelColor;cell.imageView=icon;[cell addSubview:icon];
+ NSImageView *icon=[[NSImageView alloc] initWithFrame:NSMakeRect(10,8,32,32)];icon.image=emoji?nil:clip?[NSImage imageWithSystemSymbolName:@"doc.on.clipboard" accessibilityDescription:nil]:answer?[NSImage imageWithSystemSymbolName:@"equal.circle" accessibilityDescription:nil]:result[@"symbol"]?[NSImage imageWithSystemSymbolName:result[@"symbol"] accessibilityDescription:nil]:[_icons objectForKey:path];icon.contentTintColor=NSColor.secondaryLabelColor;cell.imageView=icon;[cell addSubview:icon];
  if(emoji){NSTextField *glyph=[NSTextField labelWithString:result[@"emoji"]];glyph.frame=NSMakeRect(8,6,38,36);glyph.font=[NSFont systemFontOfSize:26];glyph.alignment=NSTextAlignmentCenter;[cell addSubview:glyph];}
  NSTextField *name=[NSTextField labelWithString:result[@"name"]];name.frame=NSMakeRect(54,24,550,21);name.font=[NSFont systemFontOfSize:15 weight:NSFontWeightMedium];name.lineBreakMode=NSLineBreakByTruncatingMiddle;cell.textField=name;[cell addSubview:name];
  NSString *type=[@{@"app":@"Application",@"folder":@"Folder",@"link":@"Link",@"file":@"File"} objectForKey:result[@"type"]];
- NSTextField *detail=[NSTextField labelWithString:emoji?@"Emoji · Return to copy":answer?[result[@"detail"] stringByAppendingString:@" · Return to copy"]:[result[@"type"] isEqual:@"settings"]?@"System Settings":[result[@"type"] isEqual:@"command"]?@"Command":[NSString stringWithFormat:@"%@ · %@",[path.stringByDeletingLastPathComponent stringByAbbreviatingWithTildeInPath],type]];detail.frame=NSMakeRect(54,6,550,17);detail.font=[NSFont systemFontOfSize:11];detail.textColor=NSColor.secondaryLabelColor;detail.lineBreakMode=NSLineBreakByTruncatingMiddle;[cell addSubview:detail];cell.accessibilityLabel=[NSString stringWithFormat:@"%@, %@",result[@"name"],detail.stringValue];
+ NSTextField *detail=[NSTextField labelWithString:emoji?@"Emoji · Return to copy":clip?Copied(result):answer?[result[@"detail"] stringByAppendingString:@" · Return to copy"]:[result[@"type"] isEqual:@"settings"]?@"System Settings":[result[@"type"] isEqual:@"command"]?@"Command":[NSString stringWithFormat:@"%@ · %@",[path.stringByDeletingLastPathComponent stringByAbbreviatingWithTildeInPath],type]];detail.frame=NSMakeRect(54,6,550,17);detail.font=[NSFont systemFontOfSize:11];detail.textColor=NSColor.secondaryLabelColor;detail.lineBreakMode=NSLineBreakByTruncatingMiddle;[cell addSubview:detail];cell.accessibilityLabel=[NSString stringWithFormat:@"%@, %@",result[@"name"],detail.stringValue];
  if(!answer && !icon.image && ![_loadingIcons containsObject:path]){[_loadingIcons addObject:path];__weak typeof(self) weak=self;
   dispatch_async(_iconQueue,^{NSImage *image=[NSWorkspace.sharedWorkspace iconForFile:path];dispatch_async(dispatch_get_main_queue(),^{SHSearchPanelController *self=weak;if(!self)return;[self->_loadingIcons removeObject:path];if(image)[self->_icons setObject:image forKey:path];for(NSUInteger i=0;i<self->_results.count;i++)if([self->_results[i][@"path"] isEqual:path]){NSTableCellView *visible=[self->_table viewAtColumn:0 row:(NSInteger)i makeIfNecessary:NO];visible.imageView.image=image;}});});
  }
@@ -154,7 +172,7 @@
  if([self action:action appliesTo:result])[self perform:action result:result application:nil];else NSBeep();
  return YES;
 }
-static BOOL Located(NSDictionary *result){return ![@[@"command",@"emoji",@"answer"] containsObject:result[@"type"]];}
+static BOOL Located(NSDictionary *result){return ![@[@"command",@"emoji",@"answer",@"clipboard"] containsObject:result[@"type"]];}
 - (BOOL)action:(NSString *)action appliesTo:(NSDictionary *)result {
  if([action isEqual:@"quickLook"])return Located(result) && ![result[@"type"] isEqual:@"settings"];
  if([action isEqual:@"copyPath"])return Located(result);
@@ -165,7 +183,8 @@ static BOOL Located(NSDictionary *result){return ![@[@"command",@"emoji",@"answe
  NSMenuItem *(^add)(NSString *,NSString *,NSString *,NSEventModifierFlags)=^NSMenuItem *(NSString *title,NSString *action,NSString *key,NSEventModifierFlags flags){
   NSMenuItem *item=[menu addItemWithTitle:title action:@selector(chooseAction:) keyEquivalent:key];item.keyEquivalentModifierMask=flags;item.target=self;item.representedObject=@{@"result":result,@"action":action};return item;};
  NSString *type=result[@"type"];
- add(Located(result)?@"Open":[type isEqual:@"command"]?@"Run":@"Copy",@"open",@"\r",0);
+ add(Located(result)?@"Open":[type isEqual:@"command"]?@"Run":[type isEqual:@"clipboard"]?@"Paste":@"Copy",@"open",@"\r",0);
+ if([type isEqual:@"clipboard"]){add(@"Copy",@"reveal",@"\r",NSEventModifierFlagCommand);[menu addItem:NSMenuItem.separatorItem];add(@"Delete from History",@"forget",@"",0);return;}
  if(!Located(result))return;
  add(@"Reveal in Finder",@"reveal",@"\r",NSEventModifierFlagCommand);
  if([self action:@"quickLook" appliesTo:result])add(@"Quick Look",@"quickLook",@"y",NSEventModifierFlagCommand);
@@ -185,8 +204,14 @@ static BOOL Located(NSDictionary *result){return ![@[@"command",@"emoji",@"answe
 - (void)menuNeedsUpdate:(NSMenu *)menu {[menu removeAllItems];NSInteger row=_table.clickedRow;if(!_pending && row>=0 && row<(NSInteger)_results.count)[self addActionsFor:_results[(NSUInteger)row] to:menu];}
 - (void)chooseAction:(NSMenuItem *)item {NSDictionary *choice=item.representedObject;[self perform:choice[@"action"] result:choice[@"result"] application:choice[@"application"]];}
 - (void)perform:(NSString *)action result:(NSDictionary *)result application:(NSURL *)application {
+ // A clipboard item is copied again; Return also pastes it, and Command-Return only copies.
+ if([result[@"type"] isEqual:@"clipboard"]){
+  if([action isEqual:@"forget"]){NSUInteger i=[_results indexOfObjectIdenticalTo:result];NSDictionary *next=i==NSNotFound?nil:i+1<_results.count?_results[i+1]:i>0?_results[i-1]:nil;
+   [_clipboard removeID:result[@"id"]];_navigated=next!=nil;_selectedID=next[@"id"];[self search:NO];return;}
+  Copy(result[@"copy"]);[self dismiss:YES];if([action isEqual:@"open"] && self.openResult)self.openResult(result,@"paste",nil);return;
+ }
  if([action isEqual:@"quickLook"]){[self quickLook:result];return;}
- if([action isEqual:@"copyPath"]){[NSPasteboard.generalPasteboard clearContents];[NSPasteboard.generalPasteboard setString:result[@"path"] forType:NSPasteboardTypeString];[self dismiss:YES];return;}
+ if([action isEqual:@"copyPath"]){Copy(result[@"path"]);[self dismiss:YES];return;}
  // The row goes at once; the library removes the entry when FSEvents reports the change.
  if([action isEqual:@"trash"]){
   // A right-click can act on a row other than the selected one; the selection stays on its item.
@@ -196,7 +221,7 @@ static BOOL Located(NSDictionary *result){return ![@[@"command",@"emoji",@"answe
   _selectedID=row>=0?rows[(NSUInteger)row][@"id"]:nil;[self updateStatus];if(self.openResult)self.openResult(result,action,nil);return;
  }
  if([result[@"type"] isEqual:@"emoji"])[_usage recordQuery:_field.stringValue result:result];
- if(result[@"copy"]){[NSPasteboard.generalPasteboard clearContents];[NSPasteboard.generalPasteboard setString:result[@"copy"] forType:NSPasteboardTypeString];[self dismiss:YES];return;}
+ if(result[@"copy"]){Copy(result[@"copy"]);[self dismiss:YES];return;}
  [_usage recordQuery:_field.stringValue result:result];[self dismiss:[result[@"type"] isEqual:@"command"]];if(self.openResult)self.openResult(result,action,application);
 }
 - (void)quickLook:(NSDictionary *)result {

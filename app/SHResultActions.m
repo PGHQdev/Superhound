@@ -1,6 +1,8 @@
 #import "SHResultActions.h"
 #import <CoreAudio/CoreAudio.h>
 #import <dlfcn.h>
+#import <ApplicationServices/ApplicationServices.h>
+#import <Carbon/Carbon.h>
 static NSString *Script(NSString *source){
  NSDictionary *error=nil;[[[NSAppleScript alloc] initWithSource:source] executeAndReturnError:&error];NSInteger code=[error[NSAppleScriptErrorNumber] integerValue];
  return !error || code==userCanceledErr?nil:code==errAEEventNotPermitted?@"macOS blocked this command. Allow Superhound in Privacy & Security → Automation.":@"The command did not finish.";
@@ -21,6 +23,19 @@ static NSString *EjectAll(void){
   if([NSWorkspace.sharedWorkspace unmountAndEjectDeviceAtURL:volume error:nil])ejected++;else failed++;
  }
  return failed?[NSString stringWithFormat:@"%lu of %lu disks could not be ejected. An app may be using them.",(unsigned long)failed,(unsigned long)(failed+ejected)]:ejected?nil:@"There are no disks to eject.";
+}
+// The key press goes when the previous app is in front again, after at most 1 second.
+// kVK_ANSI_V is the V key position of ANSI and JIS keyboards; a layout with another letter there gets that letter's shortcut.
+static void PressPaste(NSUInteger tries,void (^completion)(NSString *)){
+ if(tries && NSWorkspace.sharedWorkspace.frontmostApplication.processIdentifier==NSProcessInfo.processInfo.processIdentifier){dispatch_after(dispatch_time(DISPATCH_TIME_NOW,50*NSEC_PER_MSEC),dispatch_get_main_queue(),^{PressPaste(tries-1,completion);});return;}
+ CGEventSourceRef source=CGEventSourceCreate(kCGEventSourceStateCombinedSessionState);
+ for(int down=1;down>=0;down--){CGEventRef key=CGEventCreateKeyboardEvent(source,kVK_ANSI_V,down);CGEventSetFlags(key,kCGEventFlagMaskCommand);CGEventPost(kCGHIDEventTap,key);CFRelease(key);}
+ if(source)CFRelease(source);completion(nil);
+}
+// A key press into another app needs Accessibility access. macOS asks once in each launch; without access the text stays copied.
+static void Paste(void (^completion)(NSString *)){
+ static BOOL asked;BOOL trusted=AXIsProcessTrustedWithOptions((__bridge CFDictionaryRef)@{(__bridge NSString *)kAXTrustedCheckOptionPrompt:@(!asked)});asked=YES;
+ if(trusted)PressPaste(20,completion);else completion(@"The text is copied. To paste with Return, allow Superhound in System Settings → Privacy & Security → Accessibility.");
 }
 @implementation SHResultActions
 + (void)run:(NSString *)command completion:(void (^)(NSString *))completion {
@@ -47,6 +62,7 @@ static NSString *EjectAll(void){
  completion(@"This command is not available.");
 }
 + (void)perform:(NSString *)action result:(NSDictionary *)result application:(NSURL *)application completion:(void (^)(NSString *))completion {
+ if([action isEqual:@"paste"]){Paste(completion);return;}
  BOOL reveal=[action isEqual:@"reveal"];
  if([result[@"type"] isEqual:@"command"]){if(reveal)completion(@"A command has no location in Finder.");else [self run:result[@"path"] completion:completion];return;}
  NSURL *url=[NSURL fileURLWithPath:result[@"path"]];

@@ -9,6 +9,8 @@ xcrun clang "${flags[@]}" tests/answer.m core/SHAnswer.m -framework Foundation -
 .build/tests/answer
 xcrun clang "${flags[@]}" tests/emoji.m core/SHEmoji.m core/SHSearchSnapshot.m core/sh_match.c -framework Foundation -framework CoreText -o .build/tests/emoji
 .build/tests/emoji app/emoji.tsv
+xcrun clang "${flags[@]}" tests/clipboard.m core/SHClipboard.m core/SHSearchSnapshot.m core/sh_match.c -framework Foundation -o .build/tests/clipboard
+.build/tests/clipboard
 if [[ -f tests/catalog.m ]]; then
  xcrun clang "${flags[@]}" tests/catalog.m core/SHCatalog.m core/SHScanner.m app/SHFolderAccess.m -framework Foundation -lsqlite3 -o .build/tests/catalog
  .build/tests/catalog

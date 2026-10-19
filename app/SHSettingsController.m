@@ -11,17 +11,17 @@
 @interface SHSettingsController () <NSTableViewDataSource,NSTableViewDelegate>
 @end
 @implementation SHSettingsController {
- SHLibrary *_library;SHHotKey *_hotKey;NSArray<NSDictionary *> *_roots;
- NSTableView *_table;NSTextField *_message,*_shortcutStatus;SHShortcutButton *_recorder;NSButton *_remove,*_reselect;
+ SHLibrary *_library;SHHotKey *_hotKey,*_historyKey;NSArray<NSDictionary *> *_roots;
+ NSTableView *_table;NSTextField *_message,*_shortcutStatus,*_historyStatus;SHShortcutButton *_recorder,*_historyRecorder;NSButton *_remove,*_reselect;
 }
 static NSTextField *Label(NSView *view,NSString *text,NSRect frame,CGFloat size,BOOL secondary) {
  NSTextField *label=[NSTextField wrappingLabelWithString:text];label.frame=frame;label.font=[NSFont systemFontOfSize:size];if(secondary)label.textColor=NSColor.secondaryLabelColor;[view addSubview:label];return label;
 }
 static NSButton *Button(NSView *view,NSString *title,NSRect frame,id target,SEL action) {NSButton *button=[NSButton buttonWithTitle:title target:target action:action];button.frame=frame;[view addSubview:button];return button;}
-- (instancetype)initWithLibrary:(SHLibrary *)library hotKey:(SHHotKey *)hotKey {
- NSWindow *window=[[NSWindow alloc] initWithContentRect:NSMakeRect(0,0,740,660) styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable|NSWindowStyleMaskMiniaturizable backing:NSBackingStoreBuffered defer:NO];
+- (instancetype)initWithLibrary:(SHLibrary *)library hotKey:(SHHotKey *)hotKey historyKey:(SHHotKey *)historyKey {
+ NSWindow *window=[[NSWindow alloc] initWithContentRect:NSMakeRect(0,0,740,712) styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable|NSWindowStyleMaskMiniaturizable backing:NSBackingStoreBuffered defer:NO];
  if(!(self=[super initWithWindow:window]))return nil;
- _library=library;_hotKey=hotKey;_roots=@[];window.title=@"Superhound · Search Locations";window.releasedWhenClosed=NO;window.accessibilityIdentifier=@"superhound.settings";
+ _library=library;_hotKey=hotKey;_historyKey=historyKey;_roots=@[];window.title=@"Superhound · Search Locations";window.releasedWhenClosed=NO;window.accessibilityIdentifier=@"superhound.settings";
  NSView *view=window.contentView;
  Label(view,@"Your apps. Your folders. A shortcut away.",NSMakeRect(24,606,690,30),22,NO);
  Label(view,@"Apps are included automatically. Files are searched only inside folders you select. File contents stay unread.",NSMakeRect(24,558,690,40),13,YES);
@@ -41,10 +41,17 @@ static NSButton *Button(NSView *view,NSString *title,NSRect frame,id target,SEL 
  Button(view,@"Use ⌘Space",NSMakeRect(320,136,120,32),self,@selector(defaultShortcut:));Button(view,@"Retry",NSMakeRect(442,136,70,32),self,@selector(retry:));Button(view,@"Keyboard Settings…",NSMakeRect(520,136,199,32),self,@selector(keyboardSettings:));
  _shortcutStatus=Label(view,@"",NSMakeRect(24,91,690,40),12,NO);_shortcutStatus.accessibilityIdentifier=@"superhound.shortcut.status";
  Label(view,@"Set up ⌘Space in System Settings → Keyboard → Keyboard Shortcuts: add an App Shortcut for Superhound with menu title “Search” and ⌘Space, and disable Spotlight’s “Show Spotlight search”. Both bindings must be configured; one does not replace the other. Then Retry here. To restore Spotlight later, quit Superhound and re-enable its shortcut.",NSMakeRect(24,15,690,68),11,YES);
+ // The clipboard history row sits under the search shortcut text.
+ for(NSView *v in view.subviews)[v setFrameOrigin:NSMakePoint(v.frame.origin.x,v.frame.origin.y+52)];
+ Label(view,@"Clipboard",NSMakeRect(24,24,115,24),15,NO);
+ _historyRecorder=[[SHShortcutButton alloc] initWithFrame:NSMakeRect(144,18,170,32)];_historyRecorder.bezelStyle=NSBezelStyleRounded;_historyRecorder.title=@"Record Shortcut…";_historyRecorder.target=self;_historyRecorder.action=@selector(recordHistory:);_historyRecorder.accessibilityLabel=@"Record clipboard history shortcut";[view addSubview:_historyRecorder];
+ _historyRecorder.recorded=^(NSEvent *event){SHSettingsController *self=weak;[self->_historyKey recordEvent:event];self->_historyRecorder.title=@"Record Shortcut…";[self shortcutStatus];};
+ Button(view,[@"Use " stringByAppendingString:historyKey.defaultLabel],NSMakeRect(320,18,120,32),self,@selector(defaultHistoryShortcut:));
+ _historyStatus=Label(view,@"",NSMakeRect(448,12,270,40),11,YES);_historyStatus.accessibilityIdentifier=@"superhound.history.shortcut.status";
  [self shortcutStatus];[self updateButtons];[window center];return self;
 }
 - (void)show {[NSApp activateIgnoringOtherApps:YES];[self.window makeKeyAndOrderFront:nil];[self shortcutStatus];}
-- (void)shortcutStatus {_shortcutStatus.stringValue=_hotKey.status?:@"Use Search in the menu bar while setting up your shortcut.";}
+- (void)shortcutStatus {_shortcutStatus.stringValue=_hotKey.status?:@"Use Search in the menu bar while setting up your shortcut.";_historyStatus.stringValue=_historyKey.status?:@"";}
 - (void)updateRoots:(NSArray<NSDictionary *> *)roots message:(NSString *)message {
  NSInteger selected=_table.selectedRow;NSString *identifier=selected>=0 && selected<(NSInteger)_roots.count?_roots[(NSUInteger)selected][@"id"]:nil;
  _roots=roots;[_table reloadData];for(NSUInteger i=0;i<roots.count;i++)if([roots[i][@"id"] isEqual:identifier])[_table selectRowIndexes:[NSIndexSet indexSetWithIndex:i] byExtendingSelection:NO];
@@ -69,7 +76,9 @@ static NSButton *Button(NSView *view,NSString *title,NSRect frame,id target,SEL 
 - (void)refresh:(id)sender {(void)sender;[_library refresh];}
 - (void)exclude:(NSButton *)sender {[_library setExcludeGenerated:sender.state==NSControlStateValueOn];}
 - (void)record:(id)sender {(void)sender;_recorder.recording=YES;_recorder.title=@"Press shortcut…";[self.window makeFirstResponder:_recorder];}
-- (void)retry:(id)sender {(void)sender;[_hotKey registerSaved];[self shortcutStatus];}
+- (void)retry:(id)sender {(void)sender;[_hotKey registerSaved];[_historyKey registerSaved];[self shortcutStatus];}
+- (void)recordHistory:(id)sender {(void)sender;_historyRecorder.recording=YES;_historyRecorder.title=@"Press shortcut…";[self.window makeFirstResponder:_historyRecorder];}
+- (void)defaultHistoryShortcut:(id)sender {(void)sender;[_historyKey useDefault];[self shortcutStatus];}
 - (void)defaultShortcut:(id)sender {(void)sender;[_hotKey useDefault];[self shortcutStatus];}
 - (void)keyboardSettings:(id)sender {(void)sender;[_hotKey openKeyboardSettings];}
 @end
