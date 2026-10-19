@@ -1,5 +1,6 @@
 #import "SHScanner.h"
 #import <sys/stat.h>
+static NSString *BundleName(NSBundle *bundle){id label=[bundle objectForInfoDictionaryKey:@"CFBundleDisplayName"]?:[bundle objectForInfoDictionaryKey:@"CFBundleName"];return [label isKindOfClass:NSString.class] && [label length]?label:nil;}
 @implementation SHScanner
 + (NSArray<NSDictionary *> *)scanURL:(NSURL *)url applicationsOnly:(BOOL)apps excludeGenerated:(BOOL)exclude progress:(void (^)(NSUInteger))progress error:(NSError **)error {
  return [self scanURL:url applicationsOnly:apps excludeGenerated:exclude cancelled:nil progress:progress error:error];
@@ -16,6 +17,9 @@
  NSFileManager *fm=NSFileManager.defaultManager;
  NSNumber *directory=nil;
  if(![url getResourceValue:&directory forKey:NSURLIsDirectoryKey error:error] || !directory.boolValue || ![fm isReadableFileAtPath:url.path]){if(error && !*error)*error=[NSError errorWithDomain:NSPOSIXErrorDomain code:EACCES userInfo:nil];return nil;}
+ // A root can be one application, such as Finder, which lives among system helpers in CoreServices.
+ if([url.pathExtension.lowercaseString isEqual:@"app"]){NSString *file=url.lastPathComponent.stringByDeletingPathExtension,*label=BundleName([NSBundle bundleWithURL:url]);
+  if(progress)progress(1);return @[@{@"relative":url.lastPathComponent,@"name":label?:file,@"path":url.path,@"type":@"app",@"alias":label?file:@""}];}
  NSArray *keys=@[NSURLIsDirectoryKey,NSURLIsSymbolicLinkKey,NSURLIsPackageKey,NSURLIsHiddenKey,NSURLIsUbiquitousItemKey,NSURLUbiquitousItemDownloadingStatusKey];
  __block NSError *failure=nil;
  NSDirectoryEnumerator *enumerator=[fm enumeratorAtURL:url includingPropertiesForKeys:keys options:NSDirectoryEnumerationSkipsHiddenFiles|NSDirectoryEnumerationSkipsPackageDescendants|(shallow?NSDirectoryEnumerationSkipsSubdirectoryDescendants:0) errorHandler:^BOOL(NSURL *bad,NSError *e){(void)bad;failure=e;return NO;}];
@@ -40,7 +44,7 @@
   if(dir && (application || [values[NSURLIsPackageKey] boolValue]))[enumerator skipDescendants];
   if(!apps || application){
    NSString *alias=@"",*display=application?name.stringByDeletingPathExtension:name;
-   if(application){NSBundle *bundle=[NSBundle bundleWithURL:entry.URLByResolvingSymlinksInPath];id label=[bundle objectForInfoDictionaryKey:@"CFBundleDisplayName"]?:[bundle objectForInfoDictionaryKey:@"CFBundleName"];if([label isKindOfClass:NSString.class] && [label length]){alias=display;display=label;}}
+   if(application){NSString *label=BundleName([NSBundle bundleWithURL:entry.URLByResolvingSymlinksInPath]);if(label){alias=display;display=label;}}
    NSArray *components=entry.path.pathComponents;
    NSString *relative=[NSString pathWithComponents:[components subarrayWithRange:NSMakeRange(components.count-enumerator.level,enumerator.level)]];
    [entries addObject:@{@"relative":relative,@"name":display,@"path":entry.path,@"type":application?@"app":link?@"link":dir?@"folder":@"file",@"alias":alias}];
@@ -48,6 +52,10 @@
   visited++;if(progress && visited%256==0)progress(entries.count);
  }}
  if(failure){if(error)*error=failure;return nil;}
+ // Finder keeps All My Files as an older bundle that also shows as Recents; an application whose file has the shown name wins.
+ if(apps){BOOL (^shown)(NSDictionary *)=^BOOL(NSDictionary *e){return [[e[@"relative"] lastPathComponent].stringByDeletingPathExtension isEqual:e[@"name"]];};
+  NSMutableSet *exact=NSMutableSet.set;for(NSDictionary *e in entries)if(shown(e))[exact addObject:[[e[@"relative"] stringByDeletingLastPathComponent] stringByAppendingPathComponent:e[@"name"]]];
+  [entries filterUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(NSDictionary *e,NSDictionary *bindings){(void)bindings;return shown(e) || ![exact containsObject:[[e[@"relative"] stringByDeletingLastPathComponent] stringByAppendingPathComponent:e[@"name"]]];}]];}
  if(progress)progress(entries.count);return entries;
 }
 @end

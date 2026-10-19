@@ -25,6 +25,13 @@ int main(void){@autoreleasepool{
  assert(![paths containsObject:@"Demo.app/Contents/no.txt"]);assert([paths containsObject:@"loop"]);
  NSArray *linked=[SHScanner scanURL:root applicationsOnly:YES excludeGenerated:YES progress:nil error:&error];
  assert(([[NSSet setWithArray:[linked valueForKey:@"relative"]] isEqual:[NSSet setWithArray:@[@"Demo.app",@"Linked.app"]]]));assert(([[NSSet setWithArray:[linked valueForKey:@"type"]] isEqual:[NSSet setWithObject:@"app"]]));
+ // A root that is one application lists that application only, with its bundle name.
+ NSURL *named=[tmp URLByAppendingPathComponent:@"Named.app"];[fm createDirectoryAtURL:[named URLByAppendingPathComponent:@"Contents/Applications/Inner.app"] withIntermediateDirectories:YES attributes:nil error:nil];
+ [fm createDirectoryAtURL:[named URLByAppendingPathComponent:@"Contents/Applications/Older.app/Contents"] withIntermediateDirectories:YES attributes:nil error:nil];assert([@{@"CFBundleDisplayName":@"Inner"} writeToURL:[named URLByAppendingPathComponent:@"Contents/Applications/Older.app/Contents/Info.plist"] error:nil]);
+ assert([@{@"CFBundleDisplayName":@"Shown Name"} writeToURL:[named URLByAppendingPathComponent:@"Contents/Info.plist"] error:nil]);
+ NSArray *single=[SHScanner scanURL:named applicationsOnly:YES excludeGenerated:YES progress:nil error:&error];
+ assert(single.count==1 && [single[0][@"name"] isEqual:@"Shown Name"] && [single[0][@"alias"] isEqual:@"Named"] && [single[0][@"relative"] isEqual:@"Named.app"] && [single[0][@"type"] isEqual:@"app"]);
+ assert([[[SHScanner scanURL:[named URLByAppendingPathComponent:@"Contents/Applications"] applicationsOnly:YES excludeGenerated:YES progress:nil error:&error] valueForKey:@"relative"] isEqual:@[@"Inner.app"]]); // Older.app also shows as Inner
  NSArray *all=[SHScanner scanURL:root applicationsOnly:NO excludeGenerated:NO progress:nil error:&error];
  assert([[all valueForKey:@"relative"] containsObject:@"node_modules/ignored.txt"]);
  assert(![SHScanner scanURL:[tmp URLByAppendingPathComponent:@"missing"] applicationsOnly:NO excludeGenerated:YES progress:nil error:&error]);
@@ -68,5 +75,5 @@ int main(void){@autoreleasepool{
  NSData *bookmark=[SHFolderAccess bookmarkForURL:root error:&error];assert(bookmark);
  NSURL *resolved=[SHFolderAccess resolveBookmark:bookmark stale:NULL error:&error];assert([resolved.URLByResolvingSymlinksInPath.path isEqual:root.URLByResolvingSymlinksInPath.path]);
  [fm removeItemAtURL:tmp error:nil];
- puts("PASS catalog: exclusions, symlinks, missing root, stable IDs, directory updates, atomic rollback, corrupt cache, bookmarks");
+ puts("PASS catalog: exclusions, symlinks, single-application roots, missing root, stable IDs, directory updates, atomic rollback, corrupt cache, bookmarks");
 }return 0;}

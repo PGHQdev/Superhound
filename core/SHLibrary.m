@@ -85,7 +85,8 @@
  NSDictionary *settings=[NSDictionary dictionaryWithContentsOfURL:self.settingsURL];
  if(settings[@"excludeGenerated"])self->_exclude=[settings[@"excludeGenerated"] boolValue];
  // Safari lives in the Cryptex folder; its link in /Applications is hidden from directory listings.
- for(NSString *path in @[@"/Applications",@"/System/Applications",@"/System/Cryptexes/App/System/Applications",[@"~/Applications" stringByExpandingTildeInPath]]){
+ // Utilities such as Keychain Access live in CoreServices/Applications; Finder and its AirDrop and Recents apps live in CoreServices among system helpers.
+ for(NSString *path in @[@"/Applications",@"/System/Applications",@"/System/Cryptexes/App/System/Applications",[@"~/Applications" stringByExpandingTildeInPath],@"/System/Library/CoreServices/Applications",@"/System/Library/CoreServices/Finder.app",@"/System/Library/CoreServices/Finder.app/Contents/Applications"]){
   SHRoot *r=SHRoot.new;r.identifier=[@"apps:" stringByAppendingString:path];r.path=path;r.apps=YES;[self->_roots addObject:r];
  }
  for(NSDictionary *saved in settings[@"roots"]){if(![saved[@"id"] isKindOfClass:NSString.class]||![saved[@"bookmark"] isKindOfClass:NSData.class])continue;SHRoot *r=SHRoot.new;r.identifier=saved[@"id"];r.path=saved[@"path"]?:@"Selected folder";r.bookmark=saved[@"bookmark"];[self->_roots addObject:r];}
