@@ -13,6 +13,10 @@
     }
     NSWorkspaceOpenConfiguration *config=NSWorkspaceOpenConfiguration.configuration;config.activates=YES;
     [NSWorkspace.sharedWorkspace openApplicationAtURL:url configuration:config completionHandler:^(NSRunningApplication *app,NSError *error){(void)app;dispatch_async(dispatch_get_main_queue(),^{completion(error?@"Could not open this app. Check access and try again.":nil);});}];
+   }else if([result[@"type"] isEqual:@"settings"]){
+    // System Settings opens a pane by its extension's bundle identifier.
+    NSString *identifier=[NSBundle bundleWithURL:url].bundleIdentifier;NSURL *pane=identifier?[NSURL URLWithString:[@"x-apple.systempreferences:" stringByAppendingString:identifier]]:nil;
+    completion(pane && [NSWorkspace.sharedWorkspace openURL:pane]?nil:@"Could not open this setting.");
    }else completion([NSWorkspace.sharedWorkspace openURL:url]?nil:@"Could not open this item. Check access and try again.");
   });
  });

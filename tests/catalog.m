@@ -32,6 +32,20 @@ int main(void){@autoreleasepool{
  NSArray *single=[SHScanner scanURL:named applicationsOnly:YES excludeGenerated:YES progress:nil error:&error];
  assert(single.count==1 && [single[0][@"name"] isEqual:@"Shown Name"] && [single[0][@"alias"] isEqual:@"Named"] && [single[0][@"relative"] isEqual:@"Named.app"] && [single[0][@"type"] isEqual:@"app"]);
  assert([[[SHScanner scanURL:[named URLByAppendingPathComponent:@"Contents/Applications"] applicationsOnly:YES excludeGenerated:YES progress:nil error:&error] valueForKey:@"relative"] isEqual:@[@"Inner.app"]]); // Older.app also shows as Inner
+ // Settings panes are extensions; other extensions are not listed. A pane named only by sidebar variants takes their localized names.
+ NSURL *panes=[tmp URLByAppendingPathComponent:@"Extensions"];
+ void (^Pane)(NSString *,NSDictionary *,NSDictionary *)=^(NSString *file,NSDictionary *info,NSDictionary *settings){
+  NSURL *contents=[panes URLByAppendingPathComponent:[file stringByAppendingString:@".appex/Contents"]];[fm createDirectoryAtURL:[contents URLByAppendingPathComponent:@"Resources/en.lproj"] withIntermediateDirectories:YES attributes:nil error:nil];
+  NSMutableDictionary *plist=[info mutableCopy];plist[@"CFBundleDevelopmentRegion"]=@"en";plist[@"EXAppExtensionAttributes"]=@{@"EXExtensionPointIdentifier":settings?@"com.apple.Settings.extension.ui":@"com.apple.widgetkit-extension",@"SettingsExtensionAttributes":settings?:@{}};
+  assert([plist writeToURL:[contents URLByAppendingPathComponent:@"Info.plist"] error:nil]);
+  assert(([@{@"POWER_A":@"Energy",@"POWER_B":@"Battery"} writeToURL:[contents URLByAppendingPathComponent:@"Resources/en.lproj/Localizable.strings"] error:nil]));
+ };
+ Pane(@"Disk",@{@"CFBundleDisplayName":@"Disk"},@{});Pane(@"WiFiSettings",@{@"CFBundleDisplayName":@"Wi-Fi"},@{});Pane(@"Widget",@{@"CFBundleDisplayName":@"Widget"},nil);
+ Pane(@"PowerPreferences",@{@"CFBundleDisplayName":@"PowerPreferences"},@{@"hasPersonalities":@YES,@"representations":@[@{@"sidebar-name":@"POWER_A"},@{@"sidebar-name":@"POWER_B"}]});
+ Pane(@"Touch ID",@{@"CFBundleDisplayName":@"Touch ID"},@{@"representations":@[@{@"sidebar-name":@"Login Password"},@{@"sidebar-name":@"Touch ID"}]});
+ Pane(@"HeadphoneSettingsExtension",@{@"CFBundleDisplayName":@"HeadphoneSettingsExtension",@"CFBundleIdentifier":@"com.apple.HeadphoneSettings"},@{@"hasPersonalities":@YES});Pane(@"VPN",@{@"CFBundleDisplayName":@"VPN"},@{@"hasPersonalities":@YES});
+ NSMutableDictionary *found=NSMutableDictionary.dictionary;for(NSDictionary *e in [SHScanner scanURL:panes applicationsOnly:YES excludeGenerated:YES progress:nil error:&error]){assert([e[@"type"] isEqual:@"settings"]);found[e[@"relative"]]=@[e[@"name"],e[@"alias"]];}
+ assert(([found isEqual:@{@"Disk.appex":@[@"Disk",@""],@"WiFiSettings.appex":@[@"Wi-Fi",@"WiFiSettings"],@"PowerPreferences.appex":@[@"Energy / Battery",@"PowerPreferences"],@"Touch ID.appex":@[@"Touch ID",@"Login Password / Touch ID"],@"VPN.appex":@[@"VPN",@""]}]));
  NSArray *all=[SHScanner scanURL:root applicationsOnly:NO excludeGenerated:NO progress:nil error:&error];
  assert([[all valueForKey:@"relative"] containsObject:@"node_modules/ignored.txt"]);
  assert(![SHScanner scanURL:[tmp URLByAppendingPathComponent:@"missing"] applicationsOnly:NO excludeGenerated:YES progress:nil error:&error]);
@@ -75,5 +89,5 @@ int main(void){@autoreleasepool{
  NSData *bookmark=[SHFolderAccess bookmarkForURL:root error:&error];assert(bookmark);
  NSURL *resolved=[SHFolderAccess resolveBookmark:bookmark stale:NULL error:&error];assert([resolved.URLByResolvingSymlinksInPath.path isEqual:root.URLByResolvingSymlinksInPath.path]);
  [fm removeItemAtURL:tmp error:nil];
- puts("PASS catalog: exclusions, symlinks, single-application roots, missing root, stable IDs, directory updates, atomic rollback, corrupt cache, bookmarks");
+ puts("PASS catalog: exclusions, symlinks, single-application roots, settings panes, missing root, stable IDs, directory updates, atomic rollback, corrupt cache, bookmarks");
 }return 0;}

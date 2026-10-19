@@ -17,6 +17,10 @@ int main(void) { @autoreleasepool {
  assert([[[s search:@"CAFÉ" cancelled:nil] firstObject][@"id"] isEqual:@6]);
  assert([[[s search:@"日本 東京" cancelled:nil] firstObject][@"id"] isEqual:@7]);
  assert([s search:@"code missing" cancelled:nil].count == 0);
+ // A settings pane ranks with applications, above a file with a better match and below an application with an equal one.
+ SHSearchSnapshot *panes=[[SHSearchSnapshot alloc] initWithEntries:@[E(1,@"storage",@"/work/storage",@"file"),E(2,@"Storage",@"/settings/Storage.appex",@"settings"),E(3,@"Storage Tool",@"/apps/Storage Tool.app",@"app")] generation:1];
+ assert(([[[panes search:@"storage" cancelled:nil] valueForKey:@"id"] isEqual:@[@2,@3,@1]]));
+ assert(([[[panes search:@"" cancelled:nil] valueForKey:@"id"] isEqual:@[@3]]));
  NSArray *typos=@[E(1,@"Claude",@"/apps/Claude.app",@"app"),E(2,@"claude.js",@"/work/claude.js",@"file"),E(3,@"Visual Studio Code",@"/apps/vsc.app",@"app"),E(4,@"mail",@"/work/mail",@"file"),E(5,@"main.c",@"/work/main.c",@"file"),E(6,@"Maps",@"/apps/Maps.app",@"app"),E(7,@"documentation",@"/work/documentation",@"file")];
  SHSearchSnapshot *t=[[SHSearchSnapshot alloc] initWithEntries:typos generation:1];
  for(NSString *q in @[@"calude",@"cluade",@"claide",@"clude",@"claudee",@"lcaude"])assert(([[[t search:q cancelled:nil] valueForKey:@"id"] isEqual:@[@1,@2]]));

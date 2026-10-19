@@ -90,9 +90,10 @@ typedef struct { NSUInteger index; unsigned learned,worst,total,pathTerms; size_
 }
 - (BOOL)rank:(Ranked)a precedes:(Ranked)b {
  if(a.learned!=b.learned)return a.learned>b.learned;
- // An application matched by its name or alias precedes every file, folder, and link.
- // Exact matches precede typing-error matches; within each group, applications come first.
- BOOL aa=a.worst!=4 && [_entries[a.index][@"type"] isEqual:@"app"],ba=b.worst!=4 && [_entries[b.index][@"type"] isEqual:@"app"];
+ // An application or settings pane matched by its name or alias precedes every file, folder, and link.
+ // Exact matches precede typing-error matches; within each group, applications and settings panes come first.
+ NSString *at=_entries[a.index][@"type"],*bt=_entries[b.index][@"type"];
+ BOOL aa=a.worst!=4 && ([at isEqual:@"app"] || [at isEqual:@"settings"]),ba=b.worst!=4 && ([bt isEqual:@"app"] || [bt isEqual:@"settings"]);
  if((a.worst>4)!=(b.worst>4))return a.worst<=4;
  if(aa!=ba)return aa;
  if(a.worst!=b.worst)return a.worst<b.worst;
