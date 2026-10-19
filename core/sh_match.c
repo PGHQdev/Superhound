@@ -6,6 +6,12 @@ SHMatch sh_match(SHText text, SHText term) {
  for(size_t j=0;j<term.length;j++) if(text.points[j]!=term.points[j]) {prefix=false;break;}
  if(prefix) return (SHMatch){text.length==term.length?0:1,text.length-term.length};
  size_t j=0,first=0,last=0;
+ // A term that starts a later word ranks with word initials, above a match inside a word.
+ for(size_t i=1;i<=text.length-term.length;i++) if(text.boundaries[i]) {
+  for(j=0;j<term.length && text.points[i+j]==term.points[j];j++){}
+  if(j==term.length) return (SHMatch){2,text.length-term.length};
+ }
+ j=0;
  for(size_t i=0;i<text.length && j<term.length;i++) {
   if(text.boundaries[i] && text.points[i]==term.points[j]) {if(!j)first=i;last=i;j++;}
  }

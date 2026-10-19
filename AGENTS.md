@@ -25,7 +25,7 @@ To see a change in the live app: build with a build number one above the install
 
 | File | Function |
 |---|---|
-| `sh_match.c` | Matches one query word against one name. Ranks: 0 exact, 1 prefix, 2 word initials, 3 substring, 5 and 6 typing errors, 9 absent. |
+| `sh_match.c` | Matches one query word against one name. Ranks: 0 exact, 1 prefix, 2 word initials or the start of a later word, 3 substring, 5 and 6 typing errors, 9 absent. |
 | `SHSearchSnapshot.m` | The in-memory search list. Holds the ranking order (`rank:precedes:`), the empty-query app list, and `SHFold` (case, accent, and width folding). |
 | `SHQueryController.m` | Runs searches off the main thread and drops results of an old query. |
 | `SHUsage.m` | Learned ranking. Records which result the user opened for which query, in `usage.plist`. |
