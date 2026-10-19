@@ -18,6 +18,14 @@ int main(void) { @autoreleasepool {
  assert([[[s search:@"CAFÉ" cancelled:nil] firstObject][@"id"] isEqual:@6]);
  assert([[[s search:@"日本 東京" cancelled:nil] firstObject][@"id"] isEqual:@7]);
  assert([s search:@"code missing" cancelled:nil].count == 0);
+ // Results are equal to their entries: fields kept as UTF-8, a relative path inside or outside the full path, absent keys, and entries with other keys or values.
+ NSArray *stored=@[@{@"id":@1,@"root":@"r",@"name":@"roundtrip Café",@"path":@"/日本/roundtrip Café",@"relative":@"roundtrip Café",@"alias":@"東京 alias",@"type":@"file"},
+  @{@"id":@2,@"root":@"r",@"name":@"roundtrip app",@"path":@"/apps/roundtrip.app",@"relative":@"other/roundtrip.app",@"alias":@"roundtrip helper",@"type":@"app"},
+  @{@"name":@"roundtrip bare",@"path":@"/bare",@"type":@"folder"},
+  @{@"id":@"command:roundtrip",@"name":@"roundtrip command",@"path":@"command:roundtrip",@"relative":@"",@"alias":@"",@"type":@"command",@"symbol":@"lock"},
+  @{@"id":@(1.5),@"name":@"roundtrip fraction",@"path":@"/fraction",@"type":@"file"}];
+ NSArray *returned=[[[SHSearchSnapshot alloc] initWithEntries:stored generation:1] search:@"roundtrip" cancelled:nil];
+ assert(returned.count==stored.count);for(NSDictionary *e in stored)assert([returned containsObject:e]);
  // A settings pane ranks with applications, above a file with a better match and below an application with an equal one.
  SHSearchSnapshot *panes=[[SHSearchSnapshot alloc] initWithEntries:@[E(1,@"storage",@"/work/storage",@"file"),E(2,@"Storage",@"/settings/Storage.appex",@"settings"),E(3,@"Storage Tool",@"/apps/Storage Tool.app",@"app")] generation:1];
  assert(([[[panes search:@"storage" cancelled:nil] valueForKey:@"id"] isEqual:@[@2,@3,@1]]));

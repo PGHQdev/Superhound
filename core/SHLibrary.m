@@ -18,7 +18,8 @@
 @property NSString *state;
 @property NSUInteger count;
 @property SHChangeMonitor *monitor;
-@property NSArray *entries;
+// YES when the root's catalog entries go into the snapshot.
+@property BOOL included;
 @end
 @implementation SHRoot
 - (void)dealloc {[_monitor stop];if(_scoped)[_url stopAccessingSecurityScopedResource];}
@@ -48,11 +49,12 @@
 }
 - (SHRoot *)root:(NSString *)identifier {for(SHRoot *r in _roots)if([r.identifier isEqual:identifier])return r;return nil;}
 - (void)publish:(BOOL)rebuild {
- if(rebuild){NSMutableArray *entries=[SHCommands.entries mutableCopy];NSMutableSet *seen=NSMutableSet.set;
-  for(SHRoot *r in _roots)for(NSDictionary *e in r.entries){NSString *path=e[@"path"];if(![seen containsObject:path]){[entries addObject:e];[seen addObject:path];}}
+ // Each rebuild reads the entries from the catalog; the snapshot keeps them compact, and the library keeps no copy.
+ if(rebuild){@autoreleasepool{NSMutableArray *entries=[SHCommands.entries mutableCopy];NSMutableSet *seen=NSMutableSet.set;
+  for(SHRoot *r in _roots)if(r.included){NSArray *found=[_catalog entriesForRoot:r.identifier];r.count=found.count;for(NSDictionary *e in found){NSString *path=e[@"path"];if(![seen containsObject:path]){[entries addObject:e];[seen addObject:path];}}}
   SHSearchSnapshot *s=[[SHSearchSnapshot alloc] initWithEntries:entries generation:++_generation];
   if(s)_snapshot=s;else {_snapshot=nil;_message=@"Not enough memory to prepare search. Remove a large search location and refresh.";}
- }
+ }}
  NSMutableArray *states=NSMutableArray.array;
  for(SHRoot *r in _roots)[states addObject:@{@"id":r.identifier,@"path":r.path?:@"",@"state":r.state?:@"Waiting",@"count":@(r.count),@"apps":@(r.apps)}];
  SHSearchSnapshot *snapshot=_snapshot;NSString *message=[_message copy];
@@ -75,7 +77,7 @@
 - (void)reconcileCoverage {
  for(SHRoot *child in _roots){if(child.apps)continue;
   SHRoot *cover=nil;for(SHRoot *candidate in _roots)if([self root:child coveredBy:candidate]){cover=candidate;break;}
-  if(cover && ![child.state hasPrefix:@"Covered by"]){child.entries=nil;child.count=0;child.state=[@"Covered by " stringByAppendingString:cover.path];[child.monitor stop];child.monitor=nil;}
+  if(cover && ![child.state hasPrefix:@"Covered by"]){child.included=NO;child.count=0;child.state=[@"Covered by " stringByAppendingString:cover.path];[child.monitor stop];child.monitor=nil;}
   else if(!cover && [child.state hasPrefix:@"Covered by"]){child.state=@"Waiting";[self request:child.identifier];}
  }
 }
@@ -95,22 +97,22 @@
   SHRoot *r=SHRoot.new;r.identifier=[@"apps:" stringByAppendingString:path];r.path=path;r.apps=YES;[self->_roots addObject:r];
  }
  for(NSDictionary *saved in settings[@"roots"]){if(![saved[@"id"] isKindOfClass:NSString.class]||![saved[@"bookmark"] isKindOfClass:NSData.class])continue;SHRoot *r=SHRoot.new;r.identifier=saved[@"id"];r.path=saved[@"path"]?:@"Selected folder";r.bookmark=saved[@"bookmark"];[self->_roots addObject:r];}
- for(SHRoot *r in self->_roots){[self validate:r];if(r.url)r.entries=[self->_catalog entriesForRoot:r.identifier];r.count=r.entries.count;}
+ for(SHRoot *r in self->_roots){[self validate:r];r.included=r.url!=nil;}
  [self publish:YES];SHMeasure(@"cached_catalog_ready",began);for(SHRoot *r in self->_roots)[self request:r.identifier];
  }});}
 - (BOOL)validate:(SHRoot *)r {
  [r.monitor stop];r.monitor=nil;if(r.scoped)[r.url stopAccessingSecurityScopedResource];r.scoped=NO;r.url=nil;
  NSError *error=nil;BOOL stale=NO;
  NSURL *url=r.apps?[NSURL fileURLWithPath:r.path]:[SHFolderAccess resolveBookmark:r.bookmark stale:&stale error:&error];
- if(!url){r.state=@"Access needed — select this folder again";r.entries=nil;return NO;}
+ if(!url){r.state=@"Access needed — select this folder again";r.included=NO;return NO;}
  BOOL scoped=[url startAccessingSecurityScopedResource];NSNumber *dir=nil;
- if(![url getResourceValue:&dir forKey:NSURLIsDirectoryKey error:&error] || !dir.boolValue || ![NSFileManager.defaultManager isReadableFileAtPath:url.path]){if(scoped)[url stopAccessingSecurityScopedResource];r.state=error.code==NSFileReadNoSuchFileError?@"Unavailable":@"Access needed — select this folder again";r.entries=nil;return NO;}
+ if(![url getResourceValue:&dir forKey:NSURLIsDirectoryKey error:&error] || !dir.boolValue || ![NSFileManager.defaultManager isReadableFileAtPath:url.path]){if(scoped)[url stopAccessingSecurityScopedResource];r.state=error.code==NSFileReadNoSuchFileError?@"Unavailable":@"Access needed — select this folder again";r.included=NO;return NO;}
  r.url=url;r.scoped=scoped;r.path=url.URLByResolvingSymlinksInPath.path;r.state=@"Waiting";
  if(stale && !r.apps){NSData *fresh=[SHFolderAccess bookmarkForURL:url error:nil];if(fresh){r.bookmark=fresh;[self save];}}
  NSString *identifier=r.identifier;__weak typeof(self) weak=self;
  r.monitor=[[SHChangeMonitor alloc] initWithURL:url excludingURLs:@[_stateURL] changed:^(BOOL invalidated,NSSet *listed,NSSet *walked){
   SHLibrary *self=weak;if(!self)return;
-  if(invalidated){[self invalidateRoot:identifier];dispatch_async(self->_worker,^{SHRoot *root=[self root:identifier];if(root){root.entries=nil;root.state=@"Rechecking changed location";[self clearCancellation:identifier];[self reconcileCoverage];[self publish:YES];}});}
+  if(invalidated){[self invalidateRoot:identifier];dispatch_async(self->_worker,^{SHRoot *root=[self root:identifier];if(root){root.included=NO;root.state=@"Rechecking changed location";[self clearCancellation:identifier];[self reconcileCoverage];[self publish:YES];}});}
   if(listed)[self update:identifier listed:listed walked:walked];else [self request:identifier];
  }];
  return YES;
@@ -146,7 +148,7 @@ static NSString *Resolve(NSString *path){
  if(![self->_catalog updateRoot:identifier directories:directories changed:&changed error:&error]){[self request:identifier];return;}
  NSLog(@"Catalog update: %lu directories, %lu changed rows, %.3f seconds",(unsigned long)directories.count,(unsigned long)changed,NSProcessInfo.processInfo.systemUptime-started);
  if(!changed)return;
- r.entries=[self->_catalog entriesForRoot:identifier];r.count=r.entries.count;[self reconcileCoverage];[self publish:YES];
+ [self reconcileCoverage];[self publish:YES];
 }});}
 - (void)request:(NSString *)identifier {
  [_scheduleLock lock];if([_scheduled containsObject:identifier]){[_again addObject:identifier];[_scheduleLock unlock];return;}[_scheduled addObject:identifier];[_scheduleLock unlock];
@@ -158,7 +160,7 @@ static NSString *Resolve(NSString *path){
 }
 static BOOL Covered(NSString *path,NSString *parent){return [path isEqual:parent] || [path hasPrefix:[parent stringByAppendingString:@"/"]];}
 - (BOOL)root:(SHRoot *)r coveredBy:(SHRoot *)other {
- if(other==r || other.apps || ![other.state isEqual:@"Ready"] || !other.entries || !Covered(r.path,other.path))return NO;
+ if(other==r || other.apps || ![other.state isEqual:@"Ready"] || !other.included || !Covered(r.path,other.path))return NO;
  if([r.path isEqual:other.path])return [_roots indexOfObject:other]<[_roots indexOfObject:r];
  return [self root:other reaches:[r.path substringFromIndex:other.path.length+1]];
 }
@@ -178,14 +180,14 @@ static BOOL Covered(NSString *path,NSString *parent){return [path isEqual:parent
  if([self cancelled:r.identifier])return;
  if(![self validate:r]){r.count=0;[self reconcileCoverage];[self publish:YES];return;}
  // Selected file roots can subsume each other; app-only roots cannot cover files.
- if(!r.apps)for(SHRoot *other in _roots)if([self root:r coveredBy:other]){r.entries=nil;r.count=0;r.state=[@"Covered by " stringByAppendingString:other.path];[r.monitor stop];r.monitor=nil;[self publish:YES];return;}
+ if(!r.apps)for(SHRoot *other in _roots)if([self root:r coveredBy:other]){r.included=NO;r.count=0;r.state=[@"Covered by " stringByAppendingString:other.path];[r.monitor stop];r.monitor=nil;[self publish:YES];return;}
  r.state=@"Indexing";r.count=0;[self publish:NO];
  NSTimeInterval started=NSProcessInfo.processInfo.systemUptime;NSError *error=nil;
  NSArray *entries=[SHScanner scanURL:r.url applicationsOnly:r.apps excludeGenerated:_exclude excludingURLs:@[_stateURL] cancelled:^BOOL{return [self cancelled:r.identifier];} progress:^(NSUInteger count){r.count=count;[self publish:NO];} error:&error];
  if([self cancelled:r.identifier])return;
- if(entries && [_catalog replaceRoot:r.identifier entries:entries error:&error]){r.entries=[_catalog entriesForRoot:r.identifier];r.count=r.entries.count;dispatch_async(dispatch_get_main_queue(),^{[self->_hiddenRoots removeObject:r.identifier];});r.state=r.monitor?@"Ready":@"Partially indexed — refresh manually; watching unavailable";
+ if(entries && [_catalog replaceRoot:r.identifier entries:entries error:&error]){r.included=YES;r.count=entries.count;dispatch_async(dispatch_get_main_queue(),^{[self->_hiddenRoots removeObject:r.identifier];});r.state=r.monitor?@"Ready":@"Partially indexed — refresh manually; watching unavailable";
   NSLog(@"Catalog scan: %lu entries, %.3f seconds",(unsigned long)r.count,NSProcessInfo.processInfo.systemUptime-started);
- }else{r.entries=nil;r.count=0;r.state=@"Partially indexed — access needed; previous catalog preserved";}
+ }else{r.included=NO;r.count=0;r.state=@"Partially indexed — access needed; previous catalog preserved";}
  [self reconcileCoverage];[self publish:YES];
 }
 - (void)addURLs:(NSArray<NSURL *> *)urls replacingRoot:(NSString *)rootID {if(rootID)[self invalidateRoot:rootID];dispatch_async(_worker,^{@autoreleasepool{
@@ -193,7 +195,7 @@ static BOOL Covered(NSString *path,NSString *parent){return [path isEqual:parent
   SHRoot *r=rootID?[self root:rootID]:nil;
   if(!r)for(SHRoot *existing in self->_roots)if(!existing.apps && [existing.path isEqual:url.path]){r=existing;break;}
   if(!r){r=SHRoot.new;r.identifier=NSUUID.UUID.UUIDString;[self->_roots addObject:r];}
-  if(rootID){[r.monitor stop];r.monitor=nil;r.entries=nil;r.count=0;[self->_catalog removeRoot:r.identifier];}
+  if(rootID){[r.monitor stop];r.monitor=nil;r.included=NO;r.count=0;[self->_catalog removeRoot:r.identifier];}
   r.path=url.path;r.bookmark=bookmark;r.state=@"Waiting";[self clearCancellation:r.identifier];[self request:r.identifier];
  }
  [self save];[self publish:rootID!=nil];
