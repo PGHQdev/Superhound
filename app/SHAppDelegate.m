@@ -17,7 +17,7 @@
  _panel=[[SHSearchPanelController alloc] initWithQueries:SHQueryController.new];_panel.emoji=[[SHEmoji alloc] initWithURL:[NSBundle.mainBundle URLForResource:@"emoji" withExtension:@"tsv"]];_panel.usage=[[SHUsage alloc] initWithURL:[state URLByAppendingPathComponent:@"usage.plist"]];_settings=[[SHSettingsController alloc] initWithLibrary:_library hotKey:_hotKey];
  __weak typeof(self) weak=self;
  _hotKey.invoked=^{[weak search:nil];};
- _panel.openResult=^(NSDictionary *result,BOOL reveal){[SHResultActions open:result reveal:reveal completion:^(NSString *error){SHAppDelegate *self=weak;if(error){[self->_panel showError:error];if(![result[@"type"] isEqual:@"command"])[self->_library refresh];}}];};
+ _panel.openResult=^(NSDictionary *result,NSString *action,NSURL *application){[SHResultActions perform:action result:result application:application completion:^(NSString *error){SHAppDelegate *self=weak;if(error){[self->_panel showError:error];if(![result[@"type"] isEqual:@"command"])[self->_library refresh];}}];};
  _library.updated=^(SHSearchSnapshot *snapshot,NSArray<NSDictionary *> *roots,NSString *message){
   SHAppDelegate *self=weak;if(!self)return;[self->_settings updateRoots:roots message:message];
   NSUInteger indexing=0,unavailable=0,items=snapshot.count;for(NSDictionary *r in roots){if([r[@"state"] isEqual:@"Indexing"])indexing++;else if(![r[@"state"] isEqual:@"Ready"] && ![r[@"state"] hasPrefix:@"Covered by"])unavailable++;}

@@ -46,7 +46,8 @@ static NSString *EjectAll(void){
  if([command isEqual:@"command:eject"]){dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED,0),^{NSString *error=EjectAll();dispatch_async(dispatch_get_main_queue(),^{completion(error);});});return;}
  completion(@"This command is not available.");
 }
-+ (void)open:(NSDictionary *)result reveal:(BOOL)reveal completion:(void (^)(NSString *))completion {
++ (void)perform:(NSString *)action result:(NSDictionary *)result application:(NSURL *)application completion:(void (^)(NSString *))completion {
+ BOOL reveal=[action isEqual:@"reveal"];
  if([result[@"type"] isEqual:@"command"]){if(reveal)completion(@"A command has no location in Finder.");else [self run:result[@"path"] completion:completion];return;}
  NSURL *url=[NSURL fileURLWithPath:result[@"path"]];
  dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED,0),^{
@@ -54,6 +55,9 @@ static NSString *EjectAll(void){
   dispatch_async(dispatch_get_main_queue(),^{
    if(!exists){completion(@"This item is unavailable. Refreshing its location…");return;}
    if(reveal){[NSWorkspace.sharedWorkspace activateFileViewerSelectingURLs:@[url]];completion(nil);return;}
+   if([action isEqual:@"trash"]){[NSWorkspace.sharedWorkspace recycleURLs:@[url] completionHandler:^(NSDictionary *moved,NSError *error){(void)moved;dispatch_async(dispatch_get_main_queue(),^{completion(error?@"Could not move this item to the Trash. Check access and try again.":nil);});}];return;}
+   if(application){NSWorkspaceOpenConfiguration *config=NSWorkspaceOpenConfiguration.configuration;config.activates=YES;
+    [NSWorkspace.sharedWorkspace openURLs:@[url] withApplicationAtURL:application configuration:config completionHandler:^(NSRunningApplication *app,NSError *error){(void)app;dispatch_async(dispatch_get_main_queue(),^{completion(error?@"Could not open this item with that app.":nil);});}];return;}
    if([result[@"type"] isEqual:@"app"]){
     for(NSRunningApplication *app in NSWorkspace.sharedWorkspace.runningApplications)if([app.bundleURL.URLByStandardizingPath isEqual:url.URLByStandardizingPath]){
      BOOL activated=[app activateWithOptions:NSApplicationActivateAllWindows];completion(activated?nil:@"Could not activate this app.");return;

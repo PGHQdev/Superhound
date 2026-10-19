@@ -43,11 +43,11 @@ To see a change in the live app: build with a build number one above the install
 | File | Function |
 |---|---|
 | `SHAppDelegate.m` | Start-up wiring, the menu bar item and its menu, Open at Login. |
-| `SHSearchPanelController.m` | The search panel: field, result rows, row order (answer, chosen before, apps, settings panes, and commands, emoji, files), keys, copy and open. |
+| `SHSearchPanelController.m` | The search panel: field, result rows, row order (answer, chosen before, apps, settings panes, and commands, emoji, files), keys, the action menu (⌘K and right-click), Quick Look, copy and open. |
 | `SHSettingsController.m` | The Search Locations window and the shortcut recorder. |
 | `SHHotKey.m` | Global shortcut registration. |
 | `SHFolderAccess.m` | Security-scoped bookmarks for the user's folders. |
-| `SHResultActions.m` | Opens a result or shows it in Finder, and runs the system commands. |
+| `SHResultActions.m` | Opens a result, opens it with another app, shows it in Finder, moves it to the Trash, and runs the system commands. |
 | `emoji.tsv` | Generated emoji data: emoji, name, keywords. Do not edit by hand. |
 
 ### `tests/` and `bench/`

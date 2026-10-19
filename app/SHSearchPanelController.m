@@ -1,18 +1,16 @@
 #import "SHSearchPanelController.h"
 #import "SHMetrics.h"
 #import "SHAnswer.h"
+#import <Quartz/Quartz.h>
 @interface SHPanel : NSPanel
-@property(copy) void (^revealSelected)(void);
+@property(copy) BOOL (^shortcut)(NSEvent *);
 @end
 @implementation SHPanel
 - (BOOL)canBecomeKeyWindow{return YES;}
 - (BOOL)canBecomeMainWindow{return NO;}
 - (BOOL)performKeyEquivalent:(NSEvent *)event {
- if((event.keyCode==36 || event.keyCode==76) && (event.modifierFlags&NSEventModifierFlagCommand)){
-  if([self.firstResponder isKindOfClass:NSTextView.class] && [(NSTextView *)self.firstResponder hasMarkedText])return NO;
-  if(self.revealSelected)self.revealSelected();return YES;
- }
- return [super performKeyEquivalent:event];
+ if([self.firstResponder isKindOfClass:NSTextView.class] && [(NSTextView *)self.firstResponder hasMarkedText])return NO;
+ return (self.shortcut && self.shortcut(event)) || [super performKeyEquivalent:event];
 }
 @end
 @interface SHResultsTable : NSTableView
@@ -21,7 +19,7 @@
 @implementation SHResultsTable
 - (void)keyDown:(NSEvent *)event {if(!self.command || !self.command(event))[super keyDown:event];}
 @end
-@interface SHSearchPanelController () <NSTextFieldDelegate,NSTableViewDataSource,NSTableViewDelegate,NSWindowDelegate>
+@interface SHSearchPanelController () <NSTextFieldDelegate,NSTableViewDataSource,NSTableViewDelegate,NSWindowDelegate,NSMenuDelegate,QLPreviewPanelDataSource>
 @end
 @implementation SHSearchPanelController {
  SHQueryController *_queries;
@@ -36,6 +34,7 @@
  NSCache *_icons;
  NSMutableSet *_loadingIcons;
  dispatch_queue_t _iconQueue;
+ NSURL *_preview;
 }
 - (instancetype)initWithQueries:(SHQueryController *)queries {
  SHPanel *panel=[[SHPanel alloc] initWithContentRect:NSMakeRect(0,0,640,516) styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskFullSizeContentView backing:NSBackingStoreBuffered defer:NO];
@@ -50,11 +49,11 @@
  NSScrollView *scroll=[[NSScrollView alloc] initWithFrame:NSMakeRect(12,62,616,384)];scroll.hasVerticalScroller=NO;scroll.drawsBackground=NO;
  _table=[[SHResultsTable alloc] initWithFrame:scroll.bounds];
  __weak typeof(self) weak=self;
- panel.revealSelected=^{[weak openSelected:YES];};
- ((SHResultsTable *)_table).command=^BOOL(NSEvent *event){if(event.keyCode==53){[weak dismiss:YES];return YES;}if(event.keyCode==36 || event.keyCode==76){[weak openSelected:(event.modifierFlags&NSEventModifierFlagCommand)!=0];return YES;}return NO;};_table.headerView=nil;_table.rowHeight=48;_table.intercellSpacing=NSMakeSize(0,0);_table.backgroundColor=NSColor.clearColor;_table.selectionHighlightStyle=NSTableViewSelectionHighlightStyleRegular;_table.delegate=self;_table.dataSource=self;_table.allowsEmptySelection=YES;_table.target=self;_table.doubleAction=@selector(openClicked:);_table.accessibilityIdentifier=@"superhound.search.results";_table.accessibilityLabel=@"Search results";
+ panel.shortcut=^BOOL(NSEvent *event){return [weak shortcut:event];};
+ ((SHResultsTable *)_table).command=^BOOL(NSEvent *event){if(event.keyCode==53){[weak dismiss:YES];return YES;}if(event.keyCode==36 || event.keyCode==76){[weak openSelected:(event.modifierFlags&NSEventModifierFlagCommand)!=0];return YES;}return NO;};_table.headerView=nil;_table.rowHeight=48;_table.intercellSpacing=NSMakeSize(0,0);_table.backgroundColor=NSColor.clearColor;_table.selectionHighlightStyle=NSTableViewSelectionHighlightStyleRegular;_table.delegate=self;_table.dataSource=self;_table.allowsEmptySelection=YES;_table.target=self;_table.doubleAction=@selector(openClicked:);_table.menu=NSMenu.new;_table.menu.delegate=self;_table.accessibilityIdentifier=@"superhound.search.results";_table.accessibilityLabel=@"Search results";
  NSTableColumn *column=[[NSTableColumn alloc] initWithIdentifier:@"result"];column.width=616;[_table addTableColumn:column];scroll.documentView=_table;[view addSubview:scroll];
  _status=[NSTextField labelWithString:_coverage];_status.frame=NSMakeRect(22,37,596,20);_status.font=[NSFont systemFontOfSize:11];_status.textColor=NSColor.secondaryLabelColor;_status.lineBreakMode=NSLineBreakByTruncatingTail;_status.accessibilityIdentifier=@"superhound.search.status";[view addSubview:_status];
- NSTextField *help=[NSTextField labelWithString:@"↑ ↓ Move     ↩ Open     ⌘↩ Reveal in Finder     Esc Close"];help.frame=NSMakeRect(22,14,450,18);help.font=[NSFont systemFontOfSize:11];help.textColor=NSColor.secondaryLabelColor;[view addSubview:help];
+ NSTextField *help=[NSTextField labelWithString:@"↑ ↓ Move    ↩ Open    ⌘↩ Reveal in Finder    ⌘K Actions    Esc Close"];help.frame=NSMakeRect(22,14,456,18);help.font=[NSFont systemFontOfSize:11];help.textColor=NSColor.secondaryLabelColor;[view addSubview:help];
  NSMutableParagraphStyle *right=NSMutableParagraphStyle.new;right.alignment=NSTextAlignmentRight;
  NSTextField *mark=[NSTextField labelWithAttributedString:[[NSAttributedString alloc] initWithString:@"SUPERHOUND" attributes:@{NSFontAttributeName:[NSFont systemFontOfSize:10 weight:NSFontWeightSemibold],NSKernAttributeName:@2,NSForegroundColorAttributeName:NSColor.tertiaryLabelColor,NSParagraphStyleAttributeName:right}]];mark.frame=NSMakeRect(478,14,140,18);mark.accessibilityElement=NO;[view addSubview:mark];
  return self;
@@ -71,9 +70,10 @@
 }
 - (void)dismiss:(BOOL)restore {
  [_queries cancel];[self.window orderOut:nil];
+ if(QLPreviewPanel.sharedPreviewPanelExists && QLPreviewPanel.sharedPreviewPanel.isVisible)[QLPreviewPanel.sharedPreviewPanel orderOut:nil];
  if(restore && _previous && _previous.processIdentifier!=NSProcessInfo.processInfo.processIdentifier)[_previous activateWithOptions:0];
 }
-- (void)windowDidResignKey:(NSNotification *)notification {(void)notification;if(self.window.isVisible)[self dismiss:NO];}
+- (void)windowDidResignKey:(NSNotification *)notification {(void)notification;if(self.window.isVisible && !(QLPreviewPanel.sharedPreviewPanelExists && QLPreviewPanel.sharedPreviewPanel.isVisible))[self dismiss:NO];}
 - (void)updateSnapshot:(SHSearchSnapshot *)snapshot status:(NSString *)status {
  _coverage=status;BOOL changed=_queries.snapshot!=snapshot;
  if(changed)_queries.snapshot=snapshot;
@@ -141,14 +141,75 @@
  [_table selectRowIndexes:[NSIndexSet indexSetWithIndex:(NSUInteger)row] byExtendingSelection:NO];[_table scrollRowToVisible:row];_selectedID=_results[(NSUInteger)row][@"id"];
 }
 - (void)openClicked:(id)sender {(void)sender;[self openSelected:NO];}
-- (void)openSelected:(BOOL)reveal {
- if(_pending){NSBeep();return;}
- NSInteger row=_table.selectedRow;if(row<0 || row>=(NSInteger)_results.count){NSBeep();return;}
- NSDictionary *result=_results[(NSUInteger)row];
+- (NSDictionary *)selected {NSInteger row=_table.selectedRow;return !_pending && row>=0 && row<(NSInteger)_results.count?_results[(NSUInteger)row]:nil;}
+- (void)openSelected:(BOOL)reveal {NSDictionary *result=self.selected;if(result)[self perform:reveal?@"reveal":@"open" result:result application:nil];else NSBeep();}
+// ⌘↩ reveal, ⌘K actions, ⌘Y Quick Look, ⇧⌘C copy path.
+- (BOOL)shortcut:(NSEvent *)event {
+ NSEventModifierFlags flags=event.modifierFlags&NSEventModifierFlagDeviceIndependentFlagsMask&~(NSEventModifierFlagCapsLock|NSEventModifierFlagNumericPad|NSEventModifierFlagFunction);NSString *key=event.charactersIgnoringModifiers.lowercaseString;
+ if((event.keyCode==36 || event.keyCode==76) && (flags&NSEventModifierFlagCommand)){[self openSelected:YES];return YES;}
+ NSString *action=flags==NSEventModifierFlagCommand?@{@"k":@"actions",@"y":@"quickLook"}[key]:flags==(NSEventModifierFlagCommand|NSEventModifierFlagShift) && [key isEqual:@"c"]?@"copyPath":nil;
+ if(!action)return NO;
+ NSDictionary *result=self.selected;if(!result){NSBeep();return YES;}
+ if([action isEqual:@"actions"]){NSMenu *menu=NSMenu.new;[self addActionsFor:result to:menu];NSRect row=[_table rectOfRow:_table.selectedRow];[menu popUpMenuPositioningItem:nil atLocation:NSMakePoint(NSMinX(row)+54,NSMaxY(row)) inView:_table];return YES;}
+ if([self action:action appliesTo:result])[self perform:action result:result application:nil];else NSBeep();
+ return YES;
+}
+static BOOL Located(NSDictionary *result){return ![@[@"command",@"emoji",@"answer"] containsObject:result[@"type"]];}
+- (BOOL)action:(NSString *)action appliesTo:(NSDictionary *)result {
+ if([action isEqual:@"quickLook"])return Located(result) && ![result[@"type"] isEqual:@"settings"];
+ if([action isEqual:@"copyPath"])return Located(result);
+ return YES;
+}
+// Items for the ⌘K menu and the row's context menu. Each item carries its result, so a right-clicked row needs no selection.
+- (void)addActionsFor:(NSDictionary *)result to:(NSMenu *)menu {
+ NSMenuItem *(^add)(NSString *,NSString *,NSString *,NSEventModifierFlags)=^NSMenuItem *(NSString *title,NSString *action,NSString *key,NSEventModifierFlags flags){
+  NSMenuItem *item=[menu addItemWithTitle:title action:@selector(chooseAction:) keyEquivalent:key];item.keyEquivalentModifierMask=flags;item.target=self;item.representedObject=@{@"result":result,@"action":action};return item;};
+ NSString *type=result[@"type"];
+ add(Located(result)?@"Open":[type isEqual:@"command"]?@"Run":@"Copy",@"open",@"\r",0);
+ if(!Located(result))return;
+ add(@"Reveal in Finder",@"reveal",@"\r",NSEventModifierFlagCommand);
+ if([self action:@"quickLook" appliesTo:result])add(@"Quick Look",@"quickLook",@"y",NSEventModifierFlagCommand);
+ NSURL *url=[NSURL fileURLWithPath:result[@"path"]];
+ if([@[@"file",@"folder",@"link"] containsObject:type]){
+  NSMenu *apps=NSMenu.new;NSURL *preferred=[NSWorkspace.sharedWorkspace URLForApplicationToOpenURL:url];
+  NSMutableArray *candidates=[[NSWorkspace.sharedWorkspace URLsForApplicationsToOpenURL:url] mutableCopy];if(preferred){[candidates removeObject:preferred];[candidates insertObject:preferred atIndex:0];}
+  for(NSURL *app in candidates){NSString *name=[NSFileManager.defaultManager displayNameAtPath:app.path].stringByDeletingPathExtension;
+   NSMenuItem *item=[apps addItemWithTitle:[app isEqual:preferred]?[name stringByAppendingString:@" (default)"]:name action:@selector(chooseAction:) keyEquivalent:@""];item.target=self;item.representedObject=@{@"result":result,@"action":@"openWith",@"application":app};
+   NSImage *icon=[NSWorkspace.sharedWorkspace iconForFile:app.path];icon.size=NSMakeSize(16,16);item.image=icon;
+   if([app isEqual:preferred] && candidates.count>1)[apps addItem:NSMenuItem.separatorItem];}
+  if(apps.numberOfItems){NSMenuItem *openWith=[menu addItemWithTitle:@"Open With" action:nil keyEquivalent:@""];openWith.submenu=apps;}
+ }
+ add(@"Copy Path",@"copyPath",@"c",NSEventModifierFlagCommand|NSEventModifierFlagShift);
+ if(![type isEqual:@"settings"] && [NSFileManager.defaultManager isDeletableFileAtPath:url.path]){[menu addItem:NSMenuItem.separatorItem];add(@"Move to Trash",@"trash",@"",0);}
+}
+- (void)menuNeedsUpdate:(NSMenu *)menu {[menu removeAllItems];NSInteger row=_table.clickedRow;if(!_pending && row>=0 && row<(NSInteger)_results.count)[self addActionsFor:_results[(NSUInteger)row] to:menu];}
+- (void)chooseAction:(NSMenuItem *)item {NSDictionary *choice=item.representedObject;[self perform:choice[@"action"] result:choice[@"result"] application:choice[@"application"]];}
+- (void)perform:(NSString *)action result:(NSDictionary *)result application:(NSURL *)application {
+ if([action isEqual:@"quickLook"]){[self quickLook:result];return;}
+ if([action isEqual:@"copyPath"]){[NSPasteboard.generalPasteboard clearContents];[NSPasteboard.generalPasteboard setString:result[@"path"] forType:NSPasteboardTypeString];[self dismiss:YES];return;}
+ // The row goes at once; the library removes the entry when FSEvents reports the change.
+ if([action isEqual:@"trash"]){
+  // A right-click can act on a row other than the selected one; the selection stays on its item.
+  NSInteger removed=(NSInteger)[_results indexOfObjectIdenticalTo:result],row=_table.selectedRow;
+  NSMutableArray *rows=[_results mutableCopy];[rows removeObjectIdenticalTo:result];_results=rows;row=row==removed?MIN(row,(NSInteger)rows.count-1):row>removed?row-1:row;
+  _reloading=YES;[_table reloadData];if(row>=0)[_table selectRowIndexes:[NSIndexSet indexSetWithIndex:(NSUInteger)row] byExtendingSelection:NO];else [_table deselectAll:nil];_reloading=NO;
+  _selectedID=row>=0?rows[(NSUInteger)row][@"id"]:nil;[self updateStatus];if(self.openResult)self.openResult(result,action,nil);return;
+ }
  if([result[@"type"] isEqual:@"emoji"])[_usage recordQuery:_field.stringValue result:result];
  if(result[@"copy"]){[NSPasteboard.generalPasteboard clearContents];[NSPasteboard.generalPasteboard setString:result[@"copy"] forType:NSPasteboardTypeString];[self dismiss:YES];return;}
- [_usage recordQuery:_field.stringValue result:result];[self dismiss:[result[@"type"] isEqual:@"command"]];if(self.openResult)self.openResult(result,reveal);
+ [_usage recordQuery:_field.stringValue result:result];[self dismiss:[result[@"type"] isEqual:@"command"]];if(self.openResult)self.openResult(result,action,application);
 }
+- (void)quickLook:(NSDictionary *)result {
+ QLPreviewPanel *panel=QLPreviewPanel.sharedPreviewPanel;
+ if(panel.isVisible && [_preview isEqual:[NSURL fileURLWithPath:result[@"path"]]]){[panel orderOut:nil];return;}
+ _preview=[NSURL fileURLWithPath:result[@"path"]];if(panel.isVisible)[panel reloadData];else [panel makeKeyAndOrderFront:nil];
+}
+- (BOOL)acceptsPreviewPanelControl:(QLPreviewPanel *)panel {(void)panel;return YES;}
+- (void)beginPreviewPanelControl:(QLPreviewPanel *)panel {panel.dataSource=self;panel.level=self.window.level+1;}
+// The search panel takes the keyboard again, or closes when another app became active during the preview.
+- (void)endPreviewPanelControl:(QLPreviewPanel *)panel {panel.dataSource=nil;dispatch_async(dispatch_get_main_queue(),^{if(!self.window.isVisible || self.window.isKeyWindow)return;if(NSApp.isActive)[self.window makeKeyWindow];else [self dismiss:NO];});}
+- (NSInteger)numberOfPreviewItemsInPreviewPanel:(QLPreviewPanel *)panel {(void)panel;return _preview?1:0;}
+- (id<QLPreviewItem>)previewPanel:(QLPreviewPanel *)panel previewItemAtIndex:(NSInteger)index {(void)panel;(void)index;return _preview;}
 - (BOOL)control:(NSControl *)control textView:(NSTextView *)textView doCommandBySelector:(SEL)selector {
  (void)control;if(textView.hasMarkedText)return NO;
  if(selector==@selector(moveDown:)){[self move:1];return YES;}
