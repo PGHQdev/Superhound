@@ -58,6 +58,10 @@ int main(void){@autoreleasepool{
  library=[[SHLibrary alloc] initWithStateURL:state];
  library.updated=^(SHSearchSnapshot *s,NSArray *r,NSString *m){(void)m;snapshot=s;roots=r;};[library start];
  assert(Until(^BOOL{return [snapshot search:@"superhoundfixture" cancelled:nil].count==1;},15));
+ // The cached catalog is the first snapshot; launch scans that find no change do not rebuild it.
+ uint64_t cached=snapshot.generation;
+ assert(Until(^BOOL{for(NSDictionary *r in roots)if([r[@"state"] isEqual:@"Waiting"] || [r[@"state"] isEqual:@"Indexing"])return NO;return roots.count>0;},30));
+ Until(^BOOL{return NO;},1);assert(snapshot.generation==cached);
  library.updated=nil;library=nil;
  [NSFileManager.defaultManager removeItemAtURL:tmp error:nil];
  puts("PASS library: selected exclusions, FSEvents create/rename without a rescan, directory rename, replacement identity, root removal preserves files");

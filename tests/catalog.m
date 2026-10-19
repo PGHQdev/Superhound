@@ -57,11 +57,12 @@ int main(void){@autoreleasepool{
  assert(error.code==NSUserCancelledError);
  NSURL *db=[tmp URLByAppendingPathComponent:@"catalog.sqlite"];
  SHCatalog *c=[[SHCatalog alloc] initWithURL:db error:&error];assert(c);
- assert([c replaceRoot:@"r" entries:scan error:&error]);NSArray *before=[c entriesForRoot:@"r"];
- assert(before.count==scan.count);assert([c replaceRoot:@"r" entries:scan error:&error]);
+ NSUInteger replaced=0;assert([c replaceRoot:@"r" entries:scan changed:&replaced error:&error] && replaced==scan.count);NSArray *before=[c entriesForRoot:@"r"];
+ // A repeated scan with identical rows counts as no change.
+ assert(before.count==scan.count);assert([c replaceRoot:@"r" entries:scan changed:&replaced error:&error] && replaced==0);
  assert([[before valueForKey:@"id"] isEqual:[[c entriesForRoot:@"r"] valueForKey:@"id"]]);
  // Duplicate rows fail atomically; the previous generation survives.
- assert((![c replaceRoot:@"r" entries:@[scan[0],scan[0]] error:&error]));
+ replaced=1;assert((![c replaceRoot:@"r" entries:@[scan[0],scan[0]] changed:&replaced error:&error] && replaced==0));
  assert([[before valueForKey:@"id"] isEqual:[[c entriesForRoot:@"r"] valueForKey:@"id"]]);
  // Directory updates: identical rows count as no change, shallow keeps deeper rows, deep removes them, other directories stay.
  NSDictionary *(^E)(NSString *)=^(NSString *rel){return @{@"relative":rel,@"name":rel.lastPathComponent,@"path":[root.URLByResolvingSymlinksInPath.path stringByAppendingPathComponent:rel],@"type":@"file",@"alias":@""};};
@@ -73,7 +74,7 @@ int main(void){@autoreleasepool{
  assert([[[c entriesForRoot:@"r"] valueForKey:@"relative"] containsObject:@"normal/sub/deep.txt"]);
  assert(([c updateRoot:@"r" directories:@[@{@"relative":@"normal",@"deep":@YES,@"entries":@[]}] changed:&changed error:&error] && changed==2));
  assert([c entriesForRoot:@"r"].count==before.count-1 && ![[[c entriesForRoot:@"r"] valueForKey:@"relative"] containsObject:@"normal/東京.txt"]);
- assert([c replaceRoot:@"r" entries:scan error:&error] && [c entriesForRoot:@"r"].count==before.count);
+ assert([c replaceRoot:@"r" entries:scan changed:&replaced error:&error] && [c entriesForRoot:@"r"].count==before.count && replaced==1);
  // A process interrupted inside a transaction leaves the committed root intact.
  c=nil;const char *dbPath=db.fileSystemRepresentation;pid_t child=fork();assert(child>=0);
  if(child==0){sqlite3 *crashDB=NULL;if(sqlite3_open(dbPath,&crashDB)!=SQLITE_OK)_exit(2);if(sqlite3_exec(crashDB,"BEGIN IMMEDIATE; DELETE FROM entries",NULL,NULL,NULL)!=SQLITE_OK)_exit(3);_exit(0);}

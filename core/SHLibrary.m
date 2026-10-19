@@ -176,19 +176,22 @@ static BOOL Covered(NSString *path,NSString *parent){return [path isEqual:parent
  }
  return YES;
 }
+- (NSArray *)includedRoots {NSMutableArray *ids=NSMutableArray.array;for(SHRoot *r in _roots)if(r.included)[ids addObject:r.identifier];return ids;}
 - (void)scan:(SHRoot *)r {
  if([self cancelled:r.identifier])return;
- if(![self validate:r]){r.count=0;[self reconcileCoverage];[self publish:YES];return;}
+ // A rebuild reads the whole catalog, so a scan rebuilds only when rows or the included roots change.
+ NSArray *before=self.includedRoots;
+ if(![self validate:r]){r.count=0;[self reconcileCoverage];[self publish:![self.includedRoots isEqual:before]];return;}
  // Selected file roots can subsume each other; app-only roots cannot cover files.
- if(!r.apps)for(SHRoot *other in _roots)if([self root:r coveredBy:other]){r.included=NO;r.count=0;r.state=[@"Covered by " stringByAppendingString:other.path];[r.monitor stop];r.monitor=nil;[self publish:YES];return;}
+ if(!r.apps)for(SHRoot *other in _roots)if([self root:r coveredBy:other]){r.included=NO;r.count=0;r.state=[@"Covered by " stringByAppendingString:other.path];[r.monitor stop];r.monitor=nil;[self publish:![self.includedRoots isEqual:before]];return;}
  r.state=@"Indexing";r.count=0;[self publish:NO];
- NSTimeInterval started=NSProcessInfo.processInfo.systemUptime;NSError *error=nil;
+ NSTimeInterval started=NSProcessInfo.processInfo.systemUptime;NSError *error=nil;NSUInteger changed=0;
  NSArray *entries=[SHScanner scanURL:r.url applicationsOnly:r.apps excludeGenerated:_exclude excludingURLs:@[_stateURL] cancelled:^BOOL{return [self cancelled:r.identifier];} progress:^(NSUInteger count){r.count=count;[self publish:NO];} error:&error];
  if([self cancelled:r.identifier])return;
- if(entries && [_catalog replaceRoot:r.identifier entries:entries error:&error]){r.included=YES;r.count=entries.count;dispatch_async(dispatch_get_main_queue(),^{[self->_hiddenRoots removeObject:r.identifier];});r.state=r.monitor?@"Ready":@"Partially indexed — refresh manually; watching unavailable";
-  NSLog(@"Catalog scan: %lu entries, %.3f seconds",(unsigned long)r.count,NSProcessInfo.processInfo.systemUptime-started);
+ if(entries && [_catalog replaceRoot:r.identifier entries:entries changed:&changed error:&error]){r.included=YES;r.count=entries.count;dispatch_async(dispatch_get_main_queue(),^{[self->_hiddenRoots removeObject:r.identifier];});r.state=r.monitor?@"Ready":@"Partially indexed — refresh manually; watching unavailable";
+  NSLog(@"Catalog scan: %lu entries, %lu changed rows, %.3f seconds",(unsigned long)r.count,(unsigned long)changed,NSProcessInfo.processInfo.systemUptime-started);
  }else{r.included=NO;r.count=0;r.state=@"Partially indexed — access needed; previous catalog preserved";}
- [self reconcileCoverage];[self publish:YES];
+ [self reconcileCoverage];[self publish:changed || ![self.includedRoots isEqual:before]];
 }
 - (void)addURLs:(NSArray<NSURL *> *)urls replacingRoot:(NSString *)rootID {if(rootID)[self invalidateRoot:rootID];dispatch_async(_worker,^{@autoreleasepool{
  for(NSURL *url in urls){NSError *error=nil;NSData *bookmark=[SHFolderAccess bookmarkForURL:url error:&error];if(!bookmark){self->_message=@"Could not save access to that folder. Select it again.";continue;}
