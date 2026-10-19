@@ -7,6 +7,7 @@
 #import "SHMetrics.h"
 #import <sys/stat.h>
 #import <errno.h>
+#import <malloc/malloc.h>
 @interface SHRoot : NSObject
 @property NSString *identifier;
 @property NSString *path;
@@ -55,7 +56,9 @@
  NSMutableArray *states=NSMutableArray.array;
  for(SHRoot *r in _roots)[states addObject:@{@"id":r.identifier,@"path":r.path?:@"",@"state":r.state?:@"Waiting",@"count":@(r.count),@"apps":@(r.apps)}];
  SHSearchSnapshot *snapshot=_snapshot;NSString *message=[_message copy];
- dispatch_async(dispatch_get_main_queue(),^{self->_publicSnapshot=snapshot;self->_publicRoots=states;self->_publicMessage=message;[self deliver];});
+ dispatch_async(dispatch_get_main_queue(),^{self->_publicSnapshot=snapshot;self->_publicRoots=states;self->_publicMessage=message;[self deliver];
+  // The previous snapshot and its entries are free now; return their pages instead of keeping them for later allocations.
+  if(rebuild)dispatch_async(self->_worker,^{malloc_zone_pressure_relief(NULL,0);});});
 }
 - (void)deliver {
  NSAssert(NSThread.isMainThread,@"main thread");
