@@ -46,8 +46,14 @@ int main(void){@autoreleasepool{
  assert([[NSData dataWithBytes:"not a plist" length:11] writeToURL:file atomically:YES]);assert([[SHClipboard alloc] initWithURL:file].count==0);
  assert(([[NSPropertyListSerialization dataWithPropertyList:@{@"items":@[@{@"id":@"x",@"text":@1},@"junk",@{@"id":@4,@"text":@"kept"}]} format:NSPropertyListBinaryFormat_v1_0 options:0 error:nil] writeToURL:file atomically:YES]));
  SHClipboard *partial=[[SHClipboard alloc] initWithURL:file];assert([Texts(partial,@"") isEqual:@[@"kept"]]);
+ // Items with a wrong date or source type are left out.
+ assert(([[NSPropertyListSerialization dataWithPropertyList:@{@"items":@[@{@"id":@1,@"text":@"bad date",@"date":@[]},@{@"id":@2,@"text":@"bad source",@"source":@3},@{@"id":@3,@"text":@"good",@"date":@1,@"source":@"Notes"}]} format:NSPropertyListBinaryFormat_v1_0 options:0 error:nil] writeToURL:file atomically:YES]));
+ assert([Texts([[SHClipboard alloc] initWithURL:file],@"") isEqual:@[@"good"]]);
+ assert(([[NSPropertyListSerialization dataWithPropertyList:@{@"items":@[@{@"id":@4,@"text":@"kept"}]} format:NSPropertyListBinaryFormat_v1_0 options:0 error:nil] writeToURL:file atomically:YES]));partial=[[SHClipboard alloc] initWithURL:file];
  assert([partial addText:@"new" types:text application:nil source:nil]);assert([[partial search:@"" limit:1].firstObject[@"id"] isEqual:@"clipboard:5"]);
- [partial waitUntilSaved];
+ [partial waitUntilSaved];assert(stat(file.fileSystemRepresentation,&st)==0 && (st.st_mode&0777)==0600);
+ // No temporary file is left next to the history.
+ assert([[NSFileManager.defaultManager contentsOfDirectoryAtPath:tmp.path error:nil] isEqual:@[@"clipboard.plist"]]);
  [NSFileManager.defaultManager removeItemAtURL:tmp error:nil];
  puts("PASS clipboard: order, repeats, search folding, concealed and password copies, length limit, 500-item limit, removal, saved file, damaged file");
 }return 0;}

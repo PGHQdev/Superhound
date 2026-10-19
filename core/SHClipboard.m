@@ -1,5 +1,7 @@
 #import "SHClipboard.h"
 #import "SHSearchSnapshot.h"
+#include <fcntl.h>
+#include <unistd.h>
 static const NSUInteger Limit=500,Longest=100000;
 static NSString *Title(NSString *text){
  for(NSString *line in [text componentsSeparatedByCharactersInSet:NSCharacterSet.newlineCharacterSet]){NSString *t=[line stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceCharacterSet];if(t.length)return t.length>200?[t substringWithRange:[t rangeOfComposedCharacterSequencesForRange:NSMakeRange(0,200)]]:t;}
@@ -11,7 +13,7 @@ static NSString *Title(NSString *text){
   _url=url;_items=NSMutableArray.array;_folded=NSMutableArray.array;_saving=dispatch_queue_create("com.superhound.clipboard",DISPATCH_QUEUE_SERIAL);
   NSData *data=[NSData dataWithContentsOfURL:url];NSDictionary *saved=data?[NSPropertyListSerialization propertyListWithData:data options:0 format:NULL error:nil]:nil;
   NSArray *items=[saved isKindOfClass:NSDictionary.class] && [saved[@"items"] isKindOfClass:NSArray.class]?saved[@"items"]:@[];
-  for(NSDictionary *item in items)if(_items.count<Limit && [item isKindOfClass:NSDictionary.class] && [item[@"text"] isKindOfClass:NSString.class] && [item[@"id"] isKindOfClass:NSNumber.class]){[_items addObject:item];[_folded addObject:SHFold(item[@"text"])];_next=MAX(_next,[item[@"id"] unsignedLongLongValue]+1);}
+  for(NSDictionary *item in items)if(_items.count<Limit && [item isKindOfClass:NSDictionary.class] && [item[@"text"] isKindOfClass:NSString.class] && [item[@"id"] isKindOfClass:NSNumber.class] && (!item[@"date"] || [item[@"date"] isKindOfClass:NSNumber.class]) && (!item[@"source"] || [item[@"source"] isKindOfClass:NSString.class])){[_items addObject:item];[_folded addObject:SHFold(item[@"text"])];_next=MAX(_next,[item[@"id"] unsignedLongLongValue]+1);}
  }
  return self;
 }
@@ -43,12 +45,14 @@ static NSString *Title(NSString *text){
  if(i==NSNotFound)return;[_items removeObjectAtIndex:i];[_folded removeObjectAtIndex:i];[self save];
 }
 - (void)clear {[_items removeAllObjects];[_folded removeAllObjects];[self save];}
-// The copied text can be private, so only the user can read the file.
+// The copied text can be private, so the file is created readable only by the user, then renamed over the previous one.
 - (void)save {
  NSDictionary *state=@{@"items":[_items copy]};NSURL *url=_url;
  dispatch_async(_saving,^{@autoreleasepool{
-  NSData *data=[NSPropertyListSerialization dataWithPropertyList:state format:NSPropertyListBinaryFormat_v1_0 options:0 error:nil];
-  if([data writeToURL:url options:NSDataWritingAtomic error:nil])[NSFileManager.defaultManager setAttributes:@{NSFilePosixPermissions:@0600} ofItemAtPath:url.path error:nil];
+  NSData *data=[NSPropertyListSerialization dataWithPropertyList:state format:NSPropertyListBinaryFormat_v1_0 options:0 error:nil];if(!data)return;
+  NSString *temp=[url.path stringByAppendingFormat:@".%@",NSUUID.UUID.UUIDString];int fd=open(temp.fileSystemRepresentation,O_WRONLY|O_CREAT|O_EXCL,0600);if(fd<0)return;
+  BOOL written=write(fd,data.bytes,data.length)==(ssize_t)data.length;if(close(fd)!=0)written=NO;
+  if(!written || rename(temp.fileSystemRepresentation,url.fileSystemRepresentation)!=0)unlink(temp.fileSystemRepresentation);
  }});
 }
 - (void)waitUntilSaved {dispatch_sync(_saving,^{});}
