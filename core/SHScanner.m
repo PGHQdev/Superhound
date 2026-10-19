@@ -41,7 +41,8 @@ static NSArray<NSString *> *SettingsPane(NSURL *url){
  NSSet *excluded=[NSSet setWithArray:@[@".git",@"node_modules",@"vendor",@"build",@"dist",@"DerivedData"]];
  NSMutableArray *entries=NSMutableArray.array;
  NSUInteger visited=0;
- for(NSURL *entry in enumerator){@autoreleasepool{
+ // nextObject runs inside the pool; fast enumeration would keep every visited URL and its resource values until the scan ends.
+ for(;;){@autoreleasepool{NSURL *entry=[enumerator nextObject];if(!entry)break;
   if(cancelled && cancelled()){failure=[NSError errorWithDomain:NSCocoaErrorDomain code:NSUserCancelledError userInfo:nil];break;}
   NSDictionary *values=[entry resourceValuesForKeys:keys error:&failure];if(!values)break;
   NSString *name=entry.lastPathComponent;BOOL dir=[values[NSURLIsDirectoryKey] boolValue],link=[values[NSURLIsSymbolicLinkKey] boolValue];
