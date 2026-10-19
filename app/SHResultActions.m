@@ -24,10 +24,12 @@ static NSString *EjectAll(void){
  }
  return failed?[NSString stringWithFormat:@"%lu of %lu disks could not be ejected. An app may be using them.",(unsigned long)failed,(unsigned long)(failed+ejected)]:ejected?nil:@"There are no disks to eject.";
 }
-// The key press goes when the previous app is in front again, after at most 1 second.
+// The key press goes when the previous app is in front again; after 1 second without it, nothing is pasted.
 // kVK_ANSI_V is the V key position of ANSI and JIS keyboards; a layout with another letter there gets that letter's shortcut.
 static void PressPaste(NSUInteger tries,void (^completion)(NSString *)){
- if(tries && NSWorkspace.sharedWorkspace.frontmostApplication.processIdentifier==NSProcessInfo.processInfo.processIdentifier){dispatch_after(dispatch_time(DISPATCH_TIME_NOW,50*NSEC_PER_MSEC),dispatch_get_main_queue(),^{PressPaste(tries-1,completion);});return;}
+ BOOL waiting=NSWorkspace.sharedWorkspace.frontmostApplication.processIdentifier==NSProcessInfo.processInfo.processIdentifier;
+ if(waiting && tries){dispatch_after(dispatch_time(DISPATCH_TIME_NOW,50*NSEC_PER_MSEC),dispatch_get_main_queue(),^{PressPaste(tries-1,completion);});return;}
+ if(waiting){completion(@"The text is copied. Superhound could not return to the previous app, so nothing was pasted.");return;}
  CGEventSourceRef source=CGEventSourceCreate(kCGEventSourceStateCombinedSessionState);
  for(int down=1;down>=0;down--){CGEventRef key=CGEventCreateKeyboardEvent(source,kVK_ANSI_V,down);CGEventSetFlags(key,kCGEventFlagMaskCommand);CGEventPost(kCGHIDEventTap,key);CFRelease(key);}
  if(source)CFRelease(source);completion(nil);

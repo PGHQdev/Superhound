@@ -37,7 +37,7 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  NSRunningApplication *_previous;
  BOOL _navigated,_reloading,_pending,_history;
  id _selectedID;
- NSString *_coverage;
+ NSString *_coverage,*_error;
  NSCache *_icons;
  NSMutableSet *_loadingIcons;
  dispatch_queue_t _iconQueue;
@@ -72,7 +72,7 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  double activated=SHTime();BOOL open=self.window.isVisible && self.window.isKeyWindow;
  if(open && _history==history){[self dismiss:YES];return;}
  if(!open)_previous=NSWorkspace.sharedWorkspace.frontmostApplication;
- if(_history!=history){_history=history;_field.stringValue=@"";[_queries cancel];}
+ if(_history!=history){_history=history;_field.stringValue=@"";_error=nil;[_queries cancel];}
  _field.placeholderString=history?@"Search clipboard history":@"Search apps and files";_field.accessibilityLabel=history?@"Search clipboard history":@"Search apps and selected folders";
  _help.stringValue=history?@"↑ ↓ Move    ↩ Paste    ⌘↩ Copy    ⌘K Actions    Esc Close":@"↑ ↓ Move    ↩ Open    ⌘↩ Reveal in Finder    ⌘K Actions    Esc Close";
  NSScreen *screen=NSScreen.mainScreen?:NSScreen.screens.firstObject;
@@ -82,7 +82,7 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  [_field selectText:nil];[self search:YES];SHMeasure(@"panel_activation",activated);
 }
 - (void)dismiss:(BOOL)restore {
- [_queries cancel];[self.window orderOut:nil];
+ [_queries cancel];[self.window orderOut:nil];_error=nil;
  if(QLPreviewPanel.sharedPreviewPanelExists && QLPreviewPanel.sharedPreviewPanel.isVisible)[QLPreviewPanel.sharedPreviewPanel orderOut:nil];
  if(restore && _previous && _previous.processIdentifier!=NSProcessInfo.processInfo.processIdentifier)[_previous activateWithOptions:0];
 }
@@ -92,13 +92,15 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  if(changed)_queries.snapshot=snapshot;
  if(self.window.isVisible){if(changed && !_history)[self search:NO];else [self updateStatus];}
 }
-- (void)showError:(NSString *)error {if(!self.window.isVisible)[self show:_history];_status.stringValue=error;NSAccessibilityPostNotification(_status,NSAccessibilityValueChangedNotification);}
+// The error stays in the status line until the query changes; a search that is still in progress does not replace it.
+- (void)showError:(NSString *)error {_error=error;if(!self.window.isVisible)[self show:_history];_status.stringValue=error;NSAccessibilityPostNotification(_status,NSAccessibilityValueChangedNotification);}
 - (void)updateStatus {
+ if(_error){_status.stringValue=_error;return;}
  if(_history){_status.stringValue=!_clipboard.count?@"The clipboard history is empty. Text you copy in any app comes here.":_results.count?[NSString stringWithFormat:@"%lu copied items · Kept on this Mac only",(unsigned long)_clipboard.count]:@"No matches in the clipboard history.";return;}
  NSString *prompt=_field.stringValue.length?(_results.count?@"":@"No matches. "):@"Type to search files. ";
  _status.stringValue=[prompt stringByAppendingString:_coverage?:@""];
 }
-- (void)controlTextDidChange:(NSNotification *)notification {(void)notification;[self search:YES];}
+- (void)controlTextDidChange:(NSNotification *)notification {(void)notification;_error=nil;[self search:YES];}
 - (void)search:(BOOL)changedQuery {
  double requested=SHTime();
  _pending=YES;
