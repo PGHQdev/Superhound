@@ -26,29 +26,39 @@
 }
 - (void)dealloc {if(_db)sqlite3_close(_db);}
 static void Bind(sqlite3_stmt *s,int col,NSString *v){sqlite3_bind_text(s,col,v.UTF8String,-1,SQLITE_TRANSIENT);}
+// Rows go straight into entries; a temporary staging table kept its pages, 11 MB for 43,000 rows, until the connection closed.
+// The relative paths of one write as a JSON array for json_each, or nil when one is missing or repeated.
+static NSData *Relatives(NSArray<NSDictionary *> *entries){
+ NSMutableArray *list=[NSMutableArray arrayWithCapacity:entries.count];for(NSDictionary *e in entries){if(![e[@"relative"] isKindOfClass:NSString.class])return nil;[list addObject:e[@"relative"]];}
+ return [NSSet setWithArray:list].count==list.count?[NSJSONSerialization dataWithJSONObject:list options:0 error:nil]:nil;
+}
+static NSError *Rejected(void){return [NSError errorWithDomain:@"SuperhoundCatalog" code:SQLITE_CONSTRAINT userInfo:@{NSLocalizedDescriptionKey:@"An entry has a missing or repeated relative path."}];}
+// Inserts or updates each row; changed adds the rows that differ.
+- (BOOL)upsert:(NSArray<NSDictionary *> *)entries root:(NSString *)root sql:(const char *)sql changed:(NSUInteger *)changed {
+ sqlite3_stmt *s=NULL;BOOL ok=sqlite3_prepare_v2(_db,sql,-1,&s,NULL)==SQLITE_OK;
+ for(NSDictionary *e in entries){if(!ok)break;sqlite3_reset(s);sqlite3_clear_bindings(s);Bind(s,1,root);Bind(s,2,e[@"relative"]);Bind(s,3,e[@"name"]);Bind(s,4,e[@"path"]);Bind(s,5,e[@"type"]);Bind(s,6,e[@"alias"]?:@"");ok=sqlite3_step(s)==SQLITE_DONE;if(changed)*changed+=(NSUInteger)sqlite3_changes(_db);}
+ sqlite3_finalize(s);return ok;
+}
 - (BOOL)replaceRoot:(NSString *)root entries:(NSArray<NSDictionary *> *)entries error:(NSError **)error {
- if(![self sql:"BEGIN IMMEDIATE; CREATE TEMP TABLE IF NOT EXISTS staged (relative TEXT PRIMARY KEY,name TEXT,path TEXT,type TEXT,alias TEXT); DELETE FROM staged;"]){if(error)*error=[self failure];[self sql:"ROLLBACK"];return NO;}
- sqlite3_stmt *s=NULL;BOOL ok=sqlite3_prepare_v2(_db,"INSERT INTO staged VALUES (?,?,?,?,?)",-1,&s,NULL)==SQLITE_OK;
- for(NSDictionary *e in entries){if(!ok)break;sqlite3_reset(s);sqlite3_clear_bindings(s);Bind(s,1,e[@"relative"]);Bind(s,2,e[@"name"]);Bind(s,3,e[@"path"]);Bind(s,4,e[@"type"]);Bind(s,5,e[@"alias"]?:@"");ok=sqlite3_step(s)==SQLITE_DONE;}sqlite3_finalize(s);s=NULL;
- if(ok){ok=sqlite3_prepare_v2(_db,"INSERT INTO entries(root,relative,name,path,type,alias) SELECT ?,relative,name,path,type,alias FROM staged WHERE true ON CONFLICT(root,relative) DO UPDATE SET name=excluded.name,path=excluded.path,type=excluded.type,alias=excluded.alias",-1,&s,NULL)==SQLITE_OK;if(ok){Bind(s,1,root);ok=sqlite3_step(s)==SQLITE_DONE;}sqlite3_finalize(s);s=NULL;}
- if(ok){ok=sqlite3_prepare_v2(_db,"DELETE FROM entries WHERE root=? AND relative NOT IN (SELECT relative FROM staged)",-1,&s,NULL)==SQLITE_OK;if(ok){Bind(s,1,root);ok=sqlite3_step(s)==SQLITE_DONE;}sqlite3_finalize(s);s=NULL;}
+ NSData *relatives=Relatives(entries);if(!relatives){if(error)*error=Rejected();return NO;}
+ if(![self sql:"BEGIN IMMEDIATE"]){if(error)*error=[self failure];return NO;}
+ BOOL ok=[self upsert:entries root:root sql:"INSERT INTO entries(root,relative,name,path,type,alias) VALUES (?,?,?,?,?,?) ON CONFLICT(root,relative) DO UPDATE SET name=excluded.name,path=excluded.path,type=excluded.type,alias=excluded.alias" changed:NULL];sqlite3_stmt *s=NULL;
+ if(ok){ok=sqlite3_prepare_v2(_db,"DELETE FROM entries WHERE root=? AND relative NOT IN (SELECT value FROM json_each(?))",-1,&s,NULL)==SQLITE_OK;if(ok){Bind(s,1,root);sqlite3_bind_text(s,2,relatives.bytes,(int)relatives.length,SQLITE_STATIC);ok=sqlite3_step(s)==SQLITE_DONE;}sqlite3_finalize(s);s=NULL;}
  if(ok){ok=sqlite3_prepare_v2(_db,"INSERT INTO roots VALUES (?,strftime('%s','now'),'ready') ON CONFLICT(id) DO UPDATE SET last_scan=excluded.last_scan,state='ready'",-1,&s,NULL)==SQLITE_OK;if(ok){Bind(s,1,root);ok=sqlite3_step(s)==SQLITE_DONE;}sqlite3_finalize(s);}
  if(ok)ok=[self sql:"COMMIT"];
  if(!ok){if(error)*error=[self failure];[self sql:"ROLLBACK"];}
  return ok;
 }
 - (BOOL)updateRoot:(NSString *)root directories:(NSArray<NSDictionary *> *)directories changed:(NSUInteger *)changed error:(NSError **)error {
- NSUInteger total=0;
- if(![self sql:"BEGIN IMMEDIATE; CREATE TEMP TABLE IF NOT EXISTS staged (relative TEXT PRIMARY KEY,name TEXT,path TEXT,type TEXT,alias TEXT);"]){if(error)*error=[self failure];[self sql:"ROLLBACK"];return NO;}
+ NSUInteger total=0;NSMutableArray *relatives=NSMutableArray.array;
+ for(NSDictionary *d in directories){NSData *list=Relatives(d[@"entries"]);if(!list){if(error)*error=Rejected();if(changed)*changed=0;return NO;}[relatives addObject:list];}
+ if(![self sql:"BEGIN IMMEDIATE"]){if(error)*error=[self failure];if(changed)*changed=0;return NO;}
  BOOL ok=YES;
- for(NSDictionary *d in directories){if(!ok)break;
-  ok=[self sql:"DELETE FROM staged"];sqlite3_stmt *s=NULL;
-  if(ok)ok=sqlite3_prepare_v2(_db,"INSERT INTO staged VALUES (?,?,?,?,?)",-1,&s,NULL)==SQLITE_OK;
-  for(NSDictionary *e in d[@"entries"]){if(!ok)break;sqlite3_reset(s);sqlite3_clear_bindings(s);Bind(s,1,e[@"relative"]);Bind(s,2,e[@"name"]);Bind(s,3,e[@"path"]);Bind(s,4,e[@"type"]);Bind(s,5,e[@"alias"]?:@"");ok=sqlite3_step(s)==SQLITE_DONE;}sqlite3_finalize(s);s=NULL;
+ for(NSUInteger i=0;i<directories.count && ok;i++){NSDictionary *d=directories[i];
   // Identical rows are left alone so an unchanged directory counts as no change.
-  if(ok){ok=sqlite3_prepare_v2(_db,"INSERT INTO entries(root,relative,name,path,type,alias) SELECT ?,relative,name,path,type,alias FROM staged WHERE true ON CONFLICT(root,relative) DO UPDATE SET name=excluded.name,path=excluded.path,type=excluded.type,alias=excluded.alias WHERE name IS NOT excluded.name OR path IS NOT excluded.path OR type IS NOT excluded.type OR alias IS NOT excluded.alias",-1,&s,NULL)==SQLITE_OK;if(ok){Bind(s,1,root);ok=sqlite3_step(s)==SQLITE_DONE;total+=sqlite3_changes(_db);}sqlite3_finalize(s);s=NULL;}
-  NSString *prefix=[d[@"relative"] length]?[d[@"relative"] stringByAppendingString:@"/"]:@"";
-  if(ok){ok=sqlite3_prepare_v2(_db,"DELETE FROM entries WHERE root=?1 AND substr(relative,1,length(?2))=?2 AND (?3 OR instr(substr(relative,length(?2)+1),'/')=0) AND relative NOT IN (SELECT relative FROM staged)",-1,&s,NULL)==SQLITE_OK;if(ok){Bind(s,1,root);Bind(s,2,prefix);sqlite3_bind_int(s,3,[d[@"deep"] boolValue]);ok=sqlite3_step(s)==SQLITE_DONE;total+=sqlite3_changes(_db);}sqlite3_finalize(s);}
+  ok=[self upsert:d[@"entries"] root:root sql:"INSERT INTO entries(root,relative,name,path,type,alias) VALUES (?,?,?,?,?,?) ON CONFLICT(root,relative) DO UPDATE SET name=excluded.name,path=excluded.path,type=excluded.type,alias=excluded.alias WHERE name IS NOT excluded.name OR path IS NOT excluded.path OR type IS NOT excluded.type OR alias IS NOT excluded.alias" changed:&total];
+  NSString *prefix=[d[@"relative"] length]?[d[@"relative"] stringByAppendingString:@"/"]:@"";sqlite3_stmt *s=NULL;
+  if(ok){ok=sqlite3_prepare_v2(_db,"DELETE FROM entries WHERE root=?1 AND substr(relative,1,length(?2))=?2 AND (?3 OR instr(substr(relative,length(?2)+1),'/')=0) AND relative NOT IN (SELECT value FROM json_each(?4))",-1,&s,NULL)==SQLITE_OK;if(ok){Bind(s,1,root);Bind(s,2,prefix);sqlite3_bind_int(s,3,[d[@"deep"] boolValue]);sqlite3_bind_text(s,4,[relatives[i] bytes],(int)[relatives[i] length],SQLITE_STATIC);ok=sqlite3_step(s)==SQLITE_DONE;total+=sqlite3_changes(_db);}sqlite3_finalize(s);}
  }
  if(ok)ok=[self sql:"COMMIT"];
  if(!ok){if(error)*error=[self failure];[self sql:"ROLLBACK"];}
