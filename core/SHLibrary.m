@@ -1,6 +1,7 @@
 #import "SHLibrary.h"
 #import "SHCatalog.h"
 #import "SHScanner.h"
+#import "SHCommands.h"
 #import "SHChangeMonitor.h"
 #import "SHFolderAccess.h"
 #import "SHMetrics.h"
@@ -46,7 +47,7 @@
 }
 - (SHRoot *)root:(NSString *)identifier {for(SHRoot *r in _roots)if([r.identifier isEqual:identifier])return r;return nil;}
 - (void)publish:(BOOL)rebuild {
- if(rebuild){NSMutableArray *entries=NSMutableArray.array;NSMutableSet *seen=NSMutableSet.set;
+ if(rebuild){NSMutableArray *entries=[SHCommands.entries mutableCopy];NSMutableSet *seen=NSMutableSet.set;
   for(SHRoot *r in _roots)for(NSDictionary *e in r.entries){NSString *path=e[@"path"];if(![seen containsObject:path]){[entries addObject:e];[seen addObject:path];}}
   SHSearchSnapshot *s=[[SHSearchSnapshot alloc] initWithEntries:entries generation:++_generation];
   if(s)_snapshot=s;else {_snapshot=nil;_message=@"Not enough memory to prepare search. Remove a large search location and refresh.";}

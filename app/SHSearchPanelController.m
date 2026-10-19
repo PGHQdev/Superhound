@@ -95,11 +95,11 @@
  [_queries submit:_field.stringValue preferred:preferred completion:^(NSArray<NSDictionary *> *results){
   SHSearchPanelController *self=weak;if(!self || !self.window.isVisible)return;
   // A calculation or conversion takes the first of the eight rows.
-  // Order: answer, results the user chose before, applications and settings panes, up to 3 emoji, then files and folders.
+  // Order: answer, results the user chose before, applications, settings panes, and commands, up to 3 emoji, then files and folders.
   NSMutableArray *rows=NSMutableArray.array,*otherEmoji=[emoji mutableCopy];if(answer)[rows addObject:answer];
   NSSet *chosen=[NSSet setWithArray:[preferred valueForKey:@"path"]];
   for(NSDictionary *p in preferred)for(NSDictionary *e in emoji)if([e[@"path"] isEqual:p[@"path"]]){[rows addObject:e];[otherEmoji removeObjectIdenticalTo:e];}
-  NSUInteger lead=0;while(lead<results.count && ([results[lead][@"type"] isEqual:@"app"] || [results[lead][@"type"] isEqual:@"settings"] || [chosen containsObject:results[lead][@"path"]]))lead++;
+  NSUInteger lead=0;while(lead<results.count && (SHLaunchable(results[lead]) || [chosen containsObject:results[lead][@"path"]]))lead++;
   NSUInteger shown=MIN((NSUInteger)3,otherEmoji.count);
   for(NSUInteger i=0;i<lead && rows.count+shown<8;i++)[rows addObject:results[i]];
   for(NSUInteger i=0;i<shown;i++)[rows addObject:otherEmoji[i]];
@@ -123,11 +123,11 @@
  (void)tableView;(void)column;
  NSDictionary *result=_results[(NSUInteger)row];NSString *path=result[@"path"];BOOL emoji=[result[@"type"] isEqual:@"emoji"],answer=emoji || [result[@"type"] isEqual:@"answer"];
  NSTableCellView *cell=[[NSTableCellView alloc] initWithFrame:NSMakeRect(0,0,616,48)];
- NSImageView *icon=[[NSImageView alloc] initWithFrame:NSMakeRect(10,8,32,32)];icon.image=emoji?nil:answer?[NSImage imageWithSystemSymbolName:@"equal.circle" accessibilityDescription:nil]:[_icons objectForKey:path];icon.contentTintColor=NSColor.secondaryLabelColor;cell.imageView=icon;[cell addSubview:icon];
+ NSImageView *icon=[[NSImageView alloc] initWithFrame:NSMakeRect(10,8,32,32)];icon.image=emoji?nil:answer?[NSImage imageWithSystemSymbolName:@"equal.circle" accessibilityDescription:nil]:result[@"symbol"]?[NSImage imageWithSystemSymbolName:result[@"symbol"] accessibilityDescription:nil]:[_icons objectForKey:path];icon.contentTintColor=NSColor.secondaryLabelColor;cell.imageView=icon;[cell addSubview:icon];
  if(emoji){NSTextField *glyph=[NSTextField labelWithString:result[@"emoji"]];glyph.frame=NSMakeRect(8,6,38,36);glyph.font=[NSFont systemFontOfSize:26];glyph.alignment=NSTextAlignmentCenter;[cell addSubview:glyph];}
  NSTextField *name=[NSTextField labelWithString:result[@"name"]];name.frame=NSMakeRect(54,24,550,21);name.font=[NSFont systemFontOfSize:15 weight:NSFontWeightMedium];name.lineBreakMode=NSLineBreakByTruncatingMiddle;cell.textField=name;[cell addSubview:name];
  NSString *type=[@{@"app":@"Application",@"folder":@"Folder",@"link":@"Link",@"file":@"File"} objectForKey:result[@"type"]];
- NSTextField *detail=[NSTextField labelWithString:emoji?@"Emoji · Return to copy":answer?[result[@"detail"] stringByAppendingString:@" · Return to copy"]:[result[@"type"] isEqual:@"settings"]?@"System Settings":[NSString stringWithFormat:@"%@ · %@",[path.stringByDeletingLastPathComponent stringByAbbreviatingWithTildeInPath],type]];detail.frame=NSMakeRect(54,6,550,17);detail.font=[NSFont systemFontOfSize:11];detail.textColor=NSColor.secondaryLabelColor;detail.lineBreakMode=NSLineBreakByTruncatingMiddle;[cell addSubview:detail];cell.accessibilityLabel=[NSString stringWithFormat:@"%@, %@",result[@"name"],detail.stringValue];
+ NSTextField *detail=[NSTextField labelWithString:emoji?@"Emoji · Return to copy":answer?[result[@"detail"] stringByAppendingString:@" · Return to copy"]:[result[@"type"] isEqual:@"settings"]?@"System Settings":[result[@"type"] isEqual:@"command"]?@"Command":[NSString stringWithFormat:@"%@ · %@",[path.stringByDeletingLastPathComponent stringByAbbreviatingWithTildeInPath],type]];detail.frame=NSMakeRect(54,6,550,17);detail.font=[NSFont systemFontOfSize:11];detail.textColor=NSColor.secondaryLabelColor;detail.lineBreakMode=NSLineBreakByTruncatingMiddle;[cell addSubview:detail];cell.accessibilityLabel=[NSString stringWithFormat:@"%@, %@",result[@"name"],detail.stringValue];
  if(!answer && !icon.image && ![_loadingIcons containsObject:path]){[_loadingIcons addObject:path];__weak typeof(self) weak=self;
   dispatch_async(_iconQueue,^{NSImage *image=[NSWorkspace.sharedWorkspace iconForFile:path];dispatch_async(dispatch_get_main_queue(),^{SHSearchPanelController *self=weak;if(!self)return;[self->_loadingIcons removeObject:path];if(image)[self->_icons setObject:image forKey:path];for(NSUInteger i=0;i<self->_results.count;i++)if([self->_results[i][@"path"] isEqual:path]){NSTableCellView *visible=[self->_table viewAtColumn:0 row:(NSInteger)i makeIfNecessary:NO];visible.imageView.image=image;}});});
  }
@@ -147,7 +147,7 @@
  NSDictionary *result=_results[(NSUInteger)row];
  if([result[@"type"] isEqual:@"emoji"])[_usage recordQuery:_field.stringValue result:result];
  if(result[@"copy"]){[NSPasteboard.generalPasteboard clearContents];[NSPasteboard.generalPasteboard setString:result[@"copy"] forType:NSPasteboardTypeString];[self dismiss:YES];return;}
- [_usage recordQuery:_field.stringValue result:result];[self dismiss:NO];if(self.openResult)self.openResult(result,reveal);
+ [_usage recordQuery:_field.stringValue result:result];[self dismiss:[result[@"type"] isEqual:@"command"]];if(self.openResult)self.openResult(result,reveal);
 }
 - (BOOL)control:(NSControl *)control textView:(NSTextView *)textView doCommandBySelector:(SEL)selector {
  (void)control;if(textView.hasMarkedText)return NO;

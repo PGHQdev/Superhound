@@ -31,6 +31,7 @@ To see a change in the live app: build with a build number one above the install
 | `SHUsage.m` | Learned ranking. Records which result the user opened for which query, in `usage.plist`. |
 | `SHAnswer.m` | Quick answers: the arithmetic parser, percent rules, and the unit table. |
 | `SHEmoji.m` | Emoji search by name and keyword over `app/emoji.tsv`. |
+| `SHCommands.m` | The system commands (Lock Screen, Sleep, Restart, Toggle Mute, Empty Trash, and others) as search entries. `SHLibrary` adds them to each snapshot. |
 | `SHLibrary.m` | Owns the search locations: the fixed app folders, the user's folders, scans, overlap between folders, and snapshot publication. |
 | `SHScanner.m` | Walks one folder and makes entries. Holds the skip rules (hidden items, packages, generated folders, online-only files). |
 | `SHCatalog.m` | The SQLite cache of scanned entries. |
@@ -42,11 +43,11 @@ To see a change in the live app: build with a build number one above the install
 | File | Function |
 |---|---|
 | `SHAppDelegate.m` | Start-up wiring, the menu bar item and its menu, Open at Login. |
-| `SHSearchPanelController.m` | The search panel: field, result rows, row order (answer, chosen before, apps, emoji, files), keys, copy and open. |
+| `SHSearchPanelController.m` | The search panel: field, result rows, row order (answer, chosen before, apps, settings panes, and commands, emoji, files), keys, copy and open. |
 | `SHSettingsController.m` | The Search Locations window and the shortcut recorder. |
 | `SHHotKey.m` | Global shortcut registration. |
 | `SHFolderAccess.m` | Security-scoped bookmarks for the user's folders. |
-| `SHResultActions.m` | Opens a result or shows it in Finder. |
+| `SHResultActions.m` | Opens a result or shows it in Finder, and runs the system commands. |
 | `emoji.tsv` | Generated emoji data: emoji, name, keywords. Do not edit by hand. |
 
 ### `tests/` and `bench/`

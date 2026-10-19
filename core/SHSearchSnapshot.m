@@ -5,6 +5,7 @@
 NSString *SHFold(NSString *text) {
  return [[text precomposedStringWithCanonicalMapping] stringByFoldingWithOptions:NSCaseInsensitiveSearch|NSDiacriticInsensitiveSearch|NSWidthInsensitiveSearch locale:[NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"]];
 }
+BOOL SHLaunchable(NSDictionary *entry) {NSString *type=entry[@"type"];return [type isEqual:@"app"] || [type isEqual:@"settings"] || [type isEqual:@"command"];}
 // Names are usually unique; aliases and parent paths commonly repeat across entries.
 // Store those shared texts once and keep compact indexes in each record.
 typedef struct { SHText name; uint32_t alias,path; } SHRecord;
@@ -90,10 +91,9 @@ typedef struct { NSUInteger index; unsigned learned,worst,total,pathTerms; size_
 }
 - (BOOL)rank:(Ranked)a precedes:(Ranked)b {
  if(a.learned!=b.learned)return a.learned>b.learned;
- // An application or settings pane matched by its name or alias precedes every file, folder, and link.
- // Exact matches precede typing-error matches; within each group, applications and settings panes come first.
- NSString *at=_entries[a.index][@"type"],*bt=_entries[b.index][@"type"];
- BOOL aa=a.worst!=4 && ([at isEqual:@"app"] || [at isEqual:@"settings"]),ba=b.worst!=4 && ([bt isEqual:@"app"] || [bt isEqual:@"settings"]);
+ // An application, settings pane, or command matched by its name or alias precedes every file, folder, and link.
+ // Exact matches precede typing-error matches; within each group, those results come first.
+ BOOL aa=a.worst!=4 && SHLaunchable(_entries[a.index]),ba=b.worst!=4 && SHLaunchable(_entries[b.index]);
  if((a.worst>4)!=(b.worst>4))return a.worst<=4;
  if(aa!=ba)return aa;
  if(a.worst!=b.worst)return a.worst<b.worst;

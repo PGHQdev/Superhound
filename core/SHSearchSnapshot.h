@@ -1,6 +1,8 @@
 #import <Foundation/Foundation.h>
 NS_ASSUME_NONNULL_BEGIN
 NSString *SHFold(NSString *text);
+// Applications, settings panes, and commands: results that rank above files and lead the panel rows.
+BOOL SHLaunchable(NSDictionary *entry);
 @interface SHSearchSnapshot : NSObject
 @property(nonatomic,readonly) uint64_t generation;
 @property(nonatomic,readonly) NSUInteger count;

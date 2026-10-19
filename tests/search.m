@@ -2,6 +2,7 @@
 #import "SHSearchSnapshot.h"
 #import "SHQueryController.h"
 #import "SHUsage.h"
+#import "SHCommands.h"
 #include "sh_match.h"
 #include <assert.h>
 static NSDictionary *E(NSInteger i, NSString *name, NSString *path, NSString *type) {
@@ -24,6 +25,15 @@ int main(void) { @autoreleasepool {
  // A term that starts a later word precedes a term inside a word: System Settings leads panes whose file names end in Settings.
  SHSearchSnapshot *words=[[SHSearchSnapshot alloc] initWithEntries:@[@{@"id":@1,@"name":@"Family",@"path":@"/x/FamilySettings.appex",@"relative":@"FamilySettings.appex",@"alias":@"FamilySettings",@"type":@"settings"},E(2,@"System Settings",@"/apps/System Settings.app",@"app")] generation:1];
  for(NSString *q in @[@"settings",@"sett"])assert(([[[words search:q cancelled:nil] valueForKey:@"id"] isEqual:@[@2,@1]]));
+ // Commands are found by name and by other words, rank with applications, and stay out of the empty-query list.
+ NSArray *commands=SHCommands.entries;assert([NSSet setWithArray:[commands valueForKey:@"path"]].count==commands.count);
+ for(NSDictionary *c in commands)assert([c[@"type"] isEqual:@"command"] && [c[@"path"] hasPrefix:@"command:"] && [c[@"symbol"] length] && SHLaunchable(c));
+ SHSearchSnapshot *system=[[SHSearchSnapshot alloc] initWithEntries:[commands arrayByAddingObjectsFromArray:@[E(1,@"lock notes",@"/work/lock notes",@"file"),E(2,@"Sleep Tracker",@"/apps/Sleep Tracker.app",@"app")]] generation:1];
+ NSDictionary *expected=@{@"lock":@"command:lock",@"reboot":@"command:restart",@"shut":@"command:shutdown",@"power off":@"command:shutdown",@"unmute":@"command:mute",@"dark":@"command:dark",@"empty trash":@"command:trash",@"eject":@"command:eject",@"logout":@"command:logout",@"sleep":@"command:sleep",@"display off":@"command:display",@"screen saver":@"command:screensaver"};
+ for(NSString *q in expected)assert([[[system search:q cancelled:nil] firstObject][@"path"] isEqual:expected[q]]);
+ assert(([[[system search:@"lock" cancelled:nil] valueForKey:@"path"] isEqual:@[@"command:lock",@"/work/lock notes"]]));
+ assert(([[[system search:@"sleep" cancelled:nil] valueForKey:@"path"] isEqual:@[@"command:sleep",@"command:display",@"/apps/Sleep Tracker.app"]]));
+ assert(([[[system search:@"" cancelled:nil] valueForKey:@"path"] isEqual:@[@"/apps/Sleep Tracker.app"]]));
  NSArray *typos=@[E(1,@"Claude",@"/apps/Claude.app",@"app"),E(2,@"claude.js",@"/work/claude.js",@"file"),E(3,@"Visual Studio Code",@"/apps/vsc.app",@"app"),E(4,@"mail",@"/work/mail",@"file"),E(5,@"main.c",@"/work/main.c",@"file"),E(6,@"Maps",@"/apps/Maps.app",@"app"),E(7,@"documentation",@"/work/documentation",@"file")];
  SHSearchSnapshot *t=[[SHSearchSnapshot alloc] initWithEntries:typos generation:1];
  for(NSString *q in @[@"calude",@"cluade",@"claide",@"clude",@"claudee",@"lcaude"])assert(([[[t search:q cancelled:nil] valueForKey:@"id"] isEqual:@[@1,@2]]));
