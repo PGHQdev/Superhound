@@ -107,17 +107,20 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  // The previous rows stay visible until the new results arrive; _pending stops Return opening them.
  __weak typeof(self) weak=self;NSDictionary *answer=[SHAnswer answerForQuery:_field.stringValue];
  NSArray<NSDictionary *> *preferred=[_usage preferredForQuery:_field.stringValue],*emoji=[_emoji search:_field.stringValue limit:8];
+ // Shorter queries would match too much copied text.
+ NSArray<NSDictionary *> *clips=[_field.stringValue stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceCharacterSet].length>=3?[_clipboard search:_field.stringValue limit:2]:@[];
  [_queries submit:_field.stringValue preferred:preferred completion:^(NSArray<NSDictionary *> *results){
   SHSearchPanelController *self=weak;if(!self || !self.window.isVisible || self->_history)return;
   // A calculation or conversion takes the first of the eight rows.
-  // Order: answer, results the user chose before, applications, settings panes, and commands, up to 3 emoji, then files and folders.
+  // Order: answer, results the user chose before, applications, settings panes, and commands, up to 3 emoji, up to 2 clipboard items, then files and folders.
   NSMutableArray *rows=NSMutableArray.array,*otherEmoji=[emoji mutableCopy];if(answer)[rows addObject:answer];
   NSSet *chosen=[NSSet setWithArray:[preferred valueForKey:@"path"]];
   for(NSDictionary *p in preferred)for(NSDictionary *e in emoji)if([e[@"path"] isEqual:p[@"path"]]){[rows addObject:e];[otherEmoji removeObjectIdenticalTo:e];}
   NSUInteger lead=0;while(lead<results.count && (SHLaunchable(results[lead]) || [chosen containsObject:results[lead][@"path"]]))lead++;
   NSUInteger shown=MIN((NSUInteger)3,otherEmoji.count);
-  for(NSUInteger i=0;i<lead && rows.count+shown<8;i++)[rows addObject:results[i]];
+  for(NSUInteger i=0;i<lead && rows.count+shown+clips.count<8;i++)[rows addObject:results[i]];
   for(NSUInteger i=0;i<shown;i++)[rows addObject:otherEmoji[i]];
+  for(NSDictionary *clip in clips)if(rows.count<8)[rows addObject:clip];
   for(NSUInteger i=lead;i<results.count && rows.count<8;i++)[rows addObject:results[i]];
   // With few other results, more emoji fill the free rows.
   for(NSUInteger i=shown;i<otherEmoji.count && rows.count<8;i++)[rows addObject:otherEmoji[i]];
