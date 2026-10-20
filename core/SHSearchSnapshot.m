@@ -6,6 +6,10 @@ NSString *SHFold(NSString *text) {
  return [[text precomposedStringWithCanonicalMapping] stringByFoldingWithOptions:NSCaseInsensitiveSearch|NSDiacriticInsensitiveSearch|NSWidthInsensitiveSearch locale:[NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"]];
 }
 BOOL SHLaunchable(NSDictionary *entry) {NSString *type=entry[@"type"];return [type isEqual:@"app"] || [type isEqual:@"settings"] || [type isEqual:@"command"];}
+NSString *SHCompletion(NSString *name,NSString *typed) {
+ if(!typed.length)return nil;NSRange range=[name rangeOfString:typed options:NSCaseInsensitiveSearch|NSDiacriticInsensitiveSearch|NSWidthInsensitiveSearch|NSAnchoredSearch];
+ return range.location==0?[name substringFromIndex:NSMaxRange(range)]:nil;
+}
 // Names are usually unique; aliases and parent paths commonly repeat across entries.
 // Store those shared texts once and keep compact indexes in each record.
 // Fields of a catalog entry stay as UTF-8 in one buffer and become a dictionary only for a result; other entries keep their dictionary.

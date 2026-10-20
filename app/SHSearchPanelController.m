@@ -97,7 +97,8 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  NSScrollView *_scroll;
  NSArray<NSDictionary *> *_results;
  NSRunningApplication *_previous;
- BOOL _navigated,_reloading,_pending,_history;
+ BOOL _navigated,_reloading,_pending,_history,_deleting,_deleted;
+ NSString *_completion,*_submitted;
  id _selectedID;
  NSNumber *_queuedOpen;
  NSString *_coverage,*_error;
@@ -189,7 +190,7 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  double activated=SHTime();BOOL open=self.window.isVisible && (self.window.isKeyWindow || self.window.attachedSheet);
  if(open && _history==history){[self dismiss:YES];return;}
  if(!open)_previous=NSWorkspace.sharedWorkspace.frontmostApplication;
- if(_history!=history){_history=history;_field.stringValue=@"";_error=nil;[_queries cancel];}
+ if(_history!=history){_history=history;_field.stringValue=@"";_completion=nil;_error=nil;[_queries cancel];}
  _field.placeholderAttributedString=[[NSAttributedString alloc] initWithString:history?@"Search clipboard history":@"Search apps and files" attributes:@{NSFontAttributeName:_field.font,NSForegroundColorAttributeName:NSColor.secondaryLabelColor}];_field.accessibilityLabel=history?@"Search clipboard history":@"Search apps and selected folders";
  [self layoutFooter];
  NSScreen *screen=NSScreen.mainScreen?:NSScreen.screens.firstObject;
@@ -207,7 +208,7 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  [alert beginSheetModalForWindow:self.window completionHandler:^(NSModalResponse response){if(response==NSAlertFirstButtonReturn)[self buy:nil];else [self.window makeFirstResponder:self->_field];}];
 }
 - (void)dismiss:(BOOL)restore {
- [_queries cancel];_queuedOpen=nil;[self hover:NO];if(self.window.attachedSheet)[self.window endSheet:self.window.attachedSheet];[self.window orderOut:nil];_error=nil;
+ [self clearCompletion];[_queries cancel];_queuedOpen=nil;[self hover:NO];if(self.window.attachedSheet)[self.window endSheet:self.window.attachedSheet];[self.window orderOut:nil];_error=nil;
  if(QLPreviewPanel.sharedPreviewPanelExists && QLPreviewPanel.sharedPreviewPanel.isVisible)[QLPreviewPanel.sharedPreviewPanel orderOut:nil];
  if(restore && _previous && _previous.processIdentifier!=NSProcessInfo.processInfo.processIdentifier)[_previous activateWithOptions:0];
 }
@@ -223,24 +224,40 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
 - (void)updateStatus {
  // The web search row alone still counts as no matches.
  NSUInteger found=0;for(NSDictionary *r in _results)if(![r[@"type"] isEqual:@"web"])found++;
- BOOL empty=!_field.stringValue.length,none=!found && !_pending;
+ BOOL empty=!self.query.length,none=!found && !_pending;
  NSString *label=_error?:_history && !_clipboard.count?@"The clipboard history is empty":empty?(_history?@"Clipboard":@"Suggested"):none?@"No matches":nil;
  _section.hidden=_note.hidden=!label;_section.stringValue=label?:@"";_section.textColor=_error?NSColor.labelColor:NSColor.secondaryLabelColor;
  _note.stringValue=_error?@"":_history?(!_clipboard.count?@"Text you copy in any app comes here":empty?[NSString stringWithFormat:@"%@ %@ · Kept on this Mac only",Count(_clipboard.count),_clipboard.count==1?@"item":@"items"]:@""):_coverage?:@"";
  [self fit];
 }
-- (void)controlTextDidChange:(NSNotification *)notification {(void)notification;_error=nil;[self search:YES];}
+// The field now holds only typed text; a deletion must not bring back the completion it removed.
+- (void)controlTextDidChange:(NSNotification *)notification {(void)notification;_error=nil;_completion=nil;_deleted=_deleting;_deleting=NO;[self search:YES];}
+// The text the user typed: the field without the completion selected after it.
+- (NSString *)query {NSString *text=_field.stringValue;return _completion && [text hasSuffix:_completion]?[text substringToIndex:text.length-_completion.length]:text;}
+// With Complete the top result on in Settings (off by default), the rest of the top result's name follows the typed text, selected, so the next key replaces it.
+// It waits for the results of the text in the field, and stays away from deletions, a moved selection, input-method text, and an insertion point inside the text.
+- (void)complete {
+ NSTextView *editor=(NSTextView *)_field.currentEditor;NSString *typed=self.query,*suffix=nil;NSDictionary *top=_results.firstObject;
+ if([NSUserDefaults.standardUserDefaults boolForKey:@"inlineCompletion"] && !_history && !_navigated && !_deleted && [typed isEqual:_submitted] && [editor isKindOfClass:NSTextView.class] && !editor.hasMarkedText && _table.selectedRow==0 && (SHLaunchable(top) || [@[@"file",@"folder",@"link"] containsObject:top[@"type"]]))suffix=SHCompletion(top[@"name"],typed);
+ if(!suffix.length)suffix=nil;
+ if(suffix==_completion || [suffix isEqual:_completion])return;
+ NSRange selection=editor.selectedRange;if(!editor || selection.location!=typed.length || selection.length!=_completion.length)return;
+ _completion=suffix;_field.stringValue=[typed stringByAppendingString:suffix?:@""];editor.selectedRange=NSMakeRange(typed.length,suffix.length);
+}
+- (void)clearCompletion {if(!_completion)return;NSString *typed=self.query;_completion=nil;_field.stringValue=typed;_field.currentEditor.selectedRange=NSMakeRange(typed.length,0);}
+// Tab or → keeps the completion as typed text and searches for it.
+- (BOOL)acceptCompletion {if(!_completion)return NO;_completion=nil;_field.currentEditor.selectedRange=NSMakeRange(_field.stringValue.length,0);_error=nil;_deleted=NO;[self search:YES];return YES;}
 - (void)search:(BOOL)changedQuery {
  double requested=SHTime();
  _pending=YES;
  if(changedQuery){_navigated=NO;_selectedID=nil;_queuedOpen=nil;}
- if(_history){_pending=NO;[self present:[_clipboard search:_field.stringValue limit:100]];return;}
+ if(_history){_pending=NO;[self present:[_clipboard search:self.query limit:100]];return;}
  // The previous rows stay visible until the new results arrive; _pending stops Return opening them.
- __weak typeof(self) weak=self;NSDictionary *answer=[SHAnswer answerForQuery:_field.stringValue],*address=[SHWeb addressForQuery:_field.stringValue],*web=[SHWeb searchForQuery:_field.stringValue engine:[NSUserDefaults.standardUserDefaults stringForKey:@"searchEngine"]];
- NSArray<NSDictionary *> *preferred=[_usage preferredForQuery:_field.stringValue],*emoji=[_emoji search:_field.stringValue limit:8];
+ __weak typeof(self) weak=self;NSDictionary *answer=[SHAnswer answerForQuery:self.query],*address=[SHWeb addressForQuery:self.query],*web=[SHWeb searchForQuery:self.query engine:[NSUserDefaults.standardUserDefaults stringForKey:@"searchEngine"]];
+ NSArray<NSDictionary *> *preferred=[_usage preferredForQuery:self.query],*emoji=[_emoji search:self.query limit:8];
  // Shorter queries would match too much copied text.
- NSArray<NSDictionary *> *clips=[_field.stringValue stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceCharacterSet].length>=3?[_clipboard search:_field.stringValue limit:2]:@[];
- NSString *query=_field.stringValue;
+ NSArray<NSDictionary *> *clips=[self.query stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceCharacterSet].length>=3?[_clipboard search:self.query limit:2]:@[];
+ NSString *query=self.query;_submitted=query;
  [_queries submit:query preferred:preferred completion:^(NSArray<NSDictionary *> *results){
   SHSearchPanelController *self=weak;if(!self || !self.window.isVisible || self->_history)return;
   // A web address or a calculation takes the first of the eight rows. A result whose name or file name is the typed text, such as Safari.app or logo.ai, stays above the address.
@@ -274,7 +291,7 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  _reloading=YES;[_table reloadData];
  if(selection>=0){[_table selectRowIndexes:[NSIndexSet indexSetWithIndex:(NSUInteger)selection] byExtendingSelection:NO];[_table scrollRowToVisible:selection];}else [_table deselectAll:nil];
  _reloading=NO;_selectedID=selection>=0?results[(NSUInteger)selection][@"id"]:nil;
- [self updateStatus];
+ [self complete];[self updateStatus];
 }
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView {(void)tableView;return (NSInteger)_results.count;}
 - (NSView *)tableView:(NSTableView *)tableView viewForTableColumn:(NSTableColumn *)column row:(NSInteger)row {
@@ -288,7 +305,7 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  // An app shows its folder only when another result has the same name.
  BOOL shared=NO;for(NSDictionary *other in _results)if(other!=result && [other[@"name"] caseInsensitiveCompare:result[@"name"]]==NSOrderedSame)shared=YES;
  NSString *detail=emoji?@"Emoji · Return to copy":clip?Copied(result):[kind isEqual:@"web"]?@"Web search · Return to open in your browser":web?@"Web address · Return to open in your browser":answer?[result[@"detail"] stringByAppendingString:@" · Return to copy"]:[kind isEqual:@"settings"]?@"System Settings":[kind isEqual:@"command"]?@"Command":[kind isEqual:@"app"] && !shared?@"":Context(result,_results);
- NSTextField *name=[NSTextField labelWithAttributedString:Marked(result[@"name"],[kind isEqual:@"web"]?@"":_field.stringValue)];cell.textField=name;[cell addSubview:name];
+ NSTextField *name=[NSTextField labelWithAttributedString:Marked(result[@"name"],[kind isEqual:@"web"]?@"":self.query)];cell.textField=name;[cell addSubview:name];
  NSTextField *info=[NSTextField labelWithString:detail];info.font=[NSFont systemFontOfSize:12];info.textColor=NSColor.secondaryLabelColor;info.lineBreakMode=located || [kind isEqual:@"app"]?NSLineBreakByTruncatingHead:NSLineBreakByTruncatingTail;[cell addSubview:info];
  if(compact){CGFloat width=detail.length?MIN(ceil(info.intrinsicContentSize.width),Text/2):0;name.frame=NSMakeRect(44,(height-18)/2,Text-width-(width?8:0),18);info.frame=NSMakeRect(44+Text-width,(height-16)/2,width,16);info.alignment=NSTextAlignmentRight;}
  else {name.frame=NSMakeRect(44,24,Text,18);info.frame=NSMakeRect(44,7,Text,16);}
@@ -299,9 +316,9 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  }
  return cell;
 }
-- (void)tableViewSelectionDidChange:(NSNotification *)notification {(void)notification;if(_reloading)return;_navigated=YES;NSInteger row=_table.selectedRow;_selectedID=row>=0?_results[(NSUInteger)row][@"id"]:nil;}
+- (void)tableViewSelectionDidChange:(NSNotification *)notification {(void)notification;if(_reloading)return;[self clearCompletion];_navigated=YES;NSInteger row=_table.selectedRow;_selectedID=row>=0?_results[(NSUInteger)row][@"id"]:nil;}
 - (void)move:(NSInteger)delta {
- _navigated=YES;NSInteger row=_table.selectedRow;
+ [self clearCompletion];_navigated=YES;NSInteger row=_table.selectedRow;
  if(!_results.count)return;
  row=row<0?(delta>0?0:(NSInteger)_results.count-1):MAX(0,MIN((NSInteger)_results.count-1,row+delta));
  [_table selectRowIndexes:[NSIndexSet indexSetWithIndex:(NSUInteger)row] byExtendingSelection:NO];[_table scrollRowToVisible:row];_selectedID=_results[(NSUInteger)row][@"id"];
@@ -371,10 +388,10 @@ static BOOL Located(NSDictionary *result){return ![@[@"command",@"emoji",@"answe
   _reloading=YES;[_table reloadData];if(row>=0)[_table selectRowIndexes:[NSIndexSet indexSetWithIndex:(NSUInteger)row] byExtendingSelection:NO];else [_table deselectAll:nil];_reloading=NO;
   _selectedID=row>=0?rows[(NSUInteger)row][@"id"]:nil;[self updateStatus];if(self.openResult)self.openResult(result,action,nil);return;
  }
- if([result[@"type"] isEqual:@"emoji"])[_usage recordQuery:_field.stringValue result:result];
+ if([result[@"type"] isEqual:@"emoji"])[_usage recordQuery:self.query result:result];
  if(result[@"copy"]){Copy(result[@"copy"]);[self dismiss:YES];return;}
  // A web address or search exists only for the text typed, so it teaches the ranking nothing.
- if(![@[@"url",@"web"] containsObject:result[@"type"]])[_usage recordQuery:_field.stringValue result:result];[self dismiss:[result[@"type"] isEqual:@"command"]];if(self.openResult)self.openResult(result,action,application);
+ if(![@[@"url",@"web"] containsObject:result[@"type"]])[_usage recordQuery:self.query result:result];[self dismiss:[result[@"type"] isEqual:@"command"]];if(self.openResult)self.openResult(result,action,application);
 }
 // Escape closes Quick Look before the panel; the ⌘K menu handles its own Escape.
 - (void)escape {if(QLPreviewPanel.sharedPreviewPanelExists && QLPreviewPanel.sharedPreviewPanel.isVisible)[QLPreviewPanel.sharedPreviewPanel orderOut:nil];else [self dismiss:YES];}
@@ -391,6 +408,9 @@ static BOOL Located(NSDictionary *result){return ![@[@"command",@"emoji",@"answe
 - (id<QLPreviewItem>)previewPanel:(QLPreviewPanel *)panel previewItemAtIndex:(NSInteger)index {(void)panel;(void)index;return _preview;}
 - (BOOL)control:(NSControl *)control textView:(NSTextView *)textView doCommandBySelector:(SEL)selector {
  (void)control;if(textView.hasMarkedText)return NO;
+ if((selector==@selector(insertTab:) || selector==@selector(moveRight:)) && [self acceptCompletion])return YES;
+ // The flag covers the text change this command makes, and ends with it.
+ if([NSStringFromSelector(selector) hasPrefix:@"delete"]){_deleting=YES;dispatch_async(dispatch_get_main_queue(),^{self->_deleting=NO;});}
  if(selector==@selector(moveDown:)){[self move:1];return YES;}
  if(selector==@selector(moveUp:)){[self move:-1];return YES;}
  if(selector==@selector(cancelOperation:)){[self escape];return YES;}

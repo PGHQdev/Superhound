@@ -21,7 +21,7 @@ static NSTextField *Label(NSView *view,NSString *text,NSRect frame,CGFloat size,
 }
 static NSButton *Button(NSView *view,NSString *title,NSRect frame,id target,SEL action) {NSButton *button=[NSButton buttonWithTitle:title target:target action:action];button.frame=frame;[view addSubview:button];return button;}
 - (instancetype)initWithLibrary:(SHLibrary *)library hotKey:(SHHotKey *)hotKey historyKey:(SHHotKey *)historyKey {
- NSWindow *window=[[NSWindow alloc] initWithContentRect:NSMakeRect(0,0,740,756) styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable|NSWindowStyleMaskMiniaturizable backing:NSBackingStoreBuffered defer:NO];
+ NSWindow *window=[[NSWindow alloc] initWithContentRect:NSMakeRect(0,0,740,812) styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable|NSWindowStyleMaskMiniaturizable backing:NSBackingStoreBuffered defer:NO];
  if(!(self=[super initWithWindow:window]))return nil;
  _library=library;_hotKey=hotKey;_historyKey=historyKey;_roots=@[];window.title=@"Superhound Settings";window.releasedWhenClosed=NO;window.accessibilityIdentifier=@"superhound.settings";
  NSView *view=window.contentView;
@@ -57,6 +57,11 @@ static NSButton *Button(NSView *view,NSString *title,NSRect frame,id target,SEL 
  NSPopUpButton *engines=[[NSPopUpButton alloc] initWithFrame:NSMakeRect(144,20,170,28) pullsDown:NO];engines.target=self;engines.action=@selector(engine:);engines.accessibilityIdentifier=@"superhound.search.engine";engines.accessibilityLabel=@"Web search engine";
  NSString *chosen=[NSUserDefaults.standardUserDefaults stringForKey:@"searchEngine"];for(NSDictionary *e in SHWeb.engines){[engines addItemWithTitle:e[@"name"]];if([e[@"id"] isEqual:chosen])[engines selectItemAtIndex:engines.numberOfItems-1];}[view addSubview:engines];
  Label(view,@"The last row of each search opens your text with this engine in your browser.",NSMakeRect(320,14,394,36),11,YES);
+ // The completion switch sits under the web search row and starts off.
+ for(NSView *v in view.subviews)[v setFrameOrigin:NSMakePoint(v.frame.origin.x,v.frame.origin.y+56)];
+ NSButton *complete=[NSButton checkboxWithTitle:@"Complete the top result as you type" target:self action:@selector(complete:)];complete.frame=NSMakeRect(24,34,690,24);complete.accessibilityIdentifier=@"superhound.completion";
+ complete.state=[NSUserDefaults.standardUserDefaults boolForKey:@"inlineCompletion"]?NSControlStateValueOn:NSControlStateValueOff;[view addSubview:complete];
+ Label(view,@"The rest of the top result’s name appears after your text, selected. Tab or → keeps it; any other key replaces it.",NSMakeRect(44,6,670,26),11,YES);
  [self shortcutStatus];[self updateButtons];[window center];return self;
 }
 - (void)show {[NSApp activateIgnoringOtherApps:YES];[self.window makeKeyAndOrderFront:nil];[self shortcutStatus];}
@@ -95,6 +100,7 @@ static NSButton *Button(NSView *view,NSString *title,NSRect frame,id target,SEL 
  if(take)[_hotKey useDefault];else [_hotKey leaveCommandSpace];
  [self shortcutStatus];
 }
+- (void)complete:(NSButton *)sender {[NSUserDefaults.standardUserDefaults setBool:sender.state==NSControlStateValueOn forKey:@"inlineCompletion"];}
 - (void)engine:(NSPopUpButton *)sender {[NSUserDefaults.standardUserDefaults setObject:SHWeb.engines[(NSUInteger)sender.indexOfSelectedItem][@"id"] forKey:@"searchEngine"];}
 - (void)keyboardSettings:(id)sender {(void)sender;[_hotKey openKeyboardSettings];}
 @end

@@ -73,6 +73,7 @@ Superhound is free to evaluate, with every feature, and it shows a reminder now 
 | ⌘K | All actions: Open With, Quick Look, Copy Path, Move to Trash, and more |
 | ⌘Y | Quick Look |
 | ⇧⌘C | Copy path |
+| Tab or → | Keep the completion of the top result. Turn on **Complete the top result as you type** in **Settings…** first; it is off by default. |
 | Esc | Close |
 
 Right-click a result for the same actions as ⌘K. Click the logo at the bottom of the panel for the menu.

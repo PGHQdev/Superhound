@@ -93,6 +93,9 @@ int main(void) { @autoreleasepool {
  assert([s search:[@"a" stringByPaddingToLength:100000 withString:@"a" startingAtIndex:0] cancelled:nil].count == 0);
  assert([s search:@"code" cancelled:^BOOL {return YES;}].count == 0);
  assert([s search:@"" cancelled:nil].count == 2);
+ // Completion: the typed start of a name, folded like search; nothing for a middle match, a longer text, or an empty one.
+ assert([SHCompletion(@"Safari",@"saf") isEqual:@"ari"] && [SHCompletion(@"Café Notes",@"CAFE") isEqual:@" Notes"] && [SHCompletion(@"Safari",@"ｓａｆ") isEqual:@"ari"] && [SHCompletion(@"Safari",@"safari") isEqual:@""]);
+ assert(!SHCompletion(@"Safari",@"fari") && !SHCompletion(@"Safari",@"safarix") && !SHCompletion(@"Safari",@""));
  NSMutableArray *large = NSMutableArray.array;
  for (int i=0;i<11000;i++) [large addObject:E(i,@"noise",[NSString stringWithFormat:@"/noise/%d",i],@"file")];
  [large addObject:E(20000,@"needle",@"/needle",@"file")];
