@@ -27,7 +27,7 @@ To see a change in the live app: build with a build number one above the install
 | File | Function |
 |---|---|
 | `sh_match.c` | Matches one query word against one name. Ranks: 0 exact, 1 prefix, 2 word initials or the start of a later word, 3 substring, 5 and 6 typing errors, 9 absent. |
-| `SHSearchSnapshot.m` | The in-memory search list. Holds the ranking order (`rank:precedes:`), the empty-query app list, and `SHFold` (case, accent, and width folding). |
+| `SHSearchSnapshot.m` | The in-memory search list. Holds the ranking order (`rank:precedes:`; typing-error matches stay below exact matches, also when learned), the empty-query app list, and `SHFold` (case, accent, and width folding). |
 | `SHQueryController.m` | Runs searches off the main thread and drops results of an old query. |
 | `SHUsage.m` | Learned ranking. Records which result the user opened for which query, in `usage.plist`. |
 | `SHAnswer.m` | Quick answers: the arithmetic parser, percent rules, and the unit table. |
@@ -47,9 +47,9 @@ To see a change in the live app: build with a build number one above the install
 | File | Function |
 |---|---|
 | `SHAppDelegate.m` | Start-up wiring, the menu bar item and its menu, Open at Login, the pasteboard check twice a second for the clipboard history, the license, update, and About menu items, and `superhound://` links. |
-| `SHSearchPanelController.m` | The search panel and its clipboard history mode: the dark blurred borderless window, 600 pt wide, with a height that follows the rows (it grows at once and shrinks after 0.15 s); the shared columns (16 pt margin, 28 pt icon column, text at x 52); field, the label band ("Suggested", errors, no matches, indexing note), one-line app rows and two-line file rows with folder context, row order (answer, chosen before, apps, settings panes, and commands, emoji, clipboard items, files), keys, the action menu (⌘K and right-click), Quick Look, copy and open, the footer (key hints, the Update to and Activate license links, the logo and name), and the license reminder on every tenth opening (`unlicensedOpens` in the defaults). |
+| `SHSearchPanelController.m` | The search panel and its clipboard history mode: the dark blurred borderless window, 600 pt wide, with a height that follows the rows (it grows at once and shrinks after 0.15 s); the shared columns (16 pt margin, 28 pt icon column, text at x 52); field (Return during a search opens the result when it arrives; Escape closes Quick Look before the panel), the label band ("Suggested", errors, no matches, indexing note), one-line app rows and two-line file rows with folder context, row order (answer, chosen before, apps, settings panes, and commands, emoji, clipboard items, files), keys, the action menu (⌘K and right-click), Quick Look, copy and open, the footer (key hints, the Update to and Activate license links, the logo and name), and the license reminder on every tenth opening (`unlicensedOpens` in the defaults). |
 | `SHSettingsController.m` | The Search Locations window with the item counts, and the two shortcut recorders. |
-| `SHHotKey.m` | Global shortcut registration, one object for each shortcut. |
+| `SHHotKey.m` | Global shortcut registration, one object for each shortcut. It refuses the other shortcut's keys, and it keeps the previous keys when new keys fail to register. |
 | `SHFolderAccess.m` | Security-scoped bookmarks for the user's folders. |
 | `SHActivation.m` | Activation and deactivation requests to superhound.app, the license key window, and `superhound://activate?key=` links. The defaults key `licenseServer` points it at a local test server. |
 | `SHUpdater.m` | The daily update check, Check for Updates…, the download, and the relaunch. An update must meet the running app's designated requirement, so only a build signed with the "Superhound" certificate can update. Defaults keys: `updateCheckAutomatically`, `updateCheckedAt`; `licenseServer` also points it at a local test server. |
