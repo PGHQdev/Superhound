@@ -7,6 +7,8 @@
 @property(nonatomic,readonly) NSString *status;
 @property(nonatomic,readonly) NSString *label;
 @property(nonatomic,readonly) NSString *defaultLabel;
+// The app's other shortcut; recordEvent: and useDefault refuse its keys.
+@property(nonatomic,weak) SHHotKey *other;
 - (BOOL)registerSaved;
 - (BOOL)recordEvent:(NSEvent *)event;
 - (void)useDefault;

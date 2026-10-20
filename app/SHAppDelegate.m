@@ -38,7 +38,7 @@ static NSString *const LicensePublicKey=@"BB1mBfflJqWXPJerDDR+MLSwGOCcP/HFGM8f+H
  __weak typeof(self) weak=self;
  _activation.changed=^{SHAppDelegate *self=weak;if(self)self->_panel.licensed=self->_license.licensed;};_panel.enterLicense=^{SHAppDelegate *self=weak;[self->_activation enterKey:nil];};
  _updater=SHUpdater.new;_updater.changed=^{SHAppDelegate *self=weak;if(self)self->_panel.update=self->_updater.busy?nil:self->_updater.latest.version;};_panel.installUpdate=^{SHAppDelegate *self=weak;[self->_updater install];};
- _hotKey.invoked=^{[weak search:nil];};_historyKey.invoked=^{[weak history:nil];};
+ _hotKey.invoked=^{[weak search:nil];};_historyKey.invoked=^{[weak history:nil];};_hotKey.other=_historyKey;_historyKey.other=_hotKey;
  // macOS sends no notice when the pasteboard changes, so its change count is read twice a second.
  _pasteboardTimer=[NSTimer scheduledTimerWithTimeInterval:0.5 repeats:YES block:^(NSTimer *timer){(void)timer;[weak readPasteboard];}];_pasteboardTimer.tolerance=0.25;
  _panel.openResult=^(NSDictionary *result,NSString *action,NSURL *application){[SHResultActions perform:action result:result application:application completion:^(NSString *error){SHAppDelegate *self=weak;if(error){[self->_panel showError:error];if(![@[@"command",@"clipboard"] containsObject:result[@"type"]])[self->_library refresh];}}];};
