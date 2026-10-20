@@ -51,7 +51,7 @@ Paste this in Terminal:
 curl -fsSL https://superhound.app/install | sh
 ```
 
-That's it. Superhound downloads, checks the download against its published SHA-256, goes into `~/Applications`, and opens. A magnifying glass appears in your menu bar.
+That's it. Superhound downloads, checks the download against its published SHA-256, goes into `~/Applications`, and opens. The hound appears in your menu bar.
 
 Superhound is free to try with every feature, and it shows a reminder now and then. A license is **$15 once for 3 Macs** at [superhound.app](https://superhound.app). To activate, choose **Enter License…** from the menu bar.
 
