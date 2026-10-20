@@ -11,7 +11,7 @@ A native macOS launcher: one panel on a global shortcut that finds apps, files, 
 
 | Command | Function |
 |---|---|
-| `scripts/build.sh [build number]` | Compiles and signs `.build/Superhound.app`. Also writes the bundle's `Info.plist`. |
+| `scripts/build.sh [build number]` | Compiles and signs `.build/Superhound.app` with the "Superhound" certificate from the keychain, or ad-hoc without it. Also writes the bundle's `Info.plist`. |
 | `scripts/test.sh` | Builds and runs the eight Objective-C test suites with sanitizers. Run it before each commit. |
 | `scripts/install.sh .build/Superhound.app` | Replaces the installed app. It refuses while Superhound is in operation, and it keeps the previous bundle. |
 | `scripts/benchmark.sh` | Measures query time, memory, and catalog speed at 10,000 and 100,000 records. |
@@ -99,6 +99,7 @@ All in `~/Library/Application Support/Superhound/`:
 - Match the dense one-line style of the current Objective-C files.
 - The app makes no network request, except license activation and deactivation in `SHActivation.m`. Keep everything else offline.
 - The private signing key for activation tokens is `~/.config/superhound/license-signing-key.jwk`. Never print it or copy it into a repository.
+- The code signing certificate is "Superhound" in the login keychain (self-signed, until 2046), with copies in `~/.config/superhound/codesign-key.pem` and `codesign-cert.pem`. Never print the key or copy it into a repository. A different certificate makes macOS ask every user again for the Documents and Accessibility permissions.
 - Add tests for changes to `core/`. The panel window has no automated test; state when a change was not seen on screen.
 - Do not take full-screen captures to check the app. The screen shows the user's private windows. Ask the user to look instead.
 - One commit for each change, with a `feat:`, `fix:`, `perf:`, or `docs:` prefix.

@@ -37,7 +37,10 @@ PLIST
  app/*.m core/*.m core/*.c -framework AppKit -framework Carbon -framework CoreAudio -framework CoreServices -framework CoreText -framework IOKit -framework Quartz -framework Security -framework ServiceManagement -lsqlite3 \
  -o "$bundle/Contents/MacOS/Superhound" 2> "$stage/build-metrics.txt" || { cat "$stage/build-metrics.txt" >&2; exit 1; }
 plutil -lint "$bundle/Contents/Info.plist"
-codesign --force --sign - --timestamp=none "$bundle"
+# macOS keeps privacy permissions (Documents, Accessibility) for a signature whose certificate stays the same across builds.
+# The project certificate "Superhound" is used when it is in the keychain; other builds use an ad-hoc signature, which macOS treats as a new app each time.
+identity="$(security find-identity -p codesigning | awk '/"Superhound"/{print $2; exit}')"
+codesign --force --sign "${identity:--}" --timestamp=none "$bundle"
 codesign --verify --strict "$bundle"
 # Only replace this script's build output after successful compile/signing.
 if [[ -e .build/Superhound.app ]]; then mv .build/Superhound.app "$stage/previous.app"; fi
