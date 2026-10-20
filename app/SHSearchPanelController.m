@@ -8,6 +8,9 @@ static NSString *Copied(NSDictionary *result){
  NSString *when=[format localizedStringForDate:[NSDate dateWithTimeIntervalSince1970:[result[@"date"] doubleValue]] relativeToDate:NSDate.date];
  return [NSString stringWithFormat:@"%@%@ · Return to paste",[result[@"source"] length]?[result[@"source"] stringByAppendingString:@" · "]:@"",when];
 }
+// The panel keeps its top edge; its height follows the rows up to eight rows.
+static const CGFloat Width=600,Top=56,Bottom=70,MaxRows=8*48;
+static NSImage *Mask(CGFloat radius){NSImage *mask=[NSImage imageWithSize:NSMakeSize(2*radius+1,2*radius+1) flipped:NO drawingHandler:^BOOL(NSRect rect){[NSColor.blackColor set];[[NSBezierPath bezierPathWithRoundedRect:rect xRadius:radius yRadius:radius] fill];return YES;}];mask.capInsets=NSEdgeInsetsMake(radius,radius,radius,radius);mask.resizingMode=NSImageResizingModeStretch;return mask;}
 static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPasteboard;[board clearContents];[board setString:text forType:NSPasteboardTypeString];[board setString:@"" forType:SHOwnCopyType];}
 @interface SHPanel : NSPanel
 @property(copy) BOOL (^shortcut)(NSEvent *);
@@ -43,38 +46,52 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  dispatch_queue_t _iconQueue;
  NSURL *_preview;
  NSButton *_unlicensed,*_updateLink;
- CGFloat _markLeft;
+ NSView *_tint;
+ CGFloat _markLeft,_top,_floor;
 }
 - (instancetype)initWithQueries:(SHQueryController *)queries {
- SHPanel *panel=[[SHPanel alloc] initWithContentRect:NSMakeRect(0,0,640,516) styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskFullSizeContentView backing:NSBackingStoreBuffered defer:NO];
+ SHPanel *panel=[[SHPanel alloc] initWithContentRect:NSMakeRect(0,0,Width,Top+MaxRows+Bottom) styleMask:NSWindowStyleMaskBorderless backing:NSBackingStoreBuffered defer:NO];
  if(!(self=[super initWithWindow:panel]))return nil;
  _queries=queries;_results=@[];_coverage=@"Preparing search…";_icons=NSCache.new;_icons.countLimit=128;_loadingIcons=NSMutableSet.set;_iconQueue=dispatch_queue_create("com.superhound.icons",DISPATCH_QUEUE_SERIAL);
- panel.title=@"Superhound";panel.titleVisibility=NSWindowTitleHidden;panel.titlebarAppearsTransparent=YES;panel.level=NSFloatingWindowLevel;panel.hidesOnDeactivate=NO;panel.collectionBehavior=NSWindowCollectionBehaviorCanJoinAllSpaces|NSWindowCollectionBehaviorFullScreenAuxiliary;panel.delegate=self;panel.releasedWhenClosed=NO;
- panel.backgroundColor=NSColor.windowBackgroundColor;panel.accessibilityIdentifier=@"superhound.search.panel";
- NSView *view=panel.contentView;
+ panel.title=@"Superhound";panel.level=NSFloatingWindowLevel;panel.hidesOnDeactivate=NO;panel.collectionBehavior=NSWindowCollectionBehaviorCanJoinAllSpaces|NSWindowCollectionBehaviorFullScreenAuxiliary;panel.delegate=self;panel.releasedWhenClosed=NO;
+ panel.opaque=NO;panel.backgroundColor=NSColor.clearColor;panel.hasShadow=YES;panel.appearance=[NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];panel.accessibilityIdentifier=@"superhound.search.panel";
+ // A dark blur with a charcoal tint keeps strong wallpaper colors out; the tint carries the one border.
+ NSVisualEffectView *view=[[NSVisualEffectView alloc] initWithFrame:NSMakeRect(0,0,Width,Top+MaxRows+Bottom)];view.material=NSVisualEffectMaterialHUDWindow;view.blendingMode=NSVisualEffectBlendingModeBehindWindow;view.state=NSVisualEffectStateActive;view.maskImage=Mask(12);panel.contentView=view;
+ _tint=[[NSView alloc] initWithFrame:view.bounds];_tint.autoresizingMask=NSViewWidthSizable|NSViewHeightSizable;_tint.wantsLayer=YES;_tint.layer.cornerRadius=12;_tint.layer.borderWidth=1;_tint.layer.borderColor=[NSColor colorWithWhite:1 alpha:0.12].CGColor;[view addSubview:_tint];[self applyTransparency];
+ [NSWorkspace.sharedWorkspace.notificationCenter addObserver:self selector:@selector(applyTransparency) name:NSWorkspaceAccessibilityDisplayOptionsDidChangeNotification object:nil];
  // The system search bezel has a fixed height that clips 24-point text, so the field draws no bezel.
- NSImageView *glass=[NSImageView imageViewWithImage:[[NSImage imageWithSystemSymbolName:@"magnifyingglass" accessibilityDescription:nil] imageWithSymbolConfiguration:[NSImageSymbolConfiguration configurationWithPointSize:20 weight:NSFontWeightRegular]]];glass.frame=NSMakeRect(22,456,26,32);glass.contentTintColor=NSColor.secondaryLabelColor;[view addSubview:glass];
- _field=[[NSTextField alloc] initWithFrame:NSMakeRect(56,456,564,32)];_field.bordered=NO;_field.drawsBackground=NO;_field.focusRingType=NSFocusRingTypeNone;_field.usesSingleLineMode=YES;_field.cell.scrollable=YES;_field.font=[NSFont systemFontOfSize:24];_field.placeholderString=@"Search apps and files";_field.delegate=self;_field.accessibilityIdentifier=@"superhound.search.input";_field.accessibilityLabel=@"Search apps and selected folders";[view addSubview:_field];
- NSScrollView *scroll=[[NSScrollView alloc] initWithFrame:NSMakeRect(12,62,616,384)];scroll.hasVerticalScroller=NO;scroll.drawsBackground=NO;
+ NSImageView *glass=[NSImageView imageViewWithImage:[[NSImage imageWithSystemSymbolName:@"magnifyingglass" accessibilityDescription:nil] imageWithSymbolConfiguration:[NSImageSymbolConfiguration configurationWithPointSize:20 weight:NSFontWeightRegular]]];glass.frame=NSMakeRect(16,Bottom+MaxRows+12,28,32);glass.autoresizingMask=NSViewMinYMargin;glass.contentTintColor=NSColor.secondaryLabelColor;[view addSubview:glass];
+ _field=[[NSTextField alloc] initWithFrame:NSMakeRect(52,Bottom+MaxRows+12,Width-68,32)];_field.autoresizingMask=NSViewMinYMargin;_field.bordered=NO;_field.drawsBackground=NO;_field.focusRingType=NSFocusRingTypeNone;_field.usesSingleLineMode=YES;_field.cell.scrollable=YES;_field.font=[NSFont systemFontOfSize:24];_field.placeholderString=@"Search apps and files";_field.delegate=self;_field.accessibilityIdentifier=@"superhound.search.input";_field.accessibilityLabel=@"Search apps and selected folders";[view addSubview:_field];
+ NSScrollView *scroll=[[NSScrollView alloc] initWithFrame:NSMakeRect(8,Bottom,Width-16,MaxRows)];scroll.autoresizingMask=NSViewHeightSizable;scroll.hasVerticalScroller=NO;scroll.drawsBackground=NO;
  _table=[[SHResultsTable alloc] initWithFrame:scroll.bounds];
  __weak typeof(self) weak=self;
  panel.shortcut=^BOOL(NSEvent *event){return [weak shortcut:event];};
  ((SHResultsTable *)_table).command=^BOOL(NSEvent *event){if(event.keyCode==53){[weak dismiss:YES];return YES;}if(event.keyCode==36 || event.keyCode==76){[weak openSelected:(event.modifierFlags&NSEventModifierFlagCommand)!=0];return YES;}return NO;};_table.headerView=nil;_table.rowHeight=48;_table.intercellSpacing=NSMakeSize(0,0);_table.backgroundColor=NSColor.clearColor;_table.selectionHighlightStyle=NSTableViewSelectionHighlightStyleRegular;_table.delegate=self;_table.dataSource=self;_table.allowsEmptySelection=YES;_table.target=self;_table.doubleAction=@selector(openClicked:);_table.menu=NSMenu.new;_table.menu.delegate=self;_table.accessibilityIdentifier=@"superhound.search.results";_table.accessibilityLabel=@"Search results";
- NSTableColumn *column=[[NSTableColumn alloc] initWithIdentifier:@"result"];column.width=616;[_table addTableColumn:column];scroll.documentView=_table;[view addSubview:scroll];
- _status=[NSTextField labelWithString:_coverage];_status.frame=NSMakeRect(22,37,596,20);_status.font=[NSFont systemFontOfSize:11];_status.textColor=NSColor.secondaryLabelColor;_status.lineBreakMode=NSLineBreakByTruncatingTail;_status.accessibilityIdentifier=@"superhound.search.status";[view addSubview:_status];
+ NSTableColumn *column=[[NSTableColumn alloc] initWithIdentifier:@"result"];column.width=Width-16;[_table addTableColumn:column];scroll.documentView=_table;[view addSubview:scroll];
+ _status=[NSTextField labelWithString:_coverage];_status.frame=NSMakeRect(16,37,Width-32,20);_status.font=[NSFont systemFontOfSize:11];_status.textColor=NSColor.secondaryLabelColor;_status.lineBreakMode=NSLineBreakByTruncatingTail;_status.accessibilityIdentifier=@"superhound.search.status";[view addSubview:_status];
  _help=[NSTextField labelWithString:@""];_help.frame=NSMakeRect(22,14,456,18);_help.font=[NSFont systemFontOfSize:11];_help.textColor=NSColor.secondaryLabelColor;[view addSubview:_help];
  NSMutableParagraphStyle *right=NSMutableParagraphStyle.new;right.alignment=NSTextAlignmentRight;
- NSTextField *mark=[NSTextField labelWithAttributedString:[[NSAttributedString alloc] initWithString:@"SUPERHOUND" attributes:@{NSFontAttributeName:[NSFont systemFontOfSize:10 weight:NSFontWeightSemibold],NSKernAttributeName:@2,NSForegroundColorAttributeName:NSColor.tertiaryLabelColor,NSParagraphStyleAttributeName:right}]];mark.frame=NSMakeRect(478,14,140,18);mark.accessibilityElement=NO;[view addSubview:mark];
+ NSTextField *mark=[NSTextField labelWithAttributedString:[[NSAttributedString alloc] initWithString:@"SUPERHOUND" attributes:@{NSFontAttributeName:[NSFont systemFontOfSize:10 weight:NSFontWeightSemibold],NSKernAttributeName:@2,NSForegroundColorAttributeName:NSColor.tertiaryLabelColor,NSParagraphStyleAttributeName:right}]];mark.frame=NSMakeRect(Width-156,14,140,18);mark.accessibilityElement=NO;[view addSubview:mark];
  NSButton *unlicensed=_unlicensed=[NSButton buttonWithTitle:@"" target:self action:@selector(enterLicense:)];unlicensed.bordered=NO;unlicensed.attributedTitle=[[NSAttributedString alloc] initWithString:@"Activate license" attributes:@{NSFontAttributeName:[NSFont systemFontOfSize:11],NSForegroundColorAttributeName:NSColor.secondaryLabelColor}];
- _markLeft=618-ceil(mark.attributedStringValue.size.width);unlicensed.toolTip=@"Enter your license key, or buy a license.";unlicensed.accessibilityLabel=@"Activate license";[view addSubview:unlicensed];
+ _markLeft=Width-16-ceil(mark.attributedStringValue.size.width);unlicensed.toolTip=@"Enter your license key, or buy a license.";unlicensed.accessibilityLabel=@"Activate license";[view addSubview:unlicensed];
  _updateLink=[NSButton buttonWithTitle:@"" target:self action:@selector(openUpdate:)];_updateLink.bordered=NO;_updateLink.hidden=YES;[view addSubview:_updateLink];
  [self layoutFooter];
  return self;
 }
+// Reduce Transparency gets an opaque charcoal panel.
+- (void)applyTransparency {_tint.layer.backgroundColor=(NSWorkspace.sharedWorkspace.accessibilityDisplayShouldReduceTransparency?[NSColor colorWithWhite:0.13 alpha:1]:[NSColor colorWithWhite:0 alpha:0.35]).CGColor;}
+- (CGFloat)tableView:(NSTableView *)tableView heightOfRow:(NSInteger)row {(void)tableView;(void)row;return 48;}
+- (CGFloat)fittingHeight {CGFloat rows=0;for(NSInteger i=0;i<_table.numberOfRows;i++)rows+=[self tableView:_table heightOfRow:i];return MIN(Top+MIN(rows,MaxRows)+Bottom,_top-_floor);}
+// A taller panel grows at once; a shorter one waits for results to settle, so fast typing does not make it jump.
+- (void)fit {
+ [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(resize) object:nil];
+ CGFloat height=self.fittingHeight;if(height>=NSHeight(self.window.frame) || !self.window.isVisible)[self resize];else [self performSelector:@selector(resize) withObject:nil afterDelay:0.15];
+}
+- (void)resize {if(!_top)return;NSRect frame=self.window.frame;CGFloat height=self.fittingHeight;if(height==NSHeight(frame) && NSMaxY(frame)==_top)return;[self.window setFrame:NSMakeRect(NSMinX(frame),_top-height,Width,height) display:YES];[self.window invalidateShadow];}
 // The links sit right to left from the wordmark; the key help takes the rest of the line, without ⌘↩ when both links show.
 - (void)layoutFooter {
  CGFloat left=_markLeft;for(NSButton *link in @[_unlicensed,_updateLink])if(!link.hidden){CGFloat width=ceil(link.attributedTitle.size.width);left-=14+width;link.frame=NSMakeRect(left,14,width,18);}
- _help.frame=NSMakeRect(22,14,left-30,18);
+ _help.frame=NSMakeRect(16,14,left-24,18);
  NSString *full=_history?@"↑ ↓ Move    ↩ Paste    ⌘↩ Copy    ⌘K Actions    Esc Close":@"↑ ↓ Move    ↩ Open    ⌘↩ Reveal in Finder    ⌘K Actions    Esc Close";
  _help.stringValue=[full sizeWithAttributes:@{NSFontAttributeName:_help.font}].width<=NSWidth(_help.frame)?full:_history?@"↑ ↓ Move    ↩ Paste    ⌘K Actions    Esc Close":@"↑ ↓ Move    ↩ Open    ⌘K Actions    Esc Close";
 }
@@ -99,7 +116,7 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  [self layoutFooter];
  NSScreen *screen=NSScreen.mainScreen?:NSScreen.screens.firstObject;
  NSPoint mouse=NSEvent.mouseLocation;for(NSScreen *candidate in NSScreen.screens)if(NSPointInRect(mouse,candidate.frame)){screen=candidate;break;}
- NSRect frame=screen.visibleFrame;[self.window setFrameOrigin:NSMakePoint(NSMidX(frame)-320,NSMaxY(frame)-MIN(frame.size.height-20,100+516))];
+ NSRect frame=screen.visibleFrame;_top=NSMaxY(frame)-MAX(0,MIN(100,NSHeight(frame)-(Top+MaxRows+Bottom)-10));_floor=NSMinY(frame);[self.window setFrameOrigin:NSMakePoint(NSMidX(frame)-Width/2,NSMinY(self.window.frame))];[self resize];
  [NSApp activateIgnoringOtherApps:YES];[self.window makeKeyAndOrderFront:nil];[self.window makeFirstResponder:_field];
  [_field selectText:nil];[self search:YES];SHMeasure(@"panel_activation",activated);
  if(!open && !_licensed)[self remind];
@@ -169,18 +186,18 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  _reloading=YES;[_table reloadData];
  if(selection>=0){[_table selectRowIndexes:[NSIndexSet indexSetWithIndex:(NSUInteger)selection] byExtendingSelection:NO];[_table scrollRowToVisible:selection];}else [_table deselectAll:nil];
  _reloading=NO;_selectedID=selection>=0?results[(NSUInteger)selection][@"id"]:nil;
- [self updateStatus];
+ [self updateStatus];[self fit];
 }
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView {(void)tableView;return (NSInteger)_results.count;}
 - (NSView *)tableView:(NSTableView *)tableView viewForTableColumn:(NSTableColumn *)column row:(NSInteger)row {
  (void)tableView;(void)column;
  NSDictionary *result=_results[(NSUInteger)row];NSString *path=result[@"path"];BOOL emoji=[result[@"type"] isEqual:@"emoji"],clip=[result[@"type"] isEqual:@"clipboard"],answer=emoji || clip || [result[@"type"] isEqual:@"answer"];
- NSTableCellView *cell=[[NSTableCellView alloc] initWithFrame:NSMakeRect(0,0,616,48)];
+ NSTableCellView *cell=[[NSTableCellView alloc] initWithFrame:NSMakeRect(0,0,Width-16,48)];
  NSImageView *icon=[[NSImageView alloc] initWithFrame:NSMakeRect(10,8,32,32)];icon.image=emoji?nil:clip?[NSImage imageWithSystemSymbolName:@"doc.on.clipboard" accessibilityDescription:nil]:answer?[NSImage imageWithSystemSymbolName:@"equal.circle" accessibilityDescription:nil]:result[@"symbol"]?[NSImage imageWithSystemSymbolName:result[@"symbol"] accessibilityDescription:nil]:[_icons objectForKey:path];icon.contentTintColor=NSColor.secondaryLabelColor;cell.imageView=icon;[cell addSubview:icon];
  if(emoji){NSTextField *glyph=[NSTextField labelWithString:result[@"emoji"]];glyph.frame=NSMakeRect(8,6,38,36);glyph.font=[NSFont systemFontOfSize:26];glyph.alignment=NSTextAlignmentCenter;[cell addSubview:glyph];}
- NSTextField *name=[NSTextField labelWithString:result[@"name"]];name.frame=NSMakeRect(54,24,550,21);name.font=[NSFont systemFontOfSize:15 weight:NSFontWeightMedium];name.lineBreakMode=NSLineBreakByTruncatingMiddle;cell.textField=name;[cell addSubview:name];
+ NSTextField *name=[NSTextField labelWithString:result[@"name"]];name.frame=NSMakeRect(54,24,Width-86,21);name.font=[NSFont systemFontOfSize:15 weight:NSFontWeightMedium];name.lineBreakMode=NSLineBreakByTruncatingMiddle;cell.textField=name;[cell addSubview:name];
  NSString *type=[@{@"app":@"Application",@"folder":@"Folder",@"link":@"Link",@"file":@"File"} objectForKey:result[@"type"]];
- NSTextField *detail=[NSTextField labelWithString:emoji?@"Emoji · Return to copy":clip?Copied(result):answer?[result[@"detail"] stringByAppendingString:@" · Return to copy"]:[result[@"type"] isEqual:@"settings"]?@"System Settings":[result[@"type"] isEqual:@"command"]?@"Command":[NSString stringWithFormat:@"%@ · %@",[path.stringByDeletingLastPathComponent stringByAbbreviatingWithTildeInPath],type]];detail.frame=NSMakeRect(54,6,550,17);detail.font=[NSFont systemFontOfSize:11];detail.textColor=NSColor.secondaryLabelColor;detail.lineBreakMode=NSLineBreakByTruncatingMiddle;[cell addSubview:detail];cell.accessibilityLabel=[NSString stringWithFormat:@"%@, %@",result[@"name"],detail.stringValue];
+ NSTextField *detail=[NSTextField labelWithString:emoji?@"Emoji · Return to copy":clip?Copied(result):answer?[result[@"detail"] stringByAppendingString:@" · Return to copy"]:[result[@"type"] isEqual:@"settings"]?@"System Settings":[result[@"type"] isEqual:@"command"]?@"Command":[NSString stringWithFormat:@"%@ · %@",[path.stringByDeletingLastPathComponent stringByAbbreviatingWithTildeInPath],type]];detail.frame=NSMakeRect(54,6,Width-86,17);detail.font=[NSFont systemFontOfSize:11];detail.textColor=NSColor.secondaryLabelColor;detail.lineBreakMode=NSLineBreakByTruncatingMiddle;[cell addSubview:detail];cell.accessibilityLabel=[NSString stringWithFormat:@"%@, %@",result[@"name"],detail.stringValue];
  if(!answer && !icon.image && ![_loadingIcons containsObject:path]){[_loadingIcons addObject:path];__weak typeof(self) weak=self;
   dispatch_async(_iconQueue,^{NSImage *image=[NSWorkspace.sharedWorkspace iconForFile:path];dispatch_async(dispatch_get_main_queue(),^{SHSearchPanelController *self=weak;if(!self)return;[self->_loadingIcons removeObject:path];if(image)[self->_icons setObject:image forKey:path];for(NSUInteger i=0;i<self->_results.count;i++)if([self->_results[i][@"path"] isEqual:path]){NSTableCellView *visible=[self->_table viewAtColumn:0 row:(NSInteger)i makeIfNecessary:NO];visible.imageView.image=image;}});});
  }
@@ -253,7 +270,7 @@ static BOOL Located(NSDictionary *result){return ![@[@"command",@"emoji",@"answe
   NSInteger removed=(NSInteger)[_results indexOfObjectIdenticalTo:result],row=_table.selectedRow;
   NSMutableArray *rows=[_results mutableCopy];[rows removeObjectIdenticalTo:result];_results=rows;row=row==removed?MIN(row,(NSInteger)rows.count-1):row>removed?row-1:row;
   _reloading=YES;[_table reloadData];if(row>=0)[_table selectRowIndexes:[NSIndexSet indexSetWithIndex:(NSUInteger)row] byExtendingSelection:NO];else [_table deselectAll:nil];_reloading=NO;
-  _selectedID=row>=0?rows[(NSUInteger)row][@"id"]:nil;[self updateStatus];if(self.openResult)self.openResult(result,action,nil);return;
+  _selectedID=row>=0?rows[(NSUInteger)row][@"id"]:nil;[self updateStatus];[self fit];if(self.openResult)self.openResult(result,action,nil);return;
  }
  if([result[@"type"] isEqual:@"emoji"])[_usage recordQuery:_field.stringValue result:result];
  if(result[@"copy"]){Copy(result[@"copy"]);[self dismiss:YES];return;}
