@@ -286,7 +286,7 @@ Measured on an Apple M1 with macOS 15.
 | CPU when idle | 0.14% of one core over 120 seconds, panel closed |
 | Search across 100,000 items | 9.6 ms median, 20.3 ms at the 95th percentile |
 
-The search time comes from a synthetic benchmark. The methods and all results are in [docs/prototype-validation.md](docs/prototype-validation.md).
+The search time comes from a synthetic benchmark. `scripts/benchmark.sh` runs it.
 
 </details>
 
@@ -311,7 +311,7 @@ tests/install.sh      # installer checks; quit Superhound first
 | `bench/` | Benchmark programs |
 | `scripts/` | Build, test, install, release, and benchmark |
 
-[AGENTS.md](AGENTS.md) describes each file. The first design and plan are in [docs/superpowers](docs/superpowers).
+[AGENTS.md](AGENTS.md) describes each file.
 
 </details>
 

@@ -93,18 +93,21 @@ All in `~/Library/Application Support/Superhound/`:
 
 ## Docs
 
+All of `docs/` other than `docs/media/` is local: `.gitignore` excludes it, and the files are not on GitHub.
+
 | File | Content |
 |---|---|
 | `README.md` | Build, install, and use |
-| `docs/media/` | The logo: `superhound.png` (the original), `logo.png` and `logo-dark.png` (for the README in light and dark mode) |
+| `docs/media/` | The only folder of `docs/` in git. The logo: `superhound.png` (the original), `logo.png` and `logo-dark.png` (for the README in light and dark mode) |
 | `docs/prototype-validation.md` | Measured results and open acceptance checks for the prototype |
 | `docs/superpowers/specs/2026-10-04-first-search-prototype-design.md` | The design of the first prototype |
 | `docs/superpowers/plans/2026-10-04-first-search-prototype.md` | The implementation plan of the first prototype |
-| `docs/early-planning-notes.md`, `docs/product.md`, `docs/architecture.md`, `docs/distribution.md`, `docs/validation.md`, `docs/decisions-and-research.md` | Early research and proposals from before the code existed. Not committed to git. Check them against the code before use. |
+| `docs/early-planning-notes.md`, `docs/product.md`, `docs/architecture.md`, `docs/distribution.md`, `docs/validation.md`, `docs/decisions-and-research.md` | Early research and proposals from before the code existed. Check them against the code before use. |
 | `spikes/install-permissions/` (not committed to git) | The disposable install and folder-permission probe, with its findings |
 
 ## Conventions
 
+- Keep `docs/` out of git, other than `docs/media/`. `.gitignore` excludes the rest.
 - Match the dense one-line style of the current Objective-C files.
 - The app makes two kinds of network request: license activation and deactivation in `SHActivation.m`, and the daily update check and download in `SHUpdater.m`. Neither sends personal data other than the license key and device ID at activation. Keep everything else offline.
 - The private signing key for activation tokens is `~/.config/superhound/license-signing-key.jwk`. Never print it or copy it into a repository.

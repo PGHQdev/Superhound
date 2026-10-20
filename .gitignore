@@ -5,3 +5,7 @@ spikes/install-permissions/.evidence/
 .worktrees/
 .build/
 .superpowers/
+
+# Local notes stay on this Mac.
+docs/*
+!docs/media/
