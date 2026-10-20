@@ -17,7 +17,7 @@
 
 Press one shortcut. Type a few letters. Your app, file, answer, or emoji is already there.
 
-**[Install](#-install)** · **[Website](https://superhound.app)** · **[Docs](https://superhound.app/docs)** · **[Buy a license](https://superhound.app/buy)**
+**[Install](#-install)** · **[Website](https://superhound.app)** · **[Docs](https://superhound.app/docs)** · **[Get a license](https://superhound.app/buy)**
 
 </div>
 

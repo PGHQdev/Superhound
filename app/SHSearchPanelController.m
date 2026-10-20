@@ -140,7 +140,7 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  _brand=[NSTextField labelWithString:@"Superhound"];_brand.font=[NSFont systemFontOfSize:12 weight:NSFontWeightMedium];_brand.textColor=NSColor.secondaryLabelColor;_brand.accessibilityElement=NO;[view addSubview:_brand];
  _menuButton=[[SHBrandButton alloc] initWithFrame:NSZeroRect];_menuButton.bordered=NO;_menuButton.transparent=YES;_menuButton.title=@"";_menuButton.target=self;_menuButton.action=@selector(showMenu:);_menuButton.toolTip=@"Settings and more";_menuButton.accessibilityLabel=@"Superhound menu";_menuButton.hovered=^(BOOL hovered){[weak hover:hovered];};[view addSubview:_menuButton];
  NSButton *unlicensed=_unlicensed=[NSButton buttonWithTitle:@"" target:self action:@selector(enterLicense:)];unlicensed.bordered=NO;unlicensed.attributedTitle=[[NSAttributedString alloc] initWithString:@"Activate license" attributes:@{NSFontAttributeName:[NSFont systemFontOfSize:12],NSForegroundColorAttributeName:NSColor.secondaryLabelColor}];
- unlicensed.toolTip=@"Enter your license key, or buy a license.";unlicensed.accessibilityLabel=@"Activate license";[view addSubview:unlicensed];
+ unlicensed.toolTip=@"Enter your license key, or get a license.";unlicensed.accessibilityLabel=@"Activate license";[view addSubview:unlicensed];
  _updateLink=[NSButton buttonWithTitle:@"" target:self action:@selector(openUpdate:)];_updateLink.bordered=NO;_updateLink.hidden=YES;[view addSubview:_updateLink];
  [self layoutFooter];
  return self;
@@ -206,7 +206,7 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
 - (void)remind {
  NSUserDefaults *d=NSUserDefaults.standardUserDefaults;NSInteger opens=[d integerForKey:@"unlicensedOpens"]+1;[d setInteger:opens forKey:@"unlicensedOpens"];if(opens%10)return;
  NSAlert *alert=NSAlert.new;alert.messageText=@"Superhound is unlicensed";alert.informativeText=@"Superhound is free to evaluate, and all features keep working. License price: $15 once, for 3 Macs.";
- NSButton *buy=[alert addButtonWithTitle:@"Buy License"];buy.keyEquivalent=@"";NSButton *later=[alert addButtonWithTitle:@"Not Now"];later.keyEquivalent=@"\e";
+ NSButton *buy=[alert addButtonWithTitle:@"Get a License"];buy.keyEquivalent=@"";NSButton *later=[alert addButtonWithTitle:@"Not Now"];later.keyEquivalent=@"\e";
  [alert beginSheetModalForWindow:self.window completionHandler:^(NSModalResponse response){if(response==NSAlertFirstButtonReturn)[self buy:nil];else [self.window makeFirstResponder:self->_field];}];
 }
 - (void)dismiss:(BOOL)restore {
