@@ -293,7 +293,7 @@ The search time comes from a synthetic benchmark. The methods and all results ar
 Superhound is written in Objective-C and C with AppKit, SQLite, and FSEvents. It has no third-party dependencies.
 
 ```sh
-scripts/test.sh       # ten test suites with AddressSanitizer and UndefinedBehaviorSanitizer
+scripts/test.sh       # eleven test suites with AddressSanitizer and UndefinedBehaviorSanitizer
 scripts/benchmark.sh  # search and catalog speed at 10,000 and 100,000 items
 tests/install.sh      # installer checks; quit Superhound first
 ```

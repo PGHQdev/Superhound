@@ -240,16 +240,20 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  NSArray<NSDictionary *> *preferred=[_usage preferredForQuery:_field.stringValue],*emoji=[_emoji search:_field.stringValue limit:8];
  // Shorter queries would match too much copied text.
  NSArray<NSDictionary *> *clips=[_field.stringValue stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceCharacterSet].length>=3?[_clipboard search:_field.stringValue limit:2]:@[];
- [_queries submit:_field.stringValue preferred:preferred completion:^(NSArray<NSDictionary *> *results){
+ NSString *query=_field.stringValue;
+ [_queries submit:query preferred:preferred completion:^(NSArray<NSDictionary *> *results){
   SHSearchPanelController *self=weak;if(!self || !self.window.isVisible || self->_history)return;
-  // A web address or a calculation takes the first of the eight rows.
+  // A web address or a calculation takes the first of the eight rows. A result whose name or file name is the typed text, such as Safari.app or logo.ai, stays above the address.
   // Order: web address, answer, results the user chose before, applications, settings panes, and commands, up to 3 emoji, up to 2 clipboard items, files and folders, then the web search, which keeps the last of the eight rows.
-  NSMutableArray *rows=NSMutableArray.array,*otherEmoji=[emoji mutableCopy];if(address)[rows addObject:address];if(answer)[rows addObject:answer];
+  NSMutableArray *rows=NSMutableArray.array,*otherEmoji=[emoji mutableCopy];BOOL named=NO;NSString *typed=[query stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceCharacterSet];
+  for(NSDictionary *r in results)if([r[@"name"] caseInsensitiveCompare:typed]==NSOrderedSame || [[r[@"path"] lastPathComponent] caseInsensitiveCompare:typed]==NSOrderedSame)named=YES;
+  if(address && !named)[rows addObject:address];if(answer)[rows addObject:answer];
   NSSet *chosen=[NSSet setWithArray:[preferred valueForKey:@"path"]];
   for(NSDictionary *p in preferred)for(NSDictionary *e in emoji)if([e[@"path"] isEqual:p[@"path"]]){[rows addObject:e];[otherEmoji removeObjectIdenticalTo:e];}
   NSUInteger lead=0;while(lead<results.count && (SHLaunchable(results[lead]) || [chosen containsObject:results[lead][@"path"]]))lead++;
-  NSUInteger shown=MIN((NSUInteger)3,otherEmoji.count),limit=web?7:8;
-  for(NSUInteger i=0;i<lead && rows.count+shown+clips.count<limit;i++)[rows addObject:results[i]];
+  NSUInteger shown=MIN((NSUInteger)3,otherEmoji.count),limit=web?7:8,reserve=address && named?1:0;
+  for(NSUInteger i=0;i<lead && rows.count+shown+clips.count+reserve<limit;i++)[rows addObject:results[i]];
+  if(address && named)[rows addObject:address];
   for(NSUInteger i=0;i<shown;i++)[rows addObject:otherEmoji[i]];
   for(NSDictionary *clip in clips)if(rows.count<limit)[rows addObject:clip];
   for(NSUInteger i=lead;i<results.count && rows.count<limit;i++)[rows addObject:results[i]];
@@ -284,7 +288,7 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  // An app shows its folder only when another result has the same name.
  BOOL shared=NO;for(NSDictionary *other in _results)if(other!=result && [other[@"name"] caseInsensitiveCompare:result[@"name"]]==NSOrderedSame)shared=YES;
  NSString *detail=emoji?@"Emoji · Return to copy":clip?Copied(result):[kind isEqual:@"web"]?@"Web search · Return to open in your browser":web?@"Web address · Return to open in your browser":answer?[result[@"detail"] stringByAppendingString:@" · Return to copy"]:[kind isEqual:@"settings"]?@"System Settings":[kind isEqual:@"command"]?@"Command":[kind isEqual:@"app"] && !shared?@"":Context(result,_results);
- NSTextField *name=[NSTextField labelWithAttributedString:Marked(result[@"name"],_field.stringValue)];cell.textField=name;[cell addSubview:name];
+ NSTextField *name=[NSTextField labelWithAttributedString:Marked(result[@"name"],[kind isEqual:@"web"]?@"":_field.stringValue)];cell.textField=name;[cell addSubview:name];
  NSTextField *info=[NSTextField labelWithString:detail];info.font=[NSFont systemFontOfSize:12];info.textColor=NSColor.secondaryLabelColor;info.lineBreakMode=located || [kind isEqual:@"app"]?NSLineBreakByTruncatingHead:NSLineBreakByTruncatingTail;[cell addSubview:info];
  if(compact){CGFloat width=detail.length?MIN(ceil(info.intrinsicContentSize.width),Text/2):0;name.frame=NSMakeRect(44,(height-18)/2,Text-width-(width?8:0),18);info.frame=NSMakeRect(44+Text-width,(height-16)/2,width,16);info.alignment=NSTextAlignmentRight;}
  else {name.frame=NSMakeRect(44,24,Text,18);info.frame=NSMakeRect(44,7,Text,16);}
