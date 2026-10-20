@@ -32,6 +32,7 @@ static OSStatus Invoked(EventHandlerCallRef next,EventRef event,void *context){
  return [self saveCode:event.keyCode modifiers:mods label:label];
 }
 - (void)useDefault {[self saveCode:_code modifiers:_modifiers label:_defaultLabel];}
+- (void)leaveCommandSpace {NSUserDefaults *d=NSUserDefaults.standardUserDefaults;if([d integerForKey:[self key:@"Code"]]==kVK_Space && [d integerForKey:[self key:@"Modifiers"]]==cmdKey)[self saveCode:kVK_Space modifiers:optionKey label:@"⌥Space"];}
 + (NSDictionary *)spotlightHotKeys {CFPreferencesAppSynchronize(CFSTR("com.apple.symbolichotkeys"));id keys=CFBridgingRelease(CFPreferencesCopyAppValue(CFSTR("AppleSymbolicHotKeys"),CFSTR("com.apple.symbolichotkeys")));return [keys isKindOfClass:NSDictionary.class]?keys:@{};}
 // The saved setting alone applies at the next login; this private call applies it now and can change in a later macOS.
 + (BOOL)setSpotlightEnabled:(BOOL)enabled {

@@ -137,12 +137,9 @@ Superhound is an early version. It checks for updates once a day, and you instal
 
 <br>
 
-Spotlight uses ⌘Space, so macOS needs two changes in **System Settings → Keyboard → Keyboard Shortcuts**:
+Open **Settings…** from the menu bar and turn on **Use ⌘Space in place of Spotlight**. Superhound turns off Spotlight's ⌘Space shortcut and takes ⌘Space.
 
-1. In **App Shortcuts**, add a shortcut for **Superhound** with the menu title `Search` and the keys ⌘Space.
-2. In **Spotlight**, turn off **Show Spotlight search**.
-
-Then open **Settings…** from the menu bar and click **Retry**. To get Spotlight back, quit Superhound and turn **Show Spotlight search** on again.
+To give ⌘Space back to Spotlight, turn the switch off. Superhound then moves to ⌥Space, or keeps its keys when ⌥Space is in use.
 
 </details>
 

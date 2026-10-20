@@ -1,4 +1,5 @@
 #import "SHSettingsController.h"
+#import "SHSpotlight.h"
 @interface SHShortcutButton : NSButton
 @property(copy) void (^recorded)(NSEvent *);
 @property BOOL recording;
@@ -12,7 +13,7 @@
 @end
 @implementation SHSettingsController {
  SHLibrary *_library;SHHotKey *_hotKey,*_historyKey;NSArray<NSDictionary *> *_roots;
- NSTableView *_table;NSTextField *_message,*_shortcutStatus,*_historyStatus;SHShortcutButton *_recorder,*_historyRecorder;NSButton *_remove,*_reselect;
+ NSTableView *_table;NSTextField *_message,*_shortcutStatus,*_historyStatus;SHShortcutButton *_recorder,*_historyRecorder;NSButton *_remove,*_reselect,*_spotlight;
 }
 static NSTextField *Label(NSView *view,NSString *text,NSRect frame,CGFloat size,BOOL secondary) {
  NSTextField *label=[NSTextField wrappingLabelWithString:text];label.frame=frame;label.font=[NSFont systemFontOfSize:size];if(secondary)label.textColor=NSColor.secondaryLabelColor;[view addSubview:label];return label;
@@ -38,9 +39,10 @@ static NSButton *Button(NSView *view,NSString *title,NSRect frame,id target,SEL 
  Label(view,@"Open search",NSMakeRect(24,142,115,24),15,NO);
  _recorder=[[SHShortcutButton alloc] initWithFrame:NSMakeRect(144,136,170,32)];_recorder.bezelStyle=NSBezelStyleRounded;_recorder.title=@"Record Shortcut…";_recorder.target=self;_recorder.action=@selector(record:);_recorder.accessibilityLabel=@"Record global search shortcut";[view addSubview:_recorder];
  __weak typeof(self) weak=self;_recorder.recorded=^(NSEvent *event){SHSettingsController *self=weak;[self->_hotKey recordEvent:event];self->_recorder.title=@"Record Shortcut…";[self shortcutStatus];};
- Button(view,@"Use ⌘Space",NSMakeRect(320,136,120,32),self,@selector(defaultShortcut:));Button(view,@"Retry",NSMakeRect(442,136,70,32),self,@selector(retry:));Button(view,@"Keyboard Settings…",NSMakeRect(520,136,199,32),self,@selector(keyboardSettings:));
+ Button(view,@"Retry",NSMakeRect(320,136,70,32),self,@selector(retry:));Button(view,@"Keyboard Settings…",NSMakeRect(398,136,199,32),self,@selector(keyboardSettings:));
  _shortcutStatus=Label(view,@"",NSMakeRect(24,91,690,40),12,NO);_shortcutStatus.accessibilityIdentifier=@"superhound.shortcut.status";
- Label(view,@"Set up ⌘Space in System Settings → Keyboard → Keyboard Shortcuts: add an App Shortcut for Superhound with menu title “Search” and ⌘Space, and disable Spotlight’s “Show Spotlight search”. Both bindings must be configured; one does not replace the other. Then Retry here. To restore Spotlight later, quit Superhound and re-enable its shortcut.",NSMakeRect(24,15,690,68),11,YES);
+ _spotlight=[NSButton checkboxWithTitle:@"Use ⌘Space in place of Spotlight" target:self action:@selector(spotlight:)];_spotlight.frame=NSMakeRect(24,58,690,24);_spotlight.accessibilityIdentifier=@"superhound.spotlight";[view addSubview:_spotlight];
+ Label(view,@"Turns off Spotlight’s ⌘Space shortcut and opens Superhound with ⌘Space. To give ⌘Space back to Spotlight, turn this off, or choose Uninstall Superhound… in the menu bar.",NSMakeRect(44,15,670,38),11,YES);
  // The clipboard history row sits under the search shortcut text.
  for(NSView *v in view.subviews)[v setFrameOrigin:NSMakePoint(v.frame.origin.x,v.frame.origin.y+52)];
  Label(view,@"Clipboard",NSMakeRect(24,24,115,24),15,NO);
@@ -51,7 +53,7 @@ static NSButton *Button(NSView *view,NSString *title,NSRect frame,id target,SEL 
  [self shortcutStatus];[self updateButtons];[window center];return self;
 }
 - (void)show {[NSApp activateIgnoringOtherApps:YES];[self.window makeKeyAndOrderFront:nil];[self shortcutStatus];}
-- (void)shortcutStatus {_shortcutStatus.stringValue=_hotKey.status?:@"Use Search in the menu bar while setting up your shortcut.";_historyStatus.stringValue=_historyKey.status?:@"";}
+- (void)shortcutStatus {_spotlight.state=SHSpotlightEnabled(SHHotKey.spotlightHotKeys)?NSControlStateValueOff:NSControlStateValueOn;_shortcutStatus.stringValue=_hotKey.status?:@"Use Search in the menu bar while setting up your shortcut.";_historyStatus.stringValue=_historyKey.status?:@"";}
 - (void)updateRoots:(NSArray<NSDictionary *> *)roots message:(NSString *)message {
  NSInteger selected=_table.selectedRow;NSString *identifier=selected>=0 && selected<(NSInteger)_roots.count?_roots[(NSUInteger)selected][@"id"]:nil;
  _roots=roots;[_table reloadData];for(NSUInteger i=0;i<roots.count;i++)if([roots[i][@"id"] isEqual:identifier])[_table selectRowIndexes:[NSIndexSet indexSetWithIndex:i] byExtendingSelection:NO];
@@ -79,6 +81,12 @@ static NSButton *Button(NSView *view,NSString *title,NSRect frame,id target,SEL 
 - (void)retry:(id)sender {(void)sender;[_hotKey registerSaved];[_historyKey registerSaved];[self shortcutStatus];}
 - (void)recordHistory:(id)sender {(void)sender;_historyRecorder.recording=YES;_historyRecorder.title=@"Press shortcut…";[self.window makeFirstResponder:_historyRecorder];}
 - (void)defaultHistoryShortcut:(id)sender {(void)sender;[_historyKey useDefault];[self shortcutStatus];}
-- (void)defaultShortcut:(id)sender {(void)sender;[_hotKey useDefault];[self shortcutStatus];}
+// On gives ⌘Space to Superhound. Off gives it back to Spotlight and moves Superhound to ⌥Space when ⌥Space is free.
+- (void)spotlight:(NSButton *)sender {
+ BOOL take=sender.state==NSControlStateValueOn;
+ if(![SHHotKey setSpotlightEnabled:!take]){[self shortcutStatus];_shortcutStatus.stringValue=@"macOS did not save the Spotlight shortcut. Change it in Keyboard Settings….";return;}
+ if(take)[_hotKey useDefault];else [_hotKey leaveCommandSpace];
+ [self shortcutStatus];
+}
 - (void)keyboardSettings:(id)sender {(void)sender;[_hotKey openKeyboardSettings];}
 @end

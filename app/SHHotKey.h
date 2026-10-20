@@ -13,6 +13,8 @@
 - (BOOL)recordEvent:(NSEvent *)event;
 - (void)useDefault;
 - (void)openKeyboardSettings;
+// Moves these keys from ⌘Space to ⌥Space when ⌥Space registers; status names the result.
+- (void)leaveCommandSpace;
 // Spotlight's ⌘Space shortcut, read and written in com.apple.symbolichotkeys. setSpotlightEnabled: saves the setting and applies it at once.
 @property(class,nonatomic,readonly) NSDictionary *spotlightHotKeys;
 + (BOOL)setSpotlightEnabled:(BOOL)enabled;
