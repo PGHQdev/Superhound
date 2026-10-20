@@ -111,7 +111,7 @@ Restart, Shut Down, and Log Out show the macOS confirmation first. Empty Trash a
 
 ## Privacy
 
-Superhound works offline. It has no account, no analytics, and no updater. All of its data stays in `~/Library/Application Support/Superhound/`:
+Superhound works offline. All of its data stays in `~/Library/Application Support/Superhound/`:
 
 | File | Content |
 |---|---|
