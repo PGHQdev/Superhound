@@ -43,7 +43,7 @@ The command downloads Superhound, checks the download against the published SHA-
 
 A magnifying glass appears in the menu bar. Choose **Search** to open the panel. The same menu opens when you click the logo at the bottom of the panel. Superhound opens at login; turn this off with **Open at Login** in the same menu.
 
-Superhound works fully without a license and shows an unlicensed reminder. A license is a one-time payment of $19 for 3 Macs at [superhound.app](https://superhound.app). To activate one, choose **Enter License…** in the same menu. To move a license to another Mac, choose **Deactivate License…** on the old Mac first.
+Superhound works fully without a license and shows an unlicensed reminder. A license is a one-time payment of $15 for 3 Macs at [superhound.app](https://superhound.app). To activate one, choose **Enter License…** in the same menu. To move a license to another Mac, choose **Deactivate License…** on the old Mac first.
 
 ### Updates
 
