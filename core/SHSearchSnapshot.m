@@ -29,7 +29,9 @@ static SHText Text(NSString *value) {
 }
 static void FreeText(SHText t) {if(t.length)free((void *)t.points);}
 static NSString *String(const char *bytes,uint32_t length) {return length?[[NSString alloc] initWithBytes:bytes length:length encoding:NSUTF8StringEncoding]:@"";}
-typedef struct { NSUInteger index; unsigned learned,worst,total,pathTerms; size_t compactness; } Ranked;
+// named: an application, settings pane, or command whose name or alias is the whole query. chosen: opened before for this exact query.
+typedef struct { NSUInteger index; unsigned learned,worst,total,pathTerms; size_t compactness; BOOL named,chosen; } Ranked;
+static BOOL SameText(SHText a,SHText b) {return a.length==b.length && !memcmp(a.points,b.points,a.length*sizeof(uint32_t));}
 @implementation SHSearchSnapshot {
  NSUInteger _size;
  SHRecord *_records;
@@ -138,7 +140,10 @@ typedef struct { NSUInteger index; unsigned learned,worst,total,pathTerms; size_
 }
 - (BOOL)rank:(Ranked)a precedes:(Ranked)b {
  // Exact matches precede typing-error matches, also when the user chose the typing-error match before; learned results lead within each group.
+ // A result opened for this exact query leads; then a name typed in full, so a choice made for another query cannot push it down.
  if((a.worst>4)!=(b.worst>4))return a.worst<=4;
+ if(a.chosen!=b.chosen)return a.chosen;
+ if(!a.chosen && a.named!=b.named)return a.named;
  if(a.learned!=b.learned)return a.learned>b.learned;
  // An application, settings pane, or command matched by its name or alias precedes every file, folder, and link.
  BOOL aa=a.worst!=4 && (_records[a.index].flags&Launchable),ba=b.worst!=4 && (_records[b.index].flags&Launchable);
@@ -158,8 +163,8 @@ typedef struct { NSUInteger index; unsigned learned,worst,total,pathTerms; size_
  return NSNotFound;
 }
 - (NSArray<NSDictionary *> *)search:(NSString *)query preferred:(NSArray<NSDictionary *> *)preferred cancelled:(BOOL (^)(void))cancelled {
- NSUInteger learned[8],learnedCount=0;
- for(NSDictionary *p in preferred){if(learnedCount==8)break;learned[learnedCount]=[self indexOfName:p[@"name"] path:p[@"path"]];learnedCount++;}
+ NSUInteger learned[8],learnedCount=0;BOOL same[8];
+ for(NSDictionary *p in preferred){if(learnedCount==8)break;learned[learnedCount]=[self indexOfName:p[@"name"] path:p[@"path"]];same[learnedCount]=[p[@"same"] boolValue];learnedCount++;}
  NSArray *raw=[query componentsSeparatedByCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
  NSMutableArray *terms=NSMutableArray.array; for(NSString *t in raw)if(t.length)[terms addObject:t];
  if(cancelled && cancelled())return @[];
@@ -174,12 +179,13 @@ typedef struct { NSUInteger index; unsigned learned,worst,total,pathTerms; size_
  if(terms.count>SIZE_MAX/sizeof(SHText))return @[];
  SHText *texts=calloc(terms.count,sizeof(SHText)); if(!texts)return @[];
  BOOL valid=YES; for(NSUInteger j=0;j<terms.count;j++){texts[j]=Text(terms[j]);if(!texts[j].points)valid=NO;}
+ SHText whole=Text([terms componentsJoinedByString:@" "]);if(!whole.points)valid=NO;
  BOOL *excluded=calloc(MAX(_roots.count,1),sizeof(BOOL));if(!excluded)valid=NO;else for(NSUInteger k=0;k<_roots.count;k++)excluded[k]=[_excludedRoots containsObject:_roots[k]];
  Ranked top[8];NSUInteger found=0;
  if(valid)for(NSUInteger i=0;i<_size;i++) {
   if(excluded[_records[i].root])continue;
   if((i&255)==0 && cancelled && cancelled()){found=0;break;}
-  SHRecord rec=_records[i];SHText path=_sharedTexts[rec.path]; Ranked rank={i,0,0,0,0,0}; BOOL match=YES;
+  SHRecord rec=_records[i];SHText path=_sharedTexts[rec.path]; Ranked rank={i,0,0,0,0,0,NO,NO}; BOOL match=YES;
   for(NSUInteger j=0;j<terms.count;j++) {
    SHMatch m=sh_match(rec.name,texts[j]),alias=sh_match(_sharedTexts[rec.alias],texts[j]);
    if(alias.rank<m.rank || (alias.rank==m.rank && alias.compactness<m.compactness))m=alias;
@@ -200,11 +206,12 @@ typedef struct { NSUInteger index; unsigned learned,worst,total,pathTerms; size_
    rank.worst=MAX(rank.worst,m.rank);rank.total+=m.rank;rank.pathTerms+=m.rank==4;rank.compactness+=m.compactness;
   }
   if(!match)continue;
-  for(NSUInteger k=0;k<learnedCount;k++)if(learned[k]==i){rank.learned=(unsigned)(8-k);break;}
+  for(NSUInteger k=0;k<learnedCount;k++)if(learned[k]==i){rank.learned=(unsigned)(8-k);rank.chosen=same[k];break;}
+  rank.named=(rec.flags&Launchable) && (SameText(rec.name,whole) || SameText(_sharedTexts[rec.alias],whole));
   NSUInteger pos=0;while(pos<found && ![self rank:rank precedes:top[pos]])pos++;
   if(pos<8){for(NSUInteger k=MIN(found,7);k>pos;k--)top[k]=top[k-1];top[pos]=rank;found=MIN(found+1,8);}
  }
- for(NSUInteger j=0;j<terms.count;j++)FreeText(texts[j]);free(texts);free(excluded);
+ for(NSUInteger j=0;j<terms.count;j++)FreeText(texts[j]);FreeText(whole);free(texts);free(excluded);
  NSMutableArray *result=NSMutableArray.array;for(NSUInteger i=0;i<found;i++)[result addObject:[self entryAt:top[i].index]];return result;
 }
 @end

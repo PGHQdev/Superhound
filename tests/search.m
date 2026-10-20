@@ -59,7 +59,8 @@ int main(void) { @autoreleasepool {
  assert(([[[s search:@"code" preferred:[usage preferredForQuery:@"code"] cancelled:nil] valueForKey:@"id"] isEqual:@[@1,@3,@2,@4,@5]]));
  [usage recordQuery:@"code" result:entries[4]];[usage recordQuery:@"cod" result:entries[1]];[usage recordQuery:@"cod" result:entries[1]];
  usage=[[SHUsage alloc] initWithURL:usageURL];
- assert(([[[s search:@"code" preferred:[usage preferredForQuery:@"code"] cancelled:nil] valueForKey:@"id"] isEqual:@[@5,@2,@1,@3,@4]]));
+ // readme was opened for "code" itself and leads; the app named Code comes next, above Code notes, which was opened for "cod".
+ assert(([[[s search:@"code" preferred:[usage preferredForQuery:@"code"] cancelled:nil] valueForKey:@"id"] isEqual:@[@5,@1,@2,@3,@4]]));
  assert(([[[s search:@"cod" preferred:[usage preferredForQuery:@"cod"] cancelled:nil] valueForKey:@"id"] isEqual:@[@2,@5,@1,@3,@4]]));
  assert([[[s search:@"vsc" preferred:[usage preferredForQuery:@"vsc"] cancelled:nil] firstObject][@"id"] isEqual:@3]);
  // A learned result reached only through a typing error stays below an exact match.
@@ -68,7 +69,26 @@ int main(void) { @autoreleasepool {
  assert(([[[s search:@"" preferred:[usage preferredForQuery:@""] cancelled:nil] valueForKey:@"id"] isEqual:@[@1,@3]]));
  [usage recordQuery:@"" result:entries[2]];
  assert(([[[s search:@"" preferred:[usage preferredForQuery:@""] cancelled:nil] valueForKey:@"id"] isEqual:@[@3,@1]]));
- assert(([[[s search:@"code" preferred:[usage preferredForQuery:@"code"] cancelled:nil] valueForKey:@"id"] isEqual:@[@5,@2,@1,@3,@4]]));
+ assert(([[[s search:@"code" preferred:[usage preferredForQuery:@"code"] cancelled:nil] valueForKey:@"id"] isEqual:@[@5,@1,@2,@3,@4]]));
+ // A name typed in full leads a choice made for a shorter query, until the user opens another result for the full query; a file with that name gets no such place.
+ NSArray *mails=@[E(1,@"Mail",@"/apps/Mail.app",@"app"),E(2,@"Mailspring",@"/apps/Mailspring.app",@"app"),E(3,@"mail",@"/work/mail",@"file"),E(4,@"Activity Monitor",@"/apps/Activity Monitor.app",@"app"),E(5,@"Activity Monitor Helper",@"/apps/Activity Monitor Helper.app",@"app")];
+ SHSearchSnapshot *mail=[[SHSearchSnapshot alloc] initWithEntries:mails generation:1];
+ [NSFileManager.defaultManager removeItemAtURL:usageURL error:nil];usage=[[SHUsage alloc] initWithURL:usageURL];
+ [usage recordQuery:@"ma" result:mails[1]];[usage recordQuery:@"act" result:mails[4]];
+ assert(([[[mail search:@"ma" preferred:[usage preferredForQuery:@"ma"] cancelled:nil] valueForKey:@"id"] isEqual:@[@2,@1,@3,@4,@5]]));
+ assert(([[[mail search:@"mail" preferred:[usage preferredForQuery:@"mail"] cancelled:nil] valueForKey:@"id"] isEqual:@[@1,@2,@3]]));
+ assert(([[[mail search:@"Activity  MONITOR" preferred:[usage preferredForQuery:@"activity monitor"] cancelled:nil] valueForKey:@"id"] isEqual:@[@4,@5]]));
+ [usage recordQuery:@"mail" result:mails[1]];
+ assert(([[[mail search:@"mail" preferred:[usage preferredForQuery:@"mail"] cancelled:nil] valueForKey:@"id"] isEqual:@[@2,@1,@3]]));
+ [usage recordQuery:@"mail" result:mails[0]];[usage recordQuery:@"mail" result:mails[0]];
+ assert(([[[mail search:@"mail" preferred:[usage preferredForQuery:@"mail"] cancelled:nil] valueForKey:@"id"] isEqual:@[@1,@2,@3]]));
+ // The same holds for a settings pane named by its alias and for a command, against choices made for shorter and longer queries; a choice reached only through a typing error stays below an exact match.
+ NSArray *others=@[@{@"id":@1,@"name":@"Displays",@"path":@"/s/Displays.appex",@"relative":@"Displays.appex",@"alias":@"monitor",@"type":@"settings"},E(2,@"Monitor Pro",@"/apps/Monitor Pro.app",@"app"),@{@"id":@3,@"name":@"Sleep",@"path":@"command:sleep",@"relative":@"",@"alias":@"",@"type":@"command"},E(4,@"Sleep Tracker",@"/apps/Sleep Tracker.app",@"app"),E(5,@"Notes",@"/apps/Notes.app",@"app"),E(6,@"notse draft",@"/work/notse draft",@"file")];
+ SHSearchSnapshot *other=[[SHSearchSnapshot alloc] initWithEntries:others generation:1];
+ [usage recordQuery:@"mon" result:others[1]];[usage recordQuery:@"sleep tracker" result:others[3]];[usage recordQuery:@"notse" result:others[4]];
+ assert(([[[other search:@"monitor" preferred:[usage preferredForQuery:@"monitor"] cancelled:nil] valueForKey:@"id"] isEqual:@[@1,@2]]));
+ assert(([[[other search:@"sleep" preferred:[usage preferredForQuery:@"sleep"] cancelled:nil] valueForKey:@"id"] isEqual:@[@3,@4]]));
+ assert(([[[other search:@"notse" preferred:[usage preferredForQuery:@"notse"] cancelled:nil] valueForKey:@"id"] isEqual:@[@6,@5]]));
  [NSFileManager.defaultManager removeItemAtURL:usageURL error:nil];
  assert([s search:[@"a" stringByPaddingToLength:100000 withString:@"a" startingAtIndex:0] cancelled:nil].count == 0);
  assert([s search:@"code" cancelled:^BOOL {return YES;}].count == 0);

@@ -3,7 +3,7 @@
 @interface SHUsage : NSObject
 - (instancetype)initWithURL:(NSURL *)url;
 - (void)recordQuery:(NSString *)query result:(NSDictionary *)result;
-// Results opened before for this query or a related one, best first, at most 8.
+// Results opened before for this query or a related one, best first, at most 8. "same" is YES for a result opened for this exact query.
 // An empty query gives the most opened results of any kind, at most 40.
 - (NSArray<NSDictionary *> *)preferredForQuery:(NSString *)query;
 @end

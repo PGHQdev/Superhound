@@ -37,7 +37,7 @@ static NSString *Key(NSString *query) {
   if(score<=0)continue;
   // A choice loses half of its weight each 30 days without use.
   score*=pow(0.5,MAX(0,now-[item[@"last"] doubleValue])/(30*86400.0));
-  [scored addObject:@{@"path":path,@"name":item[@"name"]?:@"",@"score":@(score),@"last":item[@"last"]?:@0}];
+  [scored addObject:@{@"path":path,@"name":item[@"name"]?:@"",@"score":@(score),@"last":item[@"last"]?:@0,@"same":@(key.length && item[@"queries"][key]!=nil)}];
  }
  [scored sortUsingDescriptors:@[[NSSortDescriptor sortDescriptorWithKey:@"score" ascending:NO],[NSSortDescriptor sortDescriptorWithKey:@"last" ascending:NO],[NSSortDescriptor sortDescriptorWithKey:@"path" ascending:YES]]];
  return scored.count>limit?[scored subarrayWithRange:NSMakeRange(0,limit)]:scored;

@@ -9,7 +9,7 @@ BOOL SHLaunchable(NSDictionary *entry);
 - (nullable instancetype)initWithEntries:(NSArray<NSDictionary *> *)entries generation:(uint64_t)generation;
 - (SHSearchSnapshot *)snapshotByExcludingRoots:(NSSet<NSString *> *)roots;
 - (NSArray<NSDictionary *> *)search:(NSString *)query cancelled:(BOOL (^_Nullable)(void))cancelled;
-// preferred lists results the user opened before (name and path), best first; matching ones lead the results.
+// preferred lists results the user opened before (name, path, and "same" for the exact query), best first; matching ones lead the results.
 - (NSArray<NSDictionary *> *)search:(NSString *)query preferred:(nullable NSArray<NSDictionary *> *)preferred cancelled:(BOOL (^_Nullable)(void))cancelled;
 @end
 NS_ASSUME_NONNULL_END
