@@ -1,58 +1,153 @@
+<div align="center">
+
 # Superhound
 
-A native macOS search prototype for applications and filenames, with its own local catalog and a keyboard-driven AppKit panel.
+A small, fast launcher for macOS.
 
-**Status: locally usable prototype, not a public release.** Objective-C/AppKit, a C Unicode matcher, SQLite, and FSEvents; Apple Silicon on macOS 15+. See [measured results and remaining acceptance checks](docs/prototype-validation.md).
+Open apps and files, do quick math, and paste from your clipboard history, all from one search panel.
 
-## Build and run
+macOS 15 or later · Apple Silicon · Works offline
 
-Apple Command Line Tools are the only build dependency. No package manager, network service, Spotlight index, or Developer ID certificate is required.
+</div>
+
+<br>
+
+## What it does
+
+| | Type | Return |
+|---|---|---|
+| **Apps and files** | `term`, `safari`, `notes.txt` | Opens it |
+| **System Settings** | `storage` | Opens the pane |
+| **Calculator** | `48*12`, `15% of 240`, `240 + 15%` | Copies the answer |
+| **Units** | `5 km to mi`, `72f to c` | Copies the answer |
+| **Emoji** | `fire`, `happy`, `japan` | Copies the emoji |
+| **Commands** | `sleep`, `restart`, `mute`, `dark`, `empty trash`, `eject` | Runs it |
+| **Clipboard history** | Press ⌥⌘V | Pastes it |
+
+Search ignores case and accents, accepts small typing errors, and learns which results you open.
+
+## Install
+
+You need the Apple Command Line Tools (`xcode-select --install`). Nothing else.
 
 ```sh
+git clone https://github.com/PGHQdev/superhound.git
+cd superhound
 scripts/build.sh
-scripts/test.sh
-# Quit a running Superhound before replacing its bundle.
 scripts/install.sh .build/Superhound.app
 open ~/Applications/Superhound.app
 ```
 
-The installer retains the previous bundle in a `.superhound-backup.*` directory under `~/Applications`. It refuses unrelated bundle identities, symlink destinations, and replacement while Superhound is running. For rollback, quit Superhound and pass the retained `previous.app` to `scripts/install.sh`.
+A magnifying glass appears in the menu bar. Choose **Search** to open the panel. Superhound opens at login; turn this off with **Open at Login** in the same menu.
 
-## Use
+To update, pull the latest code, quit Superhound, and run the same build and install commands. The installer keeps the previous version in `~/Applications/.superhound-backup.*`. To go back, quit Superhound and install that `previous.app`.
 
-- Type a calculation (`48*12`, `15% of 240`, `240 + 15%`) or a conversion (`5 km to mi`, `72f to c`) to see the answer in the first row; Return copies the number. Units cover length, weight, temperature, volume, data size, and time, all offline.
-- Type a word such as `fire`, `happy`, or `japan` to see matching emoji in the last rows; Return copies the emoji. The list is `app/emoji.tsv`, built from the Unicode emoji list and CLDR English keywords by `scripts/update-emoji.py`.
-- Type a command name, such as `lock`, `sleep`, `restart`, `mute`, `dark`, `empty trash`, or `eject`, to run it. Restart, Shut Down, and Log Out show the system confirmation. Empty Trash asks first. On first use, macOS asks to let Superhound control Finder, System Events, or the login window. Lock Screen uses a private macOS call.
-- Open **Search** from the magnifying-glass menu-bar icon. Type an app or filename, use arrows to select, Return to open, Command-Return to reveal in Finder, and Escape to dismiss.
-- Command-K, or a right-click on a row, shows the actions for the result: Open, Reveal in Finder, Quick Look (Command-Y), Open With, Copy Path (Shift-Command-C), and Move to Trash. Open With is for files, folders, and links. A command shows Run, and an emoji or answer shows Copy. Move to Trash shows only when macOS lets you delete the item.
-- Press Option-Command-V, or choose **Clipboard History** in the menu bar, to see the text you copied, newest first. Type to filter it. A search of 3 or more characters in the normal panel also shows up to 2 matching copies, after emoji and before files. Return pastes the item into the app that was in front, and Command-Return only copies it. Command-K shows Paste, Copy, and Delete from History. Paste needs Accessibility access: macOS asks on first use, and without access Return only copies. Superhound has an ad-hoc signature, so macOS can ask again after each new install. The history keeps the last 500 text copies. It skips copies that password managers mark as concealed or transient, copies from Keychain Access and Passwords, and text over 100,000 characters. **Clear Clipboard History** in the menu bar deletes all of it. Change the shortcut in **Search Locations…**.
-- Add folders in **Search Locations…**. App directories are included automatically. No personal folders are selected automatically.
-- Command-Space is the requested default. On the validation Mac, setup required both steps in **System Settings → Keyboard → Keyboard Shortcuts**: add an **App Shortcut** for **Superhound**, menu title **Search**, shortcut **⌘Space**; then disable Spotlight’s **Show Spotlight search**. Use **Retry** in Superhound and test from another app. Enabling the new shortcut does not replace or disable the existing Spotlight binding. To restore Spotlight later, quit Superhound and re-enable that shortcut.
-- Selected folders reconcile automatically after changes; **Refresh Catalog** performs an immediate rescan. Coverage and access failures appear per location.
+<details>
+<summary><b>Open Superhound with ⌘Space</b></summary>
 
-Only names and application metadata are indexed. Hidden descendants, package contents, non-local placeholders, and Superhound’s mutable data are skipped. Symbolic links are listed without traversal. Generated-directory exclusions can be switched off. Removing a location never deletes source files.
+<br>
 
-Settings/bookmarks, a rebuildable catalog, the learned-ranking history (`usage.plist`: opened paths with the queries typed for them), and the clipboard history (`clipboard.plist`: copied text in plain form, readable only by your user) live under `~/Library/Application Support/Superhound/`, separate from the disposable installation probe. Superhound registers itself to open at login on first launch; the menu item **Open at Login** turns this off. There is no updater, licensing, or cloud search in this slice.
+Spotlight uses ⌘Space, so macOS needs two changes in **System Settings → Keyboard → Keyboard Shortcuts**:
 
-## Verify and measure
+1. In **App Shortcuts**, add a shortcut for **Superhound** with the menu title `Search` and the keys ⌘Space.
+2. In **Spotlight**, turn off **Show Spotlight search**.
+
+Then open **Search Locations…** from the menu bar and click **Retry**. To get Spotlight back, quit Superhound and turn **Show Spotlight search** on again.
+
+</details>
+
+## Keys
+
+| Key | Action |
+|---|---|
+| ⌘Space | Open Superhound (after the setup above) |
+| ⌥⌘V | Open clipboard history |
+| ↑ ↓ | Select a result |
+| Return | Open, run, copy, or paste the result |
+| ⌘Return | Show a file in Finder. In clipboard history: copy only |
+| ⌘K | All actions: Open With, Quick Look, Copy Path, Move to Trash, and more |
+| ⌘Y | Quick Look |
+| ⇧⌘C | Copy path |
+| Esc | Close |
+
+Right-click a result to see the same actions as ⌘K. You can change both shortcuts in **Search Locations…**.
+
+## Search locations
+
+Superhound always searches your app folders. To search your own folders, add them in **Search Locations…**. No personal folder is added for you.
+
+- Changes to files appear in a few seconds. **Refresh Catalog** scans everything now.
+- Superhound reads names, never file contents.
+- It skips hidden items, the inside of packages, online-only files, and generated folders such as `node_modules`. You can turn off the generated-folder rule.
+- Removing a location never deletes files.
+
+## Clipboard history
+
+Superhound keeps the last 500 pieces of text you copy, newest first. Press ⌥⌘V, or choose **Clipboard History** in the menu bar, then type to filter. A normal search of 3 or more characters also shows up to 2 matching copies.
+
+It does not keep:
+
+- copies that password managers mark as private
+- copies from Keychain Access and Passwords
+- text longer than 100,000 characters
+
+**Clear Clipboard History** in the menu bar deletes it all.
+
+## Permissions
+
+| Permission | When macOS asks | Without it |
+|---|---|---|
+| Accessibility | When you paste from clipboard history | Return copies the text, and you paste it yourself |
+| Automation for Finder, System Events, or the login window | The first use of a command such as Empty Trash or Restart | That command does not run |
+
+A build from source has a local signature, so macOS can ask for Accessibility again after you install a new build. If paste stops working, remove Superhound in **System Settings → Privacy & Security → Accessibility** and add it again.
+
+Restart, Shut Down, and Log Out show the macOS confirmation first. Empty Trash asks first. Lock Screen uses a private macOS call that a later macOS can break.
+
+## Privacy
+
+Superhound makes no network requests. It has no account, no analytics, and no updater. All of its data stays in `~/Library/Application Support/Superhound/`:
+
+| File | Content |
+|---|---|
+| `folders.plist` | Your search locations |
+| `catalog.sqlite` | The list of indexed names. Safe to delete; Superhound builds it again. |
+| `usage.plist` | The results you opened and what you typed for them |
+| `clipboard.plist` | Your clipboard history, readable only by your macOS user |
+| `performance.jsonl` | Timing records |
+
+## Performance
+
+Measured on an Apple M1 with macOS 15.
+
+| Measure | Result |
+|---|---|
+| App size | 480 KiB |
+| Memory after launch | 28 to 42 MiB over 20 minutes |
+| Search across 100,000 items | 9.6 ms median, 20.3 ms at the 95th percentile |
+
+The search time comes from a synthetic benchmark. The methods and all results are in [docs/prototype-validation.md](docs/prototype-validation.md).
+
+## Development
+
+Superhound is written in Objective-C and C with AppKit, SQLite, and FSEvents. It has no third-party dependencies.
 
 ```sh
-scripts/test.sh        # critical core checks with AddressSanitizer/UndefinedBehaviorSanitizer
-scripts/build.sh      # release build, -Wall -Wextra -Werror, ad-hoc signing verification
-# Quit the resident prototype before installer tests.
-tests/install.sh      # isolated temporary-directory installation and upgrade checks
-scripts/benchmark.sh  # synthetic 10k/100k exhaustive queries; scan/SQLite measurements
-.build/bench/search 100000 --check-memory    # reference snapshot memory budget
-.build/bench/search 100000 --unique-parents  # less favorable directory layout
+scripts/test.sh       # seven test suites with AddressSanitizer and UndefinedBehaviorSanitizer
+scripts/benchmark.sh  # search and catalog speed at 10,000 and 100,000 items
+tests/install.sh      # installer checks; quit Superhound first
 ```
 
-The benchmark uses 360 queries across exact/prefix, abbreviation, accent folding, Japanese, multi-term paths, substring, miss, and empty-input cases. It reports query percentiles separately from preparation/replacement time. It does not read user documents. Optional local UI timing instructions are in the validation report.
+| Folder | Content |
+|---|---|
+| `core/` | Search, ranking, scanning, the catalog, calculator, emoji, and clipboard history. No window code. |
+| `app/` | The panel, the settings window, shortcuts, and macOS actions |
+| `tests/` | Test suites for `core/` and the installer |
+| `bench/` | Benchmark programs |
+| `scripts/` | Build, test, install, and benchmark |
 
-## Implementation
+[AGENTS.md](AGENTS.md) describes each file. The first design and plan are in [docs/superpowers](docs/superpowers).
 
-- `app/`: native search/settings windows, accessible controls, global shortcut, focus and open/reveal actions.
-- `core/`: staged scanning, bookmark-aware root ownership, FSEvents debounce, atomic SQLite catalog, immutable snapshots, ranking and cancellation.
-- `tests/`, `bench/`, `scripts/`: critical integration checks, reproducible measurements, local build/install.
-- [Approved design](docs/superpowers/specs/2026-10-04-first-search-prototype-design.md) and [implementation plan](docs/superpowers/plans/2026-10-04-first-search-prototype.md).
+## Status
 
-The previous research and [installation probe](spikes/install-permissions/README.md) remain intact in the original repository. Product strategy, broader scope, distribution, and monetization research are in `docs/`; they are future work beyond this prototype.
+Superhound is an early version. There is no signed download yet, so you build it from source.
