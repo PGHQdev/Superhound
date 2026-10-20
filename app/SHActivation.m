@@ -48,6 +48,10 @@ static NSInteger Ask(NSString *title,NSString *text,NSString *action,NSView *acc
   [self->_license remove];if(self.changed)self.changed();
  }];
 }
+- (void)releaseThen:(void (^)(NSString *error))done {
+ if(!_license.licensed){done(nil);return;}
+ [self post:@"/api/deactivate" body:@{@"key":_license.key,@"device":_license.device} reply:^(NSDictionary *answer,NSString *error){(void)answer;[self->_license remove];done(error);}];
+}
 - (void)openURL:(NSURL *)url {
  NSURLComponents *parts=[NSURLComponents componentsWithURL:url resolvingAgainstBaseURL:NO];if(![parts.scheme isEqual:@"superhound"] || ![parts.host isEqual:@"activate"])return;
  NSString *key=nil;for(NSURLQueryItem *item in parts.queryItems)if([item.name isEqual:@"key"])key=item.value;

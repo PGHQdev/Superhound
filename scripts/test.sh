@@ -15,6 +15,8 @@ xcrun clang "${flags[@]}" tests/license.m core/SHLicense.m -framework Foundation
 .build/tests/license
 xcrun clang "${flags[@]}" tests/update.m core/SHUpdate.m -framework Foundation -framework Security -o .build/tests/update
 .build/tests/update
+xcrun clang "${flags[@]}" tests/spotlight.m core/SHSpotlight.m -framework Foundation -o .build/tests/spotlight
+.build/tests/spotlight
 if [[ -f tests/catalog.m ]]; then
  xcrun clang "${flags[@]}" tests/catalog.m core/SHCatalog.m core/SHScanner.m app/SHFolderAccess.m -framework Foundation -lsqlite3 -o .build/tests/catalog
  .build/tests/catalog

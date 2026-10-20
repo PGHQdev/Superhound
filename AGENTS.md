@@ -12,7 +12,7 @@ A native macOS launcher: one panel on a global shortcut that finds apps, files, 
 | Command | Function |
 |---|---|
 | `scripts/build.sh [build number] [version]` | Compiles and signs `.build/Superhound.app` with the "Superhound" certificate from the keychain, or ad-hoc without it. Also writes the bundle's `Info.plist`. |
-| `scripts/test.sh` | Builds and runs the nine Objective-C test suites with sanitizers. Run it before each commit. |
+| `scripts/test.sh` | Builds and runs the ten Objective-C test suites with sanitizers. Run it before each commit. |
 | `scripts/install.sh .build/Superhound.app` | Replaces the installed app. It refuses while Superhound is in operation, and it keeps the previous bundle. |
 | `scripts/release.sh <version> <build number>` | From a clean commit: runs the tests, builds with the certificate, makes `.build/release/<version>/Superhound.zip`, and prints its SHA-256, the publish commands, and the superhound-web release vars. It does not publish. |
 | `scripts/benchmark.sh` | Measures query time, memory, and catalog speed at 10,000 and 100,000 records. |
@@ -35,6 +35,7 @@ To see a change in the live app: build with a build number one above the install
 | `SHClipboard.m` | The clipboard history: the last 500 text copies, the skip rules for concealed and password copies, search, and `clipboard.plist`. |
 | `SHLicense.m` | The license of this Mac: the device ID, the check of the token that superhound.app signed, and `license.plist`. |
 | `SHUpdate.m` | Updates: the release file from `/api/latest`, the once-a-day rule, and the install of a downloaded zip (SHA-256, build number, signature check against a requirement, swap with a kept previous app). |
+| `SHSpotlight.m` | The rules for Spotlight's ⌘Space entry (64) in AppleSymbolicHotKeys: on or off, a change of only its enabled flag, and when an uninstall gives ⌘Space back. |
 | `SHCommands.m` | The system commands (Lock Screen, Sleep, Restart, Toggle Mute, Empty Trash, and others) as search entries. `SHLibrary` adds them to each snapshot. |
 | `SHLibrary.m` | Owns the search locations: the fixed app folders, the user's folders, scans, overlap between folders, and snapshot publication. |
 | `SHScanner.m` | Walks one folder and makes entries. Holds the skip rules (hidden items, packages, generated folders, online-only files). |
@@ -46,10 +47,10 @@ To see a change in the live app: build with a build number one above the install
 
 | File | Function |
 |---|---|
-| `SHAppDelegate.m` | Start-up wiring, the menu bar item and its menu, Open at Login, the pasteboard check twice a second for the clipboard history, the license, update, and About menu items, and `superhound://` links. |
+| `SHAppDelegate.m` | Start-up wiring, the menu bar item and its menu, Open at Login, the pasteboard check twice a second for the clipboard history, the license, update, and About menu items, Uninstall Superhound… (frees the activation, gives ⌘Space back to Spotlight when Superhound took it, removes the login item, the data, the defaults, the app, and its kept previous versions), and `superhound://` links. |
 | `SHSearchPanelController.m` | The search panel and its clipboard history mode: the dark blurred borderless window, 600 pt wide, with a height that follows the rows (it grows at once and shrinks after 0.15 s); the shared columns (16 pt margin, 28 pt icon column, text at x 52); field (Return during a search opens the result when it arrives; Escape closes Quick Look before the panel), the label band ("Suggested", errors, no matches, indexing note), one-line app rows and two-line file rows with folder context, row order (answer, chosen before, apps, settings panes, and commands, emoji, clipboard items, files), keys, the action menu (⌘K and right-click), Quick Look, copy and open, the footer (key hints, the Update to and Activate license links, the logo and name, which open the menu bar menu), and the license reminder on every tenth opening (`unlicensedOpens` in the defaults). |
 | `SHSettingsController.m` | The Settings window (⌘,): the search locations with the item counts, and the two shortcut recorders. |
-| `SHHotKey.m` | Global shortcut registration, one object for each shortcut. It refuses the other shortcut's keys, and it keeps the previous keys when new keys fail to register. |
+| `SHHotKey.m` | Global shortcut registration, one object for each shortcut. It refuses the other shortcut's keys, and it keeps the previous keys when new keys fail to register. It also reads and writes Spotlight's ⌘Space shortcut in `com.apple.symbolichotkeys`, with a private call that applies the change at once. |
 | `SHFolderAccess.m` | Security-scoped bookmarks for the user's folders. |
 | `SHActivation.m` | Activation and deactivation requests to superhound.app, the license key window, and `superhound://activate?key=` links. The defaults key `licenseServer` points it at a local test server. |
 | `SHUpdater.m` | The daily update check, Check for Updates…, the download, and the relaunch. An update must meet the running app's designated requirement, so only a build signed with the "Superhound" certificate can update. Defaults keys: `updateCheckAutomatically`, `updateCheckedAt`; `licenseServer` also points it at a local test server. |
@@ -67,6 +68,7 @@ To see a change in the live app: build with a build number one above the install
 | `tests/emoji.m` | Emoji search |
 | `tests/clipboard.m` | Clipboard history rules, search, limits, and its file |
 | `tests/license.m` | Device ID, token checks with a WebCrypto test token, and the license file |
+| `tests/spotlight.m` | The Spotlight shortcut entry rules |
 | `tests/update.m` | The release file, the daily rule, and installs of signed test bundles, with each failure case |
 | `tests/catalog.m` | Scanner rules and the SQLite cache |
 | `tests/library.m` | Search locations with live file changes |

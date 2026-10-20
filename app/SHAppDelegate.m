@@ -8,6 +8,7 @@
 #import "SHClipboard.h"
 #import "SHActivation.h"
 #import "SHUpdater.h"
+#import "SHSpotlight.h"
 #import <Carbon/Carbon.h>
 #import <ServiceManagement/ServiceManagement.h>
 @implementation SHAppDelegate {
@@ -50,7 +51,7 @@ static NSString *const LicensePublicKey=@"BB1mBfflJqWXPJerDDR+MLSwGOCcP/HFGM8f+H
   NSString *status=indexing?(indexing==1?@"Indexing 1 location":[NSString stringWithFormat:@"Indexing %@ locations",[NSNumberFormatter localizedStringFromNumber:@(indexing) numberStyle:NSNumberFormatterDecimalStyle]]):unavailable?@"Check Settings for coverage":@"";
   [self->_panel updateSnapshot:snapshot status:status];
  };
- NSMenu *menu=NSMenu.new;[menu addItemWithTitle:@"Update" action:@selector(installUpdate:) keyEquivalent:@""];[menu addItemWithTitle:@"Search" action:@selector(search:) keyEquivalent:@""];[menu addItemWithTitle:@"Clipboard History" action:@selector(history:) keyEquivalent:@""];[menu addItemWithTitle:@"Settings…" action:@selector(settings:) keyEquivalent:@","];[menu addItemWithTitle:@"Refresh Catalog" action:@selector(refresh:) keyEquivalent:@""];[menu addItemWithTitle:@"Clear Clipboard History" action:@selector(clearHistory:) keyEquivalent:@""];[menu addItemWithTitle:@"Open at Login" action:@selector(loginItem:) keyEquivalent:@""];[menu addItemWithTitle:@"Enter License…" action:@selector(license:) keyEquivalent:@""];[menu addItem:NSMenuItem.separatorItem];[menu addItemWithTitle:@"About Superhound" action:@selector(about:) keyEquivalent:@""];[menu addItemWithTitle:@"Check for Updates…" action:@selector(checkUpdates:) keyEquivalent:@""];[menu addItemWithTitle:@"Check for Updates Automatically" action:@selector(automaticUpdates:) keyEquivalent:@""];[menu addItem:NSMenuItem.separatorItem];[menu addItemWithTitle:@"Quit Superhound" action:@selector(terminate:) keyEquivalent:@"q"];
+ NSMenu *menu=NSMenu.new;[menu addItemWithTitle:@"Update" action:@selector(installUpdate:) keyEquivalent:@""];[menu addItemWithTitle:@"Search" action:@selector(search:) keyEquivalent:@""];[menu addItemWithTitle:@"Clipboard History" action:@selector(history:) keyEquivalent:@""];[menu addItemWithTitle:@"Settings…" action:@selector(settings:) keyEquivalent:@","];[menu addItemWithTitle:@"Refresh Catalog" action:@selector(refresh:) keyEquivalent:@""];[menu addItemWithTitle:@"Clear Clipboard History" action:@selector(clearHistory:) keyEquivalent:@""];[menu addItemWithTitle:@"Open at Login" action:@selector(loginItem:) keyEquivalent:@""];[menu addItemWithTitle:@"Enter License…" action:@selector(license:) keyEquivalent:@""];[menu addItem:NSMenuItem.separatorItem];[menu addItemWithTitle:@"About Superhound" action:@selector(about:) keyEquivalent:@""];[menu addItemWithTitle:@"Check for Updates…" action:@selector(checkUpdates:) keyEquivalent:@""];[menu addItemWithTitle:@"Check for Updates Automatically" action:@selector(automaticUpdates:) keyEquivalent:@""];[menu addItem:NSMenuItem.separatorItem];[menu addItemWithTitle:@"Uninstall Superhound…" action:@selector(uninstall:) keyEquivalent:@""];[menu addItemWithTitle:@"Quit Superhound" action:@selector(terminate:) keyEquivalent:@"q"];
  for(NSMenuItem *item in menu.itemArray)if(item.action!=@selector(terminate:))item.target=self;_panel.appMenu=menu;
  _statusItem=[NSStatusBar.systemStatusBar statusItemWithLength:NSVariableStatusItemLength];
  // The hound template takes the menu bar's color in light and dark mode.
@@ -96,6 +97,23 @@ static NSString *const LicensePublicKey=@"BB1mBfflJqWXPJerDDR+MLSwGOCcP/HFGM8f+H
  if(item.action==@selector(installUpdate:)){item.hidden=!_updater.latest;item.title=_updater.latest?[NSString stringWithFormat:@"Update to %@…",_updater.latest.version]:@"Update";return !_updater.busy;}
  if(item.action==@selector(checkUpdates:))return !_updater.busy;if(item.action==@selector(automaticUpdates:)){item.hidden=!_updater.supported;item.state=_updater.automatic?NSControlStateValueOn:NSControlStateValueOff;}
  if(item.action==@selector(license:))item.title=_license.licensed?@"Deactivate License…":@"Enter License…";if(item.action==@selector(clearHistory:))return _clipboard.count>0;if(item.action==@selector(loginItem:))item.state=SMAppService.mainAppService.status==SMAppServiceStatusEnabled?NSControlStateValueOn:NSControlStateValueOff;return YES;}
+// Takes back what Superhound added to this Mac: the license activation, Spotlight's ⌘Space change, the login item, its data and settings, and the app with its kept previous versions.
+- (void)uninstall:(id)sender {
+ (void)sender;[NSApp activateIgnoringOtherApps:YES];NSAlert *alert=NSAlert.new;alert.messageText=@"Uninstall Superhound?";
+ alert.informativeText=[NSString stringWithFormat:@"%@Superhound gives ⌘Space back to Spotlight if it took it, deletes its settings, catalog, learned ranking, and clipboard history, and moves itself to the Trash. Your files stay as they are.",_license.licensed?@"This Mac’s license activation is freed. ":@""];
+ [alert addButtonWithTitle:@"Uninstall"];[alert addButtonWithTitle:@"Cancel"];if([alert runModal]!=NSAlertFirstButtonReturn)return;
+ [_activation releaseThen:^(NSString *error){
+  if(error){NSAlert *note=NSAlert.new;note.messageText=@"The license activation is still in use";note.informativeText=[error stringByAppendingString:@" Write to support@superhound.app to free it."];[note runModal];}
+  NSUserDefaults *d=NSUserDefaults.standardUserDefaults;NSFileManager *files=NSFileManager.defaultManager;
+  if(SHSpotlightTakenOver(SHHotKey.spotlightHotKeys,[d integerForKey:@"shortcutCode"],[d integerForKey:@"shortcutModifiers"]))[SHHotKey setSpotlightEnabled:YES];
+  [self->_pasteboardTimer invalidate];[SMAppService.mainAppService unregisterAndReturnError:nil];
+  [files removeItemAtURL:[[files URLsForDirectory:NSApplicationSupportDirectory inDomains:NSUserDomainMask].firstObject URLByAppendingPathComponent:@"Superhound" isDirectory:YES] error:nil];
+  [d removePersistentDomainForName:NSBundle.mainBundle.bundleIdentifier];
+  NSURL *app=NSBundle.mainBundle.bundleURL,*folder=app.URLByDeletingLastPathComponent;
+  for(NSURL *item in [files contentsOfDirectoryAtURL:folder includingPropertiesForKeys:nil options:0 error:nil])if([item.lastPathComponent hasPrefix:@".superhound-backup."])[files trashItemAtURL:item resultingItemURL:nil error:nil];
+  [files trashItemAtURL:app resultingItemURL:nil error:nil];[NSApp terminate:nil];
+ }];
+}
 - (void)wake:(NSNotification *)notification {(void)notification;[_library refresh];}
 - (BOOL)applicationShouldHandleReopen:(NSApplication *)sender hasVisibleWindows:(BOOL)flag {(void)sender;(void)flag;[_panel toggle];return NO;}
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender {(void)sender;return NO;}

@@ -1,5 +1,7 @@
 #import "SHHotKey.h"
 #import <Carbon/Carbon.h>
+#import <dlfcn.h>
+#import "SHSpotlight.h"
 @implementation SHHotKey {EventHotKeyRef _key;EventHandlerRef _handler;UInt32 _identifier,_code,_modifiers;NSString *_name,*_menu;OSStatus _error;}
 // Each shortcut has its own handler; a press of the other shortcut goes on to the next handler.
 static OSStatus Invoked(EventHandlerCallRef next,EventRef event,void *context){
@@ -30,6 +32,14 @@ static OSStatus Invoked(EventHandlerCallRef next,EventRef event,void *context){
  return [self saveCode:event.keyCode modifiers:mods label:label];
 }
 - (void)useDefault {[self saveCode:_code modifiers:_modifiers label:_defaultLabel];}
++ (NSDictionary *)spotlightHotKeys {CFPreferencesAppSynchronize(CFSTR("com.apple.symbolichotkeys"));id keys=CFBridgingRelease(CFPreferencesCopyAppValue(CFSTR("AppleSymbolicHotKeys"),CFSTR("com.apple.symbolichotkeys")));return [keys isKindOfClass:NSDictionary.class]?keys:@{};}
+// The saved setting alone applies at the next login; this private call applies it now and can change in a later macOS.
++ (BOOL)setSpotlightEnabled:(BOOL)enabled {
+ CFPreferencesSetAppValue(CFSTR("AppleSymbolicHotKeys"),(__bridge CFDictionaryRef)SHSpotlightHotKeys(self.spotlightHotKeys,enabled),CFSTR("com.apple.symbolichotkeys"));
+ if(!CFPreferencesAppSynchronize(CFSTR("com.apple.symbolichotkeys")))return NO;
+ int (*apply)(int,bool)=(int (*)(int,bool))dlsym(RTLD_DEFAULT,"CGSSetSymbolicHotKeyEnabled");if(apply)apply(SHSpotlightEntry.intValue,enabled);
+ return SHSpotlightEnabled(self.spotlightHotKeys)==enabled;
+}
 // New keys replace the saved ones only when they register, so a refused or taken shortcut leaves the previous one working.
 - (BOOL)saveCode:(UInt32)code modifiers:(UInt32)mods label:(NSString *)label {
  NSUserDefaults *d=NSUserDefaults.standardUserDefaults;

@@ -10,6 +10,8 @@
 - (void)enterKey:(NSString *)key;
 // Asks first, then frees this Mac's activation and removes the license.
 - (void)deactivate;
+// Frees this Mac's activation with no question, for an uninstall, and removes the license either way. done gets nil, or the reason the activation is still in use.
+- (void)releaseThen:(void (^)(NSString *error))done;
 // superhound://activate?key=… from the purchase email or the install command.
 - (void)openURL:(NSURL *)url;
 @end

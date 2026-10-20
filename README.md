@@ -233,9 +233,15 @@ Restart, Shut Down, and Log Out show the macOS confirmation first. Empty Trash a
 
 <br>
 
-1. If this Mac has a license, choose **Deactivate License…** to free the activation.
-2. Quit Superhound.
-3. Delete `~/Applications/Superhound.app` and `~/Library/Application Support/Superhound/`.
+Choose **Uninstall Superhound…** in the menu bar. Superhound frees this Mac's license activation, gives ⌘Space back to Spotlight if it took it, deletes its settings and data, and moves itself to the Trash.
+
+If the app does not open, paste this in Terminal. It does the same:
+
+```sh
+curl -fsSL https://superhound.app/uninstall | sh
+```
+
+If you dragged Superhound to the Trash, Spotlight's ⌘Space stays off. Run the command above, or turn on **Show Spotlight search** in **System Settings → Keyboard → Keyboard Shortcuts → Spotlight**.
 
 </details>
 
@@ -285,7 +291,7 @@ The search time comes from a synthetic benchmark. The methods and all results ar
 Superhound is written in Objective-C and C with AppKit, SQLite, and FSEvents. It has no third-party dependencies.
 
 ```sh
-scripts/test.sh       # nine test suites with AddressSanitizer and UndefinedBehaviorSanitizer
+scripts/test.sh       # ten test suites with AddressSanitizer and UndefinedBehaviorSanitizer
 scripts/benchmark.sh  # search and catalog speed at 10,000 and 100,000 items
 tests/install.sh      # installer checks; quit Superhound first
 ```
