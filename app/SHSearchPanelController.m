@@ -272,7 +272,7 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
   for(NSDictionary *p in preferred)for(NSDictionary *e in emoji)if([e[@"path"] isEqual:p[@"path"]]){[rows addObject:e];[otherEmoji removeObjectIdenticalTo:e];}
   NSUInteger lead=0;while(lead<results.count && (SHLaunchable(results[lead]) || [chosen containsObject:results[lead][@"path"]]))lead++;
   // The result named like the address leads with the rows above it, also when it is a plain file.
-  if(named!=NSNotFound)lead=MAX(lead,named+1);
+  if(address && named!=NSNotFound)lead=MAX(lead,named+1);
   NSUInteger shown=MIN((NSUInteger)3,otherEmoji.count),limit=web?7:8,reserve=address && named!=NSNotFound?1:0;
   for(NSUInteger i=0;i<lead && rows.count+shown+clips.count+reserve<limit;i++)[rows addObject:results[i]];
   if(address && named!=NSNotFound)[rows addObject:address];
@@ -415,6 +415,8 @@ static BOOL Located(NSDictionary *result){return ![@[@"command",@"emoji",@"answe
  (void)control;if(textView.hasMarkedText)return NO;
  if((selector==@selector(insertTab:) || selector==@selector(moveRight:)) && [self acceptCompletion])return YES;
  // Any other caret move edits the typed text, so the completion goes first.
+ // ← only collapses the completion, as it collapses any selection, and leaves the caret at the end of the typed text.
+ if(_completion && (selector==@selector(moveLeft:) || selector==@selector(moveBackward:))){[self clearCompletion];return YES;}
  if([NSStringFromSelector(selector) hasPrefix:@"move"] && selector!=@selector(moveUp:) && selector!=@selector(moveDown:))[self clearCompletion];
  // The flag covers the text change this command makes, and ends with it.
  if([NSStringFromSelector(selector) hasPrefix:@"delete"]){_deleting=YES;dispatch_async(dispatch_get_main_queue(),^{self->_deleting=NO;});}
