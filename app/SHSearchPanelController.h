@@ -17,6 +17,8 @@ extern NSString *const SHOwnCopyType;
 // A newer version shows an UPDATE TO link in the footer; installUpdate runs when the user clicks it.
 @property(nonatomic,copy) NSString *update;
 @property(nonatomic,copy) void (^installUpdate)(void);
+// The menu bar menu; the logo and name in the footer open it.
+@property(nonatomic,strong) NSMenu *appMenu;
 - (instancetype)initWithQueries:(SHQueryController *)queries;
 - (void)toggle;
 // Shows the panel with the clipboard history only; Return pastes into the app that was in front.

@@ -41,7 +41,7 @@ curl -fsSL https://superhound.app/install | sh
 
 The command downloads Superhound, checks the download against the published SHA-256, puts Superhound in `~/Applications`, and opens it.
 
-A magnifying glass appears in the menu bar. Choose **Search** to open the panel. Superhound opens at login; turn this off with **Open at Login** in the same menu.
+A magnifying glass appears in the menu bar. Choose **Search** to open the panel. The same menu opens when you click the logo at the bottom of the panel. Superhound opens at login; turn this off with **Open at Login** in the same menu.
 
 Superhound works fully without a license and shows an unlicensed reminder. A license is a one-time payment of $19 for 3 Macs at [superhound.app](https://superhound.app). To activate one, choose **Enter License…** in the same menu. To move a license to another Mac, choose **Deactivate License…** on the old Mac first.
 

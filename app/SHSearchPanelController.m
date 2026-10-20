@@ -69,6 +69,17 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  NSDictionary *glyph=@{NSFontAttributeName:[NSFont systemFontOfSize:13],NSForegroundColorAttributeName:NSColor.secondaryLabelColor};NSSize size=[@"↩" sizeWithAttributes:glyph];[@"↩" drawAtPoint:NSMakePoint(NSWidth(self.bounds)-8-size.width,(NSHeight(self.bounds)-size.height)/2) withAttributes:glyph];
 }
 @end
+// The logo and name open the menu bar menu on mouse down, as a pop-up button does; a hand pointer and a brighter tint show that they take a click.
+@interface SHBrandButton : NSButton
+@property(copy) void (^hovered)(BOOL);
+@end
+@implementation SHBrandButton {NSTrackingArea *_area;}
+- (void)updateTrackingAreas {[super updateTrackingAreas];if(_area)[self removeTrackingArea:_area];_area=[[NSTrackingArea alloc] initWithRect:NSZeroRect options:NSTrackingMouseEnteredAndExited|NSTrackingActiveAlways|NSTrackingInVisibleRect owner:self userInfo:nil];[self addTrackingArea:_area];}
+- (void)mouseEntered:(NSEvent *)event {(void)event;if(self.hovered)self.hovered(YES);}
+- (void)mouseExited:(NSEvent *)event {(void)event;if(self.hovered)self.hovered(NO);}
+- (void)resetCursorRects {[self addCursorRect:self.bounds cursor:NSCursor.pointingHandCursor];}
+- (void)mouseDown:(NSEvent *)event {(void)event;[self sendAction:self.action to:self.target];}
+@end
 @interface SHSearchPanelController () <NSTextFieldDelegate,NSTableViewDataSource,NSTableViewDelegate,NSWindowDelegate,NSMenuDelegate,QLPreviewPanelDataSource>
 @end
 @implementation SHSearchPanelController {
@@ -89,6 +100,7 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  dispatch_queue_t _iconQueue;
  NSURL *_preview;
  NSButton *_unlicensed,*_updateLink;
+ SHBrandButton *_menuButton;
  NSView *_tint;
  CGFloat _top,_floor;
 }
@@ -117,6 +129,7 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  _help=[NSTextField labelWithString:@""];_help.lineBreakMode=NSLineBreakByClipping;[view addSubview:_help];
  _logo=[NSImageView imageViewWithImage:[NSBundle.mainBundle imageForResource:@"LogoTemplate"]?:NSImage.new];_logo.image.template=YES;_logo.imageScaling=NSImageScaleProportionallyUpOrDown;_logo.contentTintColor=NSColor.secondaryLabelColor;_logo.accessibilityElement=NO;[view addSubview:_logo];
  _brand=[NSTextField labelWithString:@"Superhound"];_brand.font=[NSFont systemFontOfSize:12 weight:NSFontWeightMedium];_brand.textColor=NSColor.secondaryLabelColor;_brand.accessibilityElement=NO;[view addSubview:_brand];
+ _menuButton=[[SHBrandButton alloc] initWithFrame:NSZeroRect];_menuButton.bordered=NO;_menuButton.transparent=YES;_menuButton.title=@"";_menuButton.target=self;_menuButton.action=@selector(showMenu:);_menuButton.toolTip=@"Settings and more";_menuButton.accessibilityLabel=@"Superhound menu";_menuButton.hovered=^(BOOL hovered){[weak hover:hovered];};[view addSubview:_menuButton];
  NSButton *unlicensed=_unlicensed=[NSButton buttonWithTitle:@"" target:self action:@selector(enterLicense:)];unlicensed.bordered=NO;unlicensed.attributedTitle=[[NSAttributedString alloc] initWithString:@"Activate license" attributes:@{NSFontAttributeName:[NSFont systemFontOfSize:12],NSForegroundColorAttributeName:NSColor.secondaryLabelColor}];
  unlicensed.toolTip=@"Enter your license key, or buy a license.";unlicensed.accessibilityLabel=@"Activate license";[view addSubview:unlicensed];
  _updateLink=[NSButton buttonWithTitle:@"" target:self action:@selector(openUpdate:)];_updateLink.bordered=NO;_updateLink.hidden=YES;[view addSubview:_updateLink];
@@ -141,7 +154,7 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
 - (void)resize {if(!_top)return;NSRect frame=self.window.frame;CGFloat height=self.fittingHeight;if(height!=NSHeight(frame) || NSMaxY(frame)!=_top){[self.window setFrame:NSMakeRect(NSMinX(frame),_top-height,Width,height) display:YES];[self.window invalidateShadow];}[self place];}
 // Right to left: the logo and name, Activate license, and Update to; the key hints take the rest and drop Close when they do not fit.
 - (void)layoutFooter {
- CGFloat width=ceil(_brand.fittingSize.width),left=Width-16-width;Seat(_brand,left,width);left-=6+14;_logo.frame=NSMakeRect(left,12,14,14);
+ CGFloat width=ceil(_brand.fittingSize.width),left=Width-16-width;Seat(_brand,left,width);left-=6+14;_logo.frame=NSMakeRect(left,12,14,14);_menuButton.frame=NSMakeRect(left-4,6,Width-16-left+8,28);
  for(NSButton *link in @[_unlicensed,_updateLink])if(!link.hidden){width=ceil(link.fittingSize.width);left-=18+width;Seat(link,left,width);}
  NSString *action=_history?@"Paste":@"Open";_help.attributedStringValue=Hints(@[@"↩",action,@"⌘K",@"Actions",@"Esc",@"Close"]);
  if(_help.fittingSize.width>left-18-16)_help.attributedStringValue=Hints(@[@"↩",action,@"⌘K",@"Actions"]);
@@ -152,6 +165,13 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  _update=[update copy];_updateLink.hidden=!update;
  if(update){_updateLink.attributedTitle=[[NSAttributedString alloc] initWithString:[@"Update to " stringByAppendingString:update] attributes:@{NSFontAttributeName:[NSFont systemFontOfSize:12],NSForegroundColorAttributeName:NSColor.controlAccentColor}];_updateLink.toolTip=[NSString stringWithFormat:@"Superhound %@ is available. Click to install it.",update];_updateLink.accessibilityLabel=_updateLink.toolTip;}
  [self layoutFooter];
+}
+- (void)hover:(BOOL)hovered {NSColor *color=hovered?NSColor.labelColor:NSColor.secondaryLabelColor;_logo.contentTintColor=color;_brand.textColor=color;}
+// The menu opens above the logo with its right edge at the right margin; the pointer may leave during the menu, so the tint follows its place when the menu closes.
+- (void)showMenu:(id)sender {
+ (void)sender;if(!_appMenu)return;[_appMenu update];NSRect frame=_menuButton.frame;
+ [_appMenu popUpMenuPositioningItem:nil atLocation:NSMakePoint(NSMaxX(frame)-4-_appMenu.size.width,NSMaxY(frame)+_appMenu.size.height) inView:self.window.contentView];
+ [self hover:self.window.isVisible && NSPointInRect([_menuButton convertPoint:self.window.mouseLocationOutsideOfEventStream fromView:nil],_menuButton.bounds)];
 }
 - (void)openUpdate:(id)sender {(void)sender;[self dismiss:NO];if(self.installUpdate)self.installUpdate();}
 - (void)buy:(id)sender {(void)sender;[self dismiss:NO];[NSWorkspace.sharedWorkspace openURL:[NSURL URLWithString:@"https://superhound.app/buy"]];}
@@ -181,7 +201,7 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  [alert beginSheetModalForWindow:self.window completionHandler:^(NSModalResponse response){if(response==NSAlertFirstButtonReturn)[self buy:nil];else [self.window makeFirstResponder:self->_field];}];
 }
 - (void)dismiss:(BOOL)restore {
- [_queries cancel];_queuedOpen=nil;if(self.window.attachedSheet)[self.window endSheet:self.window.attachedSheet];[self.window orderOut:nil];_error=nil;
+ [_queries cancel];_queuedOpen=nil;[self hover:NO];if(self.window.attachedSheet)[self.window endSheet:self.window.attachedSheet];[self.window orderOut:nil];_error=nil;
  if(QLPreviewPanel.sharedPreviewPanelExists && QLPreviewPanel.sharedPreviewPanel.isVisible)[QLPreviewPanel.sharedPreviewPanel orderOut:nil];
  if(restore && _previous && _previous.processIdentifier!=NSProcessInfo.processInfo.processIdentifier)[_previous activateWithOptions:0];
 }
