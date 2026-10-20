@@ -50,6 +50,7 @@ To see a change in the live app: build with a build number one above the install
 | `SHFolderAccess.m` | Security-scoped bookmarks for the user's folders. |
 | `SHResultActions.m` | Opens a result, opens it with another app, shows it in Finder, moves it to the Trash, runs the system commands, and pastes with a ⌘V key press. |
 | `emoji.tsv` | Generated emoji data: emoji, name, keywords. Do not edit by hand. |
+| `AppIcon.icns` | The app icon, made from `docs/media/superhound.png` |
 
 ### `tests/` and `bench/`
 
@@ -82,6 +83,7 @@ All in `~/Library/Application Support/Superhound/`:
 | File | Content |
 |---|---|
 | `README.md` | Build, install, and use |
+| `docs/media/` | The logo: `superhound.png` (the original), `logo.png` and `logo-dark.png` (for the README in light and dark mode) |
 | `docs/prototype-validation.md` | Measured results and open acceptance checks for the prototype |
 | `docs/superpowers/specs/2026-10-04-first-search-prototype-design.md` | The design of the first prototype |
 | `docs/superpowers/plans/2026-10-04-first-search-prototype.md` | The implementation plan of the first prototype |

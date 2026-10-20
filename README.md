@@ -1,5 +1,10 @@
 <div align="center">
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/media/logo-dark.png">
+  <img src="docs/media/logo.png" width="128" alt="Superhound logo: a pharaoh hound head">
+</picture>
+
 # Superhound
 
 A small, fast launcher for macOS.
@@ -122,7 +127,7 @@ Measured on an Apple M1 with macOS 15.
 
 | Measure | Result |
 |---|---|
-| App size | 480 KiB |
+| App size | 900 KiB |
 | Memory after launch | 28 to 42 MiB over 20 minutes |
 | Search across 100,000 items | 9.6 ms median, 20.3 ms at the 95th percentile |
 
