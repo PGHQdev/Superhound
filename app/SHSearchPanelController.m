@@ -10,7 +10,7 @@ static NSString *Copied(NSDictionary *result){
 }
 // The panel keeps its top edge; its height follows the rows up to eight rows.
 // Shared columns: a 16-point margin, a 28-point icon column, text from x 52, and the same right margin; the selection spans x 8 to Width-8.
-static const CGFloat Width=600,Top=56,Band=26,Bottom=70,MaxRows=8*48,Text=Width-16-44-32;
+static const CGFloat Width=600,Top=56,Band=26,Bottom=49,MaxRows=8*48,Text=Width-16-44-32;
 static NSImage *Mask(CGFloat radius){NSImage *mask=[NSImage imageWithSize:NSMakeSize(2*radius+1,2*radius+1) flipped:NO drawingHandler:^BOOL(NSRect rect){[NSColor.blackColor set];[[NSBezierPath bezierPathWithRoundedRect:rect xRadius:radius yRadius:radius] fill];return YES;}];mask.capInsets=NSEdgeInsetsMake(radius,radius,radius,radius);mask.resizingMode=NSImageResizingModeStretch;return mask;}
 // The parent folder's last two names, or more until they differ from each other result with the same name.
 static NSString *Context(NSDictionary *result,NSArray<NSDictionary *> *results){
@@ -27,6 +27,16 @@ static NSAttributedString *Marked(NSString *name,NSString *query){
  for(NSString *term in [query componentsSeparatedByCharactersInSet:NSCharacterSet.whitespaceCharacterSet])if(term.length){NSRange range=[name rangeOfString:term options:NSCaseInsensitiveSearch|NSDiacriticInsensitiveSearch|NSWidthInsensitiveSearch];if(range.location!=NSNotFound)[text addAttribute:NSFontAttributeName value:[NSFont systemFontOfSize:14 weight:NSFontWeightSemibold] range:range];}
  return text;
 }
+static NSString *Count(NSUInteger count){return [NSNumberFormatter localizedStringFromNumber:@(count) numberStyle:NSNumberFormatterDecimalStyle];}
+// Key and name pairs: 5 points inside a pair, 18 between pairs.
+static NSAttributedString *Hints(NSArray<NSString *> *parts){
+ NSMutableAttributedString *text=NSMutableAttributedString.new;
+ for(NSUInteger i=0;i<parts.count;i++){BOOL key=i%2==0;[text appendAttributedString:[[NSAttributedString alloc] initWithString:parts[i] attributes:@{NSFontAttributeName:[NSFont systemFontOfSize:12 weight:key?NSFontWeightMedium:NSFontWeightRegular],NSForegroundColorAttributeName:NSColor.secondaryLabelColor}]];
+  if(i+1<parts.count)[text addAttribute:NSKernAttributeName value:key?@5:@18 range:[text.string rangeOfComposedCharacterSequenceAtIndex:text.length-1]];}
+ return text;
+}
+// Footer items share one text baseline, whatever their control type.
+static void Seat(NSView *view,CGFloat x,CGFloat width){NSSize size=view.fittingSize;view.frame=NSMakeRect(x,0,width,size.height);[view setFrameOrigin:NSMakePoint(x,15-(size.height-view.firstBaselineOffsetFromTop))];}
 static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPasteboard;[board clearContents];[board setString:text forType:NSPasteboardTypeString];[board setString:@"" forType:SHOwnCopyType];}
 @interface SHPanel : NSPanel
 @property(copy) BOOL (^shortcut)(NSEvent *);
@@ -65,7 +75,8 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  SHQueryController *_queries;
  NSTextField *_field;
  NSTableView *_table;
- NSTextField *_status,*_help,*_section;
+ NSTextField *_help,*_section,*_note,*_brand;
+ NSImageView *_logo;
  NSScrollView *_scroll;
  NSArray<NSDictionary *> *_results;
  NSRunningApplication *_previous;
@@ -78,12 +89,12 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  NSURL *_preview;
  NSButton *_unlicensed,*_updateLink;
  NSView *_tint;
- CGFloat _markLeft,_top,_floor;
+ CGFloat _top,_floor;
 }
 - (instancetype)initWithQueries:(SHQueryController *)queries {
  SHPanel *panel=[[SHPanel alloc] initWithContentRect:NSMakeRect(0,0,Width,Top+MaxRows+Bottom) styleMask:NSWindowStyleMaskBorderless backing:NSBackingStoreBuffered defer:NO];
  if(!(self=[super initWithWindow:panel]))return nil;
- _queries=queries;_results=@[];_coverage=@"Preparing search…";_icons=NSCache.new;_icons.countLimit=128;_loadingIcons=NSMutableSet.set;_iconQueue=dispatch_queue_create("com.superhound.icons",DISPATCH_QUEUE_SERIAL);
+ _queries=queries;_results=@[];_coverage=@"Preparing search";_icons=NSCache.new;_icons.countLimit=128;_loadingIcons=NSMutableSet.set;_iconQueue=dispatch_queue_create("com.superhound.icons",DISPATCH_QUEUE_SERIAL);
  panel.title=@"Superhound";panel.level=NSFloatingWindowLevel;panel.hidesOnDeactivate=NO;panel.collectionBehavior=NSWindowCollectionBehaviorCanJoinAllSpaces|NSWindowCollectionBehaviorFullScreenAuxiliary;panel.delegate=self;panel.releasedWhenClosed=NO;
  panel.opaque=NO;panel.backgroundColor=NSColor.clearColor;panel.hasShadow=YES;panel.appearance=[NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];panel.accessibilityIdentifier=@"superhound.search.panel";
  // A dark blur with a charcoal tint keeps strong wallpaper colors out; the tint carries the one border.
@@ -93,19 +104,20 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  // The system search bezel has a fixed height that clips 22-point text, so the field draws no bezel.
  NSImageView *glass=[NSImageView imageViewWithImage:[[NSImage imageWithSystemSymbolName:@"magnifyingglass" accessibilityDescription:nil] imageWithSymbolConfiguration:[NSImageSymbolConfiguration configurationWithPointSize:18 weight:NSFontWeightRegular]]];glass.frame=NSMakeRect(16,Bottom+MaxRows+12,28,32);glass.autoresizingMask=NSViewMinYMargin;glass.contentTintColor=NSColor.secondaryLabelColor;[view addSubview:glass];
  _field=[[NSTextField alloc] initWithFrame:NSMakeRect(52,Bottom+MaxRows+12,Width-68,32)];_field.autoresizingMask=NSViewMinYMargin;_field.bordered=NO;_field.drawsBackground=NO;_field.focusRingType=NSFocusRingTypeNone;_field.usesSingleLineMode=YES;_field.cell.scrollable=YES;_field.font=[NSFont systemFontOfSize:22];_field.delegate=self;_field.accessibilityIdentifier=@"superhound.search.input";_field.accessibilityLabel=@"Search apps and selected folders";[view addSubview:_field];
- _section=[NSTextField labelWithString:@""];_section.font=[NSFont systemFontOfSize:12 weight:NSFontWeightMedium];_section.textColor=NSColor.secondaryLabelColor;[view addSubview:_section];
+ _section=[NSTextField labelWithString:@""];_section.font=[NSFont systemFontOfSize:12 weight:NSFontWeightMedium];_section.textColor=NSColor.secondaryLabelColor;_section.lineBreakMode=NSLineBreakByTruncatingTail;_section.accessibilityIdentifier=@"superhound.search.status";[view addSubview:_section];
+ _note=[NSTextField labelWithString:@""];_note.font=[NSFont systemFontOfSize:12];_note.textColor=NSColor.tertiaryLabelColor;_note.alignment=NSTextAlignmentRight;_note.lineBreakMode=NSLineBreakByTruncatingHead;[view addSubview:_note];
  NSScrollView *scroll=_scroll=[[NSScrollView alloc] initWithFrame:NSMakeRect(8,Bottom,Width-16,MaxRows)];scroll.hasVerticalScroller=NO;scroll.drawsBackground=NO;
  _table=[[SHResultsTable alloc] initWithFrame:scroll.bounds];
  __weak typeof(self) weak=self;
  panel.shortcut=^BOOL(NSEvent *event){return [weak shortcut:event];};
  ((SHResultsTable *)_table).command=^BOOL(NSEvent *event){if(event.keyCode==53){[weak dismiss:YES];return YES;}if(event.keyCode==36 || event.keyCode==76){[weak openSelected:(event.modifierFlags&NSEventModifierFlagCommand)!=0];return YES;}return NO;};_table.headerView=nil;_table.style=NSTableViewStylePlain;_table.intercellSpacing=NSMakeSize(0,0);_table.backgroundColor=NSColor.clearColor;_table.selectionHighlightStyle=NSTableViewSelectionHighlightStyleRegular;_table.delegate=self;_table.dataSource=self;_table.allowsEmptySelection=YES;_table.target=self;_table.doubleAction=@selector(openClicked:);_table.menu=NSMenu.new;_table.menu.delegate=self;_table.accessibilityIdentifier=@"superhound.search.results";_table.accessibilityLabel=@"Search results";
  NSTableColumn *column=[[NSTableColumn alloc] initWithIdentifier:@"result"];column.width=Width-16;[_table addTableColumn:column];scroll.documentView=_table;[view addSubview:scroll];
- _status=[NSTextField labelWithString:_coverage];_status.frame=NSMakeRect(16,37,Width-32,20);_status.font=[NSFont systemFontOfSize:11];_status.textColor=NSColor.secondaryLabelColor;_status.lineBreakMode=NSLineBreakByTruncatingTail;_status.accessibilityIdentifier=@"superhound.search.status";[view addSubview:_status];
- _help=[NSTextField labelWithString:@""];_help.frame=NSMakeRect(22,14,456,18);_help.font=[NSFont systemFontOfSize:11];_help.textColor=NSColor.secondaryLabelColor;[view addSubview:_help];
- NSMutableParagraphStyle *right=NSMutableParagraphStyle.new;right.alignment=NSTextAlignmentRight;
- NSTextField *mark=[NSTextField labelWithAttributedString:[[NSAttributedString alloc] initWithString:@"SUPERHOUND" attributes:@{NSFontAttributeName:[NSFont systemFontOfSize:10 weight:NSFontWeightSemibold],NSKernAttributeName:@2,NSForegroundColorAttributeName:NSColor.tertiaryLabelColor,NSParagraphStyleAttributeName:right}]];mark.frame=NSMakeRect(Width-156,14,140,18);mark.accessibilityElement=NO;[view addSubview:mark];
- NSButton *unlicensed=_unlicensed=[NSButton buttonWithTitle:@"" target:self action:@selector(enterLicense:)];unlicensed.bordered=NO;unlicensed.attributedTitle=[[NSAttributedString alloc] initWithString:@"Activate license" attributes:@{NSFontAttributeName:[NSFont systemFontOfSize:11],NSForegroundColorAttributeName:NSColor.secondaryLabelColor}];
- _markLeft=Width-16-ceil(mark.attributedStringValue.size.width);unlicensed.toolTip=@"Enter your license key, or buy a license.";unlicensed.accessibilityLabel=@"Activate license";[view addSubview:unlicensed];
+ NSView *rule=[[NSView alloc] initWithFrame:NSMakeRect(16,40,Width-32,1)];rule.wantsLayer=YES;rule.layer.backgroundColor=[NSColor colorWithWhite:1 alpha:0.1].CGColor;[view addSubview:rule];
+ _help=[NSTextField labelWithString:@""];_help.lineBreakMode=NSLineBreakByClipping;[view addSubview:_help];
+ _logo=[NSImageView imageViewWithImage:[NSBundle.mainBundle imageForResource:@"LogoTemplate"]?:NSImage.new];_logo.image.template=YES;_logo.imageScaling=NSImageScaleProportionallyUpOrDown;_logo.contentTintColor=NSColor.secondaryLabelColor;_logo.accessibilityElement=NO;[view addSubview:_logo];
+ _brand=[NSTextField labelWithString:@"Superhound"];_brand.font=[NSFont systemFontOfSize:12 weight:NSFontWeightMedium];_brand.textColor=NSColor.secondaryLabelColor;_brand.accessibilityElement=NO;[view addSubview:_brand];
+ NSButton *unlicensed=_unlicensed=[NSButton buttonWithTitle:@"" target:self action:@selector(enterLicense:)];unlicensed.bordered=NO;unlicensed.attributedTitle=[[NSAttributedString alloc] initWithString:@"Activate license" attributes:@{NSFontAttributeName:[NSFont systemFontOfSize:12],NSForegroundColorAttributeName:NSColor.secondaryLabelColor}];
+ unlicensed.toolTip=@"Enter your license key, or buy a license.";unlicensed.accessibilityLabel=@"Activate license";[view addSubview:unlicensed];
  _updateLink=[NSButton buttonWithTitle:@"" target:self action:@selector(openUpdate:)];_updateLink.bordered=NO;_updateLink.hidden=YES;[view addSubview:_updateLink];
  [self layoutFooter];
  return self;
@@ -117,24 +129,27 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
 - (NSTableRowView *)tableView:(NSTableView *)tableView rowViewForRow:(NSInteger)row {(void)tableView;(void)row;return SHRowView.new;}
 - (CGFloat)fittingHeight {CGFloat rows=0;for(NSInteger i=0;i<_table.numberOfRows;i++)rows+=[self tableView:_table heightOfRow:i];return MIN(Top+(_section.hidden?0:Band)+MIN(rows,MaxRows)+Bottom,_top-_floor);}
 // The label band and the rows follow the current height at once, also while a shrink waits.
-- (void)place {CGFloat height=NSHeight(self.window.frame),band=_section.hidden?0:Band;_section.frame=NSMakeRect(16,height-Top-band+5,Width-32,16);_scroll.frame=NSMakeRect(8,Bottom,Width-16,MAX(0,height-Top-band-Bottom));}
+- (void)place {
+ CGFloat height=NSHeight(self.window.frame),band=_section.hidden?0:Band,note=_note.stringValue.length?MIN(ceil(_note.fittingSize.width),(Width-32)/2):0;
+ _note.frame=NSMakeRect(Width-16-note,height-Top-band+5,note,16);_section.frame=NSMakeRect(16,height-Top-band+5,Width-32-note-(note?12:0),16);_scroll.frame=NSMakeRect(8,Bottom,Width-16,MAX(0,height-Top-band-Bottom));}
 // A taller panel grows at once; a shorter one waits for results to settle, so fast typing does not make it jump.
 - (void)fit {
  [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(resize) object:nil];
  CGFloat height=self.fittingHeight;if(height>=NSHeight(self.window.frame) || !self.window.isVisible)[self resize];else {[self place];[self performSelector:@selector(resize) withObject:nil afterDelay:0.15];}
 }
 - (void)resize {if(!_top)return;NSRect frame=self.window.frame;CGFloat height=self.fittingHeight;if(height!=NSHeight(frame) || NSMaxY(frame)!=_top){[self.window setFrame:NSMakeRect(NSMinX(frame),_top-height,Width,height) display:YES];[self.window invalidateShadow];}[self place];}
-// The links sit right to left from the wordmark; the key help takes the rest of the line, without ⌘↩ when both links show.
+// Right to left: the logo and name, Activate license, and Update to; the key hints take the rest and drop Close when they do not fit.
 - (void)layoutFooter {
- CGFloat left=_markLeft;for(NSButton *link in @[_unlicensed,_updateLink])if(!link.hidden){CGFloat width=ceil(link.attributedTitle.size.width);left-=14+width;link.frame=NSMakeRect(left,14,width,18);}
- _help.frame=NSMakeRect(16,14,left-24,18);
- NSString *full=_history?@"↑ ↓ Move    ↩ Paste    ⌘↩ Copy    ⌘K Actions    Esc Close":@"↑ ↓ Move    ↩ Open    ⌘↩ Reveal in Finder    ⌘K Actions    Esc Close";
- _help.stringValue=[full sizeWithAttributes:@{NSFontAttributeName:_help.font}].width<=NSWidth(_help.frame)?full:_history?@"↑ ↓ Move    ↩ Paste    ⌘K Actions    Esc Close":@"↑ ↓ Move    ↩ Open    ⌘K Actions    Esc Close";
+ CGFloat width=ceil(_brand.fittingSize.width),left=Width-16-width;Seat(_brand,left,width);left-=6+14;_logo.frame=NSMakeRect(left,12,14,14);
+ for(NSButton *link in @[_unlicensed,_updateLink])if(!link.hidden){width=ceil(link.fittingSize.width);left-=18+width;Seat(link,left,width);}
+ NSString *action=_history?@"Paste":@"Open";_help.attributedStringValue=Hints(@[@"↩",action,@"⌘K",@"Actions",@"Esc",@"Close"]);
+ if(_help.fittingSize.width>left-18-16)_help.attributedStringValue=Hints(@[@"↩",action,@"⌘K",@"Actions"]);
+ Seat(_help,16,left-18-16);
 }
 - (void)setLicensed:(BOOL)licensed {_licensed=licensed;_unlicensed.hidden=licensed;[self layoutFooter];}
 - (void)setUpdate:(NSString *)update {
  _update=[update copy];_updateLink.hidden=!update;
- if(update){_updateLink.attributedTitle=[[NSAttributedString alloc] initWithString:[@"UPDATE TO " stringByAppendingString:update] attributes:@{NSFontAttributeName:[NSFont systemFontOfSize:10 weight:NSFontWeightSemibold],NSKernAttributeName:@2,NSForegroundColorAttributeName:NSColor.controlAccentColor}];_updateLink.toolTip=[NSString stringWithFormat:@"Superhound %@ is available. Click to install it.",update];_updateLink.accessibilityLabel=_updateLink.toolTip;}
+ if(update){_updateLink.attributedTitle=[[NSAttributedString alloc] initWithString:[@"Update to " stringByAppendingString:update] attributes:@{NSFontAttributeName:[NSFont systemFontOfSize:12],NSForegroundColorAttributeName:NSColor.controlAccentColor}];_updateLink.toolTip=[NSString stringWithFormat:@"Superhound %@ is available. Click to install it.",update];_updateLink.accessibilityLabel=_updateLink.toolTip;}
  [self layoutFooter];
 }
 - (void)openUpdate:(id)sender {(void)sender;[self dismiss:NO];if(self.installUpdate)self.installUpdate();}
@@ -176,13 +191,14 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  if(self.window.isVisible){if(changed && !_history)[self search:NO];else [self updateStatus];}
 }
 // The error stays in the status line until the query changes; a search that is still in progress does not replace it.
-- (void)showError:(NSString *)error {_error=error;if(!self.window.isVisible)[self show:_history];_status.stringValue=error;NSAccessibilityPostNotification(_status,NSAccessibilityValueChangedNotification);}
+- (void)showError:(NSString *)error {_error=error;if(!self.window.isVisible)[self show:_history];[self updateStatus];NSAccessibilityPostNotification(_section,NSAccessibilityValueChangedNotification);}
+// The band above the rows names the list for an empty query, and otherwise shows only an error or no matches; the indexing note sits at its right.
 - (void)updateStatus {
- _section.hidden=_field.stringValue.length>0;_section.stringValue=_history?@"Clipboard":@"Suggested";
- if(_error){_status.stringValue=_error;return;}
- if(_history){_status.stringValue=!_clipboard.count?@"The clipboard history is empty. Text you copy in any app comes here.":_results.count?[NSString stringWithFormat:@"%lu copied items · Kept on this Mac only",(unsigned long)_clipboard.count]:@"No matches in the clipboard history.";return;}
- NSString *prompt=_field.stringValue.length?(_results.count?@"":@"No matches. "):@"Type to search files. ";
- _status.stringValue=[prompt stringByAppendingString:_coverage?:@""];
+ BOOL empty=!_field.stringValue.length,none=!_results.count && !_pending;
+ NSString *label=_error?:_history && !_clipboard.count?@"The clipboard history is empty":empty?(_history?@"Clipboard":@"Suggested"):none?@"No matches":nil;
+ _section.hidden=_note.hidden=!label;_section.stringValue=label?:@"";_section.textColor=_error?NSColor.labelColor:NSColor.secondaryLabelColor;
+ _note.stringValue=_error?@"":_history?(!_clipboard.count?@"Text you copy in any app comes here":empty?[NSString stringWithFormat:@"%@ %@ · Kept on this Mac only",Count(_clipboard.count),_clipboard.count==1?@"item":@"items"]:@""):_coverage?:@"";
+ [self fit];
 }
 - (void)controlTextDidChange:(NSNotification *)notification {(void)notification;_error=nil;[self search:YES];}
 - (void)search:(BOOL)changedQuery {
@@ -223,7 +239,7 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  _reloading=YES;[_table reloadData];
  if(selection>=0){[_table selectRowIndexes:[NSIndexSet indexSetWithIndex:(NSUInteger)selection] byExtendingSelection:NO];[_table scrollRowToVisible:selection];}else [_table deselectAll:nil];
  _reloading=NO;_selectedID=selection>=0?results[(NSUInteger)selection][@"id"]:nil;
- [self updateStatus];[self fit];
+ [self updateStatus];
 }
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView {(void)tableView;return (NSInteger)_results.count;}
 - (NSView *)tableView:(NSTableView *)tableView viewForTableColumn:(NSTableColumn *)column row:(NSInteger)row {
@@ -315,7 +331,7 @@ static BOOL Located(NSDictionary *result){return ![@[@"command",@"emoji",@"answe
   NSInteger removed=(NSInteger)[_results indexOfObjectIdenticalTo:result],row=_table.selectedRow;
   NSMutableArray *rows=[_results mutableCopy];[rows removeObjectIdenticalTo:result];_results=rows;row=row==removed?MIN(row,(NSInteger)rows.count-1):row>removed?row-1:row;
   _reloading=YES;[_table reloadData];if(row>=0)[_table selectRowIndexes:[NSIndexSet indexSetWithIndex:(NSUInteger)row] byExtendingSelection:NO];else [_table deselectAll:nil];_reloading=NO;
-  _selectedID=row>=0?rows[(NSUInteger)row][@"id"]:nil;[self updateStatus];[self fit];if(self.openResult)self.openResult(result,action,nil);return;
+  _selectedID=row>=0?rows[(NSUInteger)row][@"id"]:nil;[self updateStatus];if(self.openResult)self.openResult(result,action,nil);return;
  }
  if([result[@"type"] isEqual:@"emoji"])[_usage recordQuery:_field.stringValue result:result];
  if(result[@"copy"]){Copy(result[@"copy"]);[self dismiss:YES];return;}

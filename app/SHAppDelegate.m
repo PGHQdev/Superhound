@@ -43,9 +43,11 @@ static NSString *const LicensePublicKey=@"BB1mBfflJqWXPJerDDR+MLSwGOCcP/HFGM8f+H
  _pasteboardTimer=[NSTimer scheduledTimerWithTimeInterval:0.5 repeats:YES block:^(NSTimer *timer){(void)timer;[weak readPasteboard];}];_pasteboardTimer.tolerance=0.25;
  _panel.openResult=^(NSDictionary *result,NSString *action,NSURL *application){[SHResultActions perform:action result:result application:application completion:^(NSString *error){SHAppDelegate *self=weak;if(error){[self->_panel showError:error];if(![@[@"command",@"clipboard"] containsObject:result[@"type"]])[self->_library refresh];}}];};
  _library.updated=^(SHSearchSnapshot *snapshot,NSArray<NSDictionary *> *roots,NSString *message){
-  SHAppDelegate *self=weak;if(!self)return;[self->_settings updateRoots:roots message:message];
-  NSUInteger indexing=0,unavailable=0,items=snapshot.count;for(NSDictionary *r in roots){if([r[@"state"] isEqual:@"Indexing"])indexing++;else if(![r[@"state"] isEqual:@"Ready"] && ![r[@"state"] hasPrefix:@"Covered by"])unavailable++;}
-  NSString *status=[NSString stringWithFormat:@"%lu searchable items%@%@",(unsigned long)items,indexing?[NSString stringWithFormat:@" · %lu locations indexing",(unsigned long)indexing]:@"",unavailable?@" · Check Search Locations for coverage":@""];
+  SHAppDelegate *self=weak;if(!self)return;
+  // The item count is shown in Search Locations; the panel shows only indexing and coverage notes.
+  NSUInteger indexing=0,unavailable=0;for(NSDictionary *r in roots){if([r[@"state"] isEqual:@"Indexing"])indexing++;else if(![r[@"state"] isEqual:@"Ready"] && ![r[@"state"] hasPrefix:@"Covered by"])unavailable++;}
+  [self->_settings updateRoots:roots message:[NSString stringWithFormat:@"%@ searchable items. %@",[NSNumberFormatter localizedStringFromNumber:@(snapshot.count) numberStyle:NSNumberFormatterDecimalStyle],message]];
+  NSString *status=indexing?(indexing==1?@"Indexing 1 location":[NSString stringWithFormat:@"Indexing %@ locations",[NSNumberFormatter localizedStringFromNumber:@(indexing) numberStyle:NSNumberFormatterDecimalStyle]]):unavailable?@"Check Search Locations for coverage":@"";
   [self->_panel updateSnapshot:snapshot status:status];
  };
  NSMenu *menu=NSMenu.new;[menu addItemWithTitle:@"Update" action:@selector(installUpdate:) keyEquivalent:@""];[menu addItemWithTitle:@"Search" action:@selector(search:) keyEquivalent:@""];[menu addItemWithTitle:@"Clipboard History" action:@selector(history:) keyEquivalent:@""];[menu addItemWithTitle:@"Search Locations…" action:@selector(settings:) keyEquivalent:@","];[menu addItemWithTitle:@"Refresh Catalog" action:@selector(refresh:) keyEquivalent:@""];[menu addItemWithTitle:@"Clear Clipboard History" action:@selector(clearHistory:) keyEquivalent:@""];[menu addItemWithTitle:@"Open at Login" action:@selector(loginItem:) keyEquivalent:@""];[menu addItemWithTitle:@"Enter License…" action:@selector(license:) keyEquivalent:@""];[menu addItem:NSMenuItem.separatorItem];[menu addItemWithTitle:@"About Superhound" action:@selector(about:) keyEquivalent:@""];[menu addItemWithTitle:@"Check for Updates…" action:@selector(checkUpdates:) keyEquivalent:@""];[menu addItemWithTitle:@"Check for Updates Automatically" action:@selector(automaticUpdates:) keyEquivalent:@""];[menu addItem:NSMenuItem.separatorItem];[menu addItemWithTitle:@"Quit Superhound" action:@selector(terminate:) keyEquivalent:@"q"];
@@ -63,7 +65,7 @@ static NSString *const LicensePublicKey=@"BB1mBfflJqWXPJerDDR+MLSwGOCcP/HFGM8f+H
 - (void)search:(id)sender {(void)sender;[_panel toggle];}
 - (void)history:(id)sender {(void)sender;[_panel toggleHistory];}
 - (void)clearHistory:(id)sender {
- (void)sender;[NSApp activateIgnoringOtherApps:YES];NSAlert *alert=NSAlert.new;alert.messageText=@"Clear the clipboard history?";alert.informativeText=[NSString stringWithFormat:@"All %lu copied items are deleted from this Mac. You cannot undo this.",(unsigned long)_clipboard.count];[alert addButtonWithTitle:@"Clear History"];[alert addButtonWithTitle:@"Cancel"];
+ (void)sender;[NSApp activateIgnoringOtherApps:YES];NSAlert *alert=NSAlert.new;alert.messageText=@"Clear the clipboard history?";alert.informativeText=[NSString stringWithFormat:@"All %@ copied items are deleted from this Mac. You cannot undo this.",[NSNumberFormatter localizedStringFromNumber:@(_clipboard.count) numberStyle:NSNumberFormatterDecimalStyle]];[alert addButtonWithTitle:@"Clear History"];[alert addButtonWithTitle:@"Cancel"];
  if([alert runModal]==NSAlertFirstButtonReturn)[_clipboard clear];
 }
 - (void)readPasteboard {

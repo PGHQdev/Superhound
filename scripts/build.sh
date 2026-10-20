@@ -12,6 +12,7 @@ bundle="$stage/Superhound.app"
 mkdir -p "$bundle/Contents/MacOS" "$bundle/Contents/Resources"
 cp app/emoji.tsv "$bundle/Contents/Resources/emoji.tsv"
 cp app/AppIcon.icns "$bundle/Contents/Resources/AppIcon.icns"
+cp app/LogoTemplate.png "$bundle/Contents/Resources/LogoTemplate.png"
 cat > "$bundle/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

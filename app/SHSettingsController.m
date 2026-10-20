@@ -61,7 +61,7 @@ static NSButton *Button(NSView *view,NSString *title,NSRect frame,id target,SEL 
 - (NSView *)tableView:(NSTableView *)tableView viewForTableColumn:(NSTableColumn *)column row:(NSInteger)row {
  (void)tableView;(void)column;NSDictionary *root=_roots[(NSUInteger)row];NSView *cell=[[NSView alloc] initWithFrame:NSMakeRect(0,0,670,49)];
  NSTextField *name=Label(cell,[root[@"path"] stringByAbbreviatingWithTildeInPath],NSMakeRect(10,26,650,20),13,NO);name.lineBreakMode=NSLineBreakByTruncatingMiddle;
- Label(cell,[NSString stringWithFormat:@"%@ · %@ items%@",root[@"state"],root[@"count"],[root[@"apps"] boolValue]?@" · applications only":@""],NSMakeRect(10,6,650,19),11,YES);return cell;
+ Label(cell,[NSString stringWithFormat:@"%@ · %@ items%@",root[@"state"],[NSNumberFormatter localizedStringFromNumber:root[@"count"] numberStyle:NSNumberFormatterDecimalStyle],[root[@"apps"] boolValue]?@" · applications only":@""],NSMakeRect(10,6,650,19),11,YES);return cell;
 }
 - (NSString *)selectedRoot {NSInteger row=_table.selectedRow;return row>=0 && row<(NSInteger)_roots.count && ![_roots[(NSUInteger)row][@"apps"] boolValue]?_roots[(NSUInteger)row][@"id"]:nil;}
 - (void)updateButtons {_remove.enabled=self.selectedRoot!=nil;_reselect.enabled=_remove.enabled;}
