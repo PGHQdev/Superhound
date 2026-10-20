@@ -65,8 +65,8 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  _help=[NSTextField labelWithString:@""];_help.frame=NSMakeRect(22,14,456,18);_help.font=[NSFont systemFontOfSize:11];_help.textColor=NSColor.secondaryLabelColor;[view addSubview:_help];
  NSMutableParagraphStyle *right=NSMutableParagraphStyle.new;right.alignment=NSTextAlignmentRight;
  NSTextField *mark=[NSTextField labelWithAttributedString:[[NSAttributedString alloc] initWithString:@"SUPERHOUND" attributes:@{NSFontAttributeName:[NSFont systemFontOfSize:10 weight:NSFontWeightSemibold],NSKernAttributeName:@2,NSForegroundColorAttributeName:NSColor.tertiaryLabelColor,NSParagraphStyleAttributeName:right}]];mark.frame=NSMakeRect(478,14,140,18);mark.accessibilityElement=NO;[view addSubview:mark];
- NSButton *unlicensed=_unlicensed=[NSButton buttonWithTitle:@"" target:self action:@selector(buy:)];unlicensed.bordered=NO;unlicensed.attributedTitle=[[NSAttributedString alloc] initWithString:@"UNLICENSED" attributes:@{NSFontAttributeName:[NSFont systemFontOfSize:10 weight:NSFontWeightSemibold],NSKernAttributeName:@2,NSForegroundColorAttributeName:NSColor.systemOrangeColor}];
- _markLeft=618-ceil(mark.attributedStringValue.size.width);unlicensed.toolTip=@"This copy of Superhound is unlicensed. Click to buy a license.";unlicensed.accessibilityLabel=@"Unlicensed. Buy a license";[view addSubview:unlicensed];
+ NSButton *unlicensed=_unlicensed=[NSButton buttonWithTitle:@"" target:self action:@selector(enterLicense:)];unlicensed.bordered=NO;unlicensed.attributedTitle=[[NSAttributedString alloc] initWithString:@"Activate license" attributes:@{NSFontAttributeName:[NSFont systemFontOfSize:11],NSForegroundColorAttributeName:NSColor.secondaryLabelColor}];
+ _markLeft=618-ceil(mark.attributedStringValue.size.width);unlicensed.toolTip=@"Enter your license key, or buy a license.";unlicensed.accessibilityLabel=@"Activate license";[view addSubview:unlicensed];
  _updateLink=[NSButton buttonWithTitle:@"" target:self action:@selector(openUpdate:)];_updateLink.bordered=NO;_updateLink.hidden=YES;[view addSubview:_updateLink];
  [self layoutFooter];
  return self;
@@ -86,6 +86,7 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
 }
 - (void)openUpdate:(id)sender {(void)sender;[self dismiss:NO];if(self.installUpdate)self.installUpdate();}
 - (void)buy:(id)sender {(void)sender;[self dismiss:NO];[NSWorkspace.sharedWorkspace openURL:[NSURL URLWithString:@"https://superhound.app/buy"]];}
+- (void)enterLicense:(id)sender {(void)sender;[self dismiss:NO];if(self.enterLicense)self.enterLicense();}
 - (void)toggle {[self show:NO];}
 - (void)toggleHistory {[self show:YES];}
 // The other shortcut switches the open panel to its mode and keeps the app to return to.

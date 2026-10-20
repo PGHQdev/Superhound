@@ -36,7 +36,7 @@ static NSString *const LicensePublicKey=@"BB1mBfflJqWXPJerDDR+MLSwGOCcP/HFGM8f+H
  _panel.licensed=_license.licensed;
  _clipboard=[[SHClipboard alloc] initWithURL:[state URLByAppendingPathComponent:@"clipboard.plist"]];_panel.clipboard=_clipboard;_pasteboardCount=NSPasteboard.generalPasteboard.changeCount;
  __weak typeof(self) weak=self;
- _activation.changed=^{SHAppDelegate *self=weak;if(self)self->_panel.licensed=self->_license.licensed;};
+ _activation.changed=^{SHAppDelegate *self=weak;if(self)self->_panel.licensed=self->_license.licensed;};_panel.enterLicense=^{SHAppDelegate *self=weak;[self->_activation enterKey:nil];};
  _updater=SHUpdater.new;_updater.changed=^{SHAppDelegate *self=weak;if(self)self->_panel.update=self->_updater.busy?nil:self->_updater.latest.version;};_panel.installUpdate=^{SHAppDelegate *self=weak;[self->_updater install];};
  _hotKey.invoked=^{[weak search:nil];};_historyKey.invoked=^{[weak history:nil];};
  // macOS sends no notice when the pasteboard changes, so its change count is read twice a second.

@@ -28,7 +28,10 @@ static NSInteger Ask(NSString *title,NSString *text,NSString *action,NSView *acc
 - (void)enterKey:(NSString *)key {
  if(_busy)return;
  NSTextField *field=[[NSTextField alloc] initWithFrame:NSMakeRect(0,0,320,24)];field.stringValue=key?:@"";field.placeholderString=@"License key";
- _busy=YES;NSInteger answer=Ask(@"Activate Superhound",@"Superhound sends the license key and a device ID to superhound.app. The device ID is a one-way hash, so it does not identify you. A license covers 3 Macs.",@"Activate",field);_busy=NO;
+ [NSApp activateIgnoringOtherApps:YES];NSAlert *alert=NSAlert.new;alert.messageText=@"Activate Superhound";alert.informativeText=@"Superhound sends the license key and a device ID to superhound.app. The device ID is a one-way hash, so it does not identify you. A license covers 3 Macs.";alert.accessoryView=field;
+ [alert addButtonWithTitle:@"Activate"];[alert addButtonWithTitle:@"Cancel"];[alert addButtonWithTitle:@"Buy License"];alert.window.initialFirstResponder=field;
+ _busy=YES;NSInteger answer=[alert runModal];_busy=NO;
+ if(answer==NSAlertThirdButtonReturn){[NSWorkspace.sharedWorkspace openURL:[NSURL URLWithString:@"https://superhound.app/buy"]];return;}
  NSString *entered=[field.stringValue stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];if(answer!=NSAlertFirstButtonReturn || !entered.length)return;
  [self post:@"/api/activate" body:@{@"key":entered,@"device":_license.device,@"label":[@"Mac " stringByAppendingString:[_license.device substringToIndex:8]]} reply:^(NSDictionary *answer,NSString *error){
   if(!error && ![answer[@"token"] isKindOfClass:NSString.class])error=@"superhound.app sent an answer that Superhound cannot read.";

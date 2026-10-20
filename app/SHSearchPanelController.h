@@ -11,8 +11,9 @@ extern NSString *const SHOwnCopyType;
 @property(nonatomic,strong) SHUsage *usage;
 @property(nonatomic,strong) SHEmoji *emoji;
 @property(nonatomic,strong) SHClipboard *clipboard;
-// NO shows the UNLICENSED link and the reminder on every tenth opening.
+// NO shows the Activate license link and the reminder on every tenth opening; enterLicense runs when the user clicks the link.
 @property(nonatomic) BOOL licensed;
+@property(nonatomic,copy) void (^enterLicense)(void);
 // A newer version shows an UPDATE TO link in the footer; installUpdate runs when the user clicks it.
 @property(nonatomic,copy) NSString *update;
 @property(nonatomic,copy) void (^installUpdate)(void);
