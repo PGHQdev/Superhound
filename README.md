@@ -151,3 +151,7 @@ tests/install.sh      # installer checks; quit Superhound first
 ## Status
 
 Superhound is an early version. There is no signed download yet, so you build it from source.
+
+## License
+
+Copyright (C) 2026 PGHQdev. Superhound is free software under the GNU Affero General Public License, version 3. See [LICENSE](LICENSE).
