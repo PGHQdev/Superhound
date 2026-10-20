@@ -1,6 +1,6 @@
 <div align="center">
 
-<a href="https://superhound.app"><img src="docs/media/banner.png" alt="Superhound: the ultrafast Spotlight alternative for macOS. Open apps and files, do quick math, find emoji, and paste from your clipboard history." width="100%"></a>
+<a href="https://superhound.app"><img src="docs/media/banner.png" alt="Superhound: the ultrafast Spotlight alternative for Mac. 10 ms for 100k items, under 45 MB of RAM when idle, native, 1 MB app." width="100%"></a>
 
 <br>
 
