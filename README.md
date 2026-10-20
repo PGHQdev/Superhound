@@ -47,7 +47,7 @@ Superhound works fully without a license and shows an unlicensed reminder. A lic
 
 ### Updates
 
-Superhound checks for a new version once a day. When there is one, the panel shows **UPDATE TO** and the menu shows **Update to…**. Superhound downloads the update, checks that it has the Superhound signature, and opens again. It keeps the previous version in `~/Applications/.superhound-backup.*`. To go back, quit Superhound and put that `previous.app` in place of `~/Applications/Superhound.app`.
+Superhound checks for a new version once a day. When there is one, the panel shows **Update to** and the menu shows **Update to…**. Superhound downloads the update, checks that it has the Superhound signature, and opens again. It keeps the previous version in `~/Applications/.superhound-backup.*`. To go back, quit Superhound and put that `previous.app` in place of `~/Applications/Superhound.app`.
 
 To turn off the daily check, turn off **Check for Updates Automatically** in the menu. **Check for Updates…** checks at once.
 

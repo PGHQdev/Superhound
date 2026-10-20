@@ -47,8 +47,8 @@ To see a change in the live app: build with a build number one above the install
 | File | Function |
 |---|---|
 | `SHAppDelegate.m` | Start-up wiring, the menu bar item and its menu, Open at Login, the pasteboard check twice a second for the clipboard history, the license, update, and About menu items, and `superhound://` links. |
-| `SHSearchPanelController.m` | The search panel and its clipboard history mode: field, result rows, row order (answer, chosen before, apps, settings panes, and commands, emoji, clipboard items, files), keys, the action menu (⌘K and right-click), Quick Look, copy and open, the UPDATE TO and Activate license links to the left of the wordmark, and the license reminder on every tenth opening (`unlicensedOpens` in the defaults). |
-| `SHSettingsController.m` | The Search Locations window and the two shortcut recorders. |
+| `SHSearchPanelController.m` | The search panel and its clipboard history mode: the dark blurred borderless window, 600 pt wide, with a height that follows the rows (it grows at once and shrinks after 0.15 s); the shared columns (16 pt margin, 28 pt icon column, text at x 52); field, the label band ("Suggested", errors, no matches, indexing note), one-line app rows and two-line file rows with folder context, row order (answer, chosen before, apps, settings panes, and commands, emoji, clipboard items, files), keys, the action menu (⌘K and right-click), Quick Look, copy and open, the footer (key hints, the Update to and Activate license links, the logo and name), and the license reminder on every tenth opening (`unlicensedOpens` in the defaults). |
+| `SHSettingsController.m` | The Search Locations window with the item counts, and the two shortcut recorders. |
 | `SHHotKey.m` | Global shortcut registration, one object for each shortcut. |
 | `SHFolderAccess.m` | Security-scoped bookmarks for the user's folders. |
 | `SHActivation.m` | Activation and deactivation requests to superhound.app, the license key window, and `superhound://activate?key=` links. The defaults key `licenseServer` points it at a local test server. |
@@ -56,6 +56,7 @@ To see a change in the live app: build with a build number one above the install
 | `SHResultActions.m` | Opens a result, opens it with another app, shows it in Finder, moves it to the Trash, runs the system commands, and pastes with a ⌘V key press. |
 | `emoji.tsv` | Generated emoji data: emoji, name, keywords. Do not edit by hand. |
 | `AppIcon.icns` | The app icon, made from `docs/media/superhound.png` |
+| `LogoTemplate.png` | The 36 px template logo for the panel footer, made from `docs/media/logo.png` |
 
 ### `tests/` and `bench/`
 
