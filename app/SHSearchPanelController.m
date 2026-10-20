@@ -82,6 +82,7 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  NSRunningApplication *_previous;
  BOOL _navigated,_reloading,_pending,_history;
  id _selectedID;
+ NSNumber *_queuedOpen;
  NSString *_coverage,*_error;
  NSCache *_icons;
  NSMutableSet *_loadingIcons;
@@ -110,7 +111,7 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  _table=[[SHResultsTable alloc] initWithFrame:scroll.bounds];
  __weak typeof(self) weak=self;
  panel.shortcut=^BOOL(NSEvent *event){return [weak shortcut:event];};
- ((SHResultsTable *)_table).command=^BOOL(NSEvent *event){if(event.keyCode==53){[weak dismiss:YES];return YES;}if(event.keyCode==36 || event.keyCode==76){[weak openSelected:(event.modifierFlags&NSEventModifierFlagCommand)!=0];return YES;}return NO;};_table.headerView=nil;_table.style=NSTableViewStylePlain;_table.intercellSpacing=NSMakeSize(0,0);_table.backgroundColor=NSColor.clearColor;_table.selectionHighlightStyle=NSTableViewSelectionHighlightStyleRegular;_table.delegate=self;_table.dataSource=self;_table.allowsEmptySelection=YES;_table.target=self;_table.doubleAction=@selector(openClicked:);_table.menu=NSMenu.new;_table.menu.delegate=self;_table.accessibilityIdentifier=@"superhound.search.results";_table.accessibilityLabel=@"Search results";
+ ((SHResultsTable *)_table).command=^BOOL(NSEvent *event){if(event.keyCode==53){[weak escape];return YES;}if(event.keyCode==36 || event.keyCode==76){[weak openSelected:(event.modifierFlags&NSEventModifierFlagCommand)!=0];return YES;}return NO;};_table.headerView=nil;_table.style=NSTableViewStylePlain;_table.intercellSpacing=NSMakeSize(0,0);_table.backgroundColor=NSColor.clearColor;_table.selectionHighlightStyle=NSTableViewSelectionHighlightStyleRegular;_table.delegate=self;_table.dataSource=self;_table.allowsEmptySelection=YES;_table.target=self;_table.doubleAction=@selector(openClicked:);_table.menu=NSMenu.new;_table.menu.delegate=self;_table.accessibilityIdentifier=@"superhound.search.results";_table.accessibilityLabel=@"Search results";
  NSTableColumn *column=[[NSTableColumn alloc] initWithIdentifier:@"result"];column.width=Width-16;[_table addTableColumn:column];scroll.documentView=_table;[view addSubview:scroll];
  NSView *rule=[[NSView alloc] initWithFrame:NSMakeRect(16,40,Width-32,1)];rule.wantsLayer=YES;rule.layer.backgroundColor=[NSColor colorWithWhite:1 alpha:0.1].CGColor;[view addSubview:rule];
  _help=[NSTextField labelWithString:@""];_help.lineBreakMode=NSLineBreakByClipping;[view addSubview:_help];
@@ -180,7 +181,7 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  [alert beginSheetModalForWindow:self.window completionHandler:^(NSModalResponse response){if(response==NSAlertFirstButtonReturn)[self buy:nil];else [self.window makeFirstResponder:self->_field];}];
 }
 - (void)dismiss:(BOOL)restore {
- [_queries cancel];if(self.window.attachedSheet)[self.window endSheet:self.window.attachedSheet];[self.window orderOut:nil];_error=nil;
+ [_queries cancel];_queuedOpen=nil;if(self.window.attachedSheet)[self.window endSheet:self.window.attachedSheet];[self.window orderOut:nil];_error=nil;
  if(QLPreviewPanel.sharedPreviewPanelExists && QLPreviewPanel.sharedPreviewPanel.isVisible)[QLPreviewPanel.sharedPreviewPanel orderOut:nil];
  if(restore && _previous && _previous.processIdentifier!=NSProcessInfo.processInfo.processIdentifier)[_previous activateWithOptions:0];
 }
@@ -204,7 +205,7 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
 - (void)search:(BOOL)changedQuery {
  double requested=SHTime();
  _pending=YES;
- if(changedQuery){_navigated=NO;_selectedID=nil;}
+ if(changedQuery){_navigated=NO;_selectedID=nil;_queuedOpen=nil;}
  if(_history){_pending=NO;[self present:[_clipboard search:_field.stringValue limit:100]];return;}
  // The previous rows stay visible until the new results arrive; _pending stops Return opening them.
  __weak typeof(self) weak=self;NSDictionary *answer=[SHAnswer answerForQuery:_field.stringValue];
@@ -227,6 +228,7 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
   // With few other results, more emoji fill the free rows.
   for(NSUInteger i=shown;i<otherEmoji.count && rows.count<8;i++)[rows addObject:otherEmoji[i]];
   self->_pending=NO;[self present:rows];
+  if(self->_queuedOpen){BOOL reveal=self->_queuedOpen.boolValue;self->_queuedOpen=nil;[self openSelected:reveal];}
   if([NSUserDefaults.standardUserDefaults boolForKey:@"measurePerformance"])[self.window displayIfNeeded];
   SHMeasure(@"query_to_text_presentation",requested);
  }];
@@ -273,7 +275,8 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
 }
 - (void)openClicked:(id)sender {(void)sender;[self openSelected:NO];}
 - (NSDictionary *)selected {NSInteger row=_table.selectedRow;return !_pending && row>=0 && row<(NSInteger)_results.count?_results[(NSUInteger)row]:nil;}
-- (void)openSelected:(BOOL)reveal {NSDictionary *result=self.selected;if(result)[self perform:reveal?@"reveal":@"open" result:result application:nil];else NSBeep();}
+// Return during a search waits for its results, so typing fast and pressing Return opens the new first result.
+- (void)openSelected:(BOOL)reveal {if(_pending){_queuedOpen=@(reveal);return;}NSDictionary *result=self.selected;if(result)[self perform:reveal?@"reveal":@"open" result:result application:nil];else NSBeep();}
 // ⌘↩ reveal, ⌘K actions, ⌘Y Quick Look, ⇧⌘C copy path.
 - (BOOL)shortcut:(NSEvent *)event {
  NSEventModifierFlags flags=event.modifierFlags&NSEventModifierFlagDeviceIndependentFlagsMask&~(NSEventModifierFlagCapsLock|NSEventModifierFlagNumericPad|NSEventModifierFlagFunction);NSString *key=event.charactersIgnoringModifiers.lowercaseString;
@@ -337,6 +340,8 @@ static BOOL Located(NSDictionary *result){return ![@[@"command",@"emoji",@"answe
  if(result[@"copy"]){Copy(result[@"copy"]);[self dismiss:YES];return;}
  [_usage recordQuery:_field.stringValue result:result];[self dismiss:[result[@"type"] isEqual:@"command"]];if(self.openResult)self.openResult(result,action,application);
 }
+// Escape closes Quick Look before the panel; the ⌘K menu handles its own Escape.
+- (void)escape {if(QLPreviewPanel.sharedPreviewPanelExists && QLPreviewPanel.sharedPreviewPanel.isVisible)[QLPreviewPanel.sharedPreviewPanel orderOut:nil];else [self dismiss:YES];}
 - (void)quickLook:(NSDictionary *)result {
  QLPreviewPanel *panel=QLPreviewPanel.sharedPreviewPanel;
  if(panel.isVisible && [_preview isEqual:[NSURL fileURLWithPath:result[@"path"]]]){[panel orderOut:nil];return;}
@@ -352,7 +357,7 @@ static BOOL Located(NSDictionary *result){return ![@[@"command",@"emoji",@"answe
  (void)control;if(textView.hasMarkedText)return NO;
  if(selector==@selector(moveDown:)){[self move:1];return YES;}
  if(selector==@selector(moveUp:)){[self move:-1];return YES;}
- if(selector==@selector(cancelOperation:)){[self dismiss:YES];return YES;}
+ if(selector==@selector(cancelOperation:)){[self escape];return YES;}
  if(selector==@selector(insertNewline:) || selector==@selector(insertNewlineIgnoringFieldEditor:)){[self openSelected:(NSApp.currentEvent.modifierFlags&NSEventModifierFlagCommand)!=0];return YES;}
  return NO;
 }
