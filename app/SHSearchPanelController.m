@@ -38,6 +38,11 @@ static NSAttributedString *Hints(NSArray<NSString *> *parts){
 }
 // Footer items share one text baseline, whatever their control type.
 static void Seat(NSView *view,CGFloat x,CGFloat width){NSSize size=view.fittingSize;view.frame=NSMakeRect(x,0,width,size.height);[view setFrameOrigin:NSMakePoint(x,15-(size.height-view.firstBaselineOffsetFromTop))];}
+// A colour answer shows its colour in the icon box, with a faint ring so black stays visible on the dark panel.
+static NSImage *Swatch(NSString *hex){
+ unsigned value=0;[[NSScanner scannerWithString:[hex substringFromIndex:1]] scanHexInt:&value];NSColor *color=[NSColor colorWithSRGBRed:((value>>16)&255)/255.0 green:((value>>8)&255)/255.0 blue:(value&255)/255.0 alpha:1];
+ return [NSImage imageWithSize:NSMakeSize(20,20) flipped:NO drawingHandler:^BOOL(NSRect rect){NSBezierPath *shape=[NSBezierPath bezierPathWithRoundedRect:NSInsetRect(rect,0.5,0.5) xRadius:5 yRadius:5];[color set];[shape fill];[[NSColor colorWithWhite:1 alpha:0.25] set];[shape stroke];return YES;}];
+}
 static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPasteboard;[board clearContents];[board setString:text forType:NSPasteboardTypeString];[board setString:@"" forType:SHOwnCopyType];}
 @interface SHPanel : NSPanel
 @property(copy) BOOL (^shortcut)(NSEvent *);
@@ -274,7 +279,7 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  CGFloat height=compact?40:48;NSTableCellView *cell=[[NSTableCellView alloc] initWithFrame:NSMakeRect(0,0,Width-16,height)];
  // Every row has the same 28-point icon box; file icons scale with their proportions and symbols keep one size.
  NSString *symbol=emoji?nil:clip?@"doc.on.clipboard":[kind isEqual:@"web"]?@"magnifyingglass":web?@"globe":answer?@"equal.circle":result[@"symbol"];
- NSImageView *icon=[[NSImageView alloc] initWithFrame:NSMakeRect(8,(height-28)/2,28,28)];icon.imageScaling=symbol?NSImageScaleNone:NSImageScaleProportionallyUpOrDown;icon.image=symbol?[[NSImage imageWithSystemSymbolName:symbol accessibilityDescription:nil] imageWithSymbolConfiguration:[NSImageSymbolConfiguration configurationWithPointSize:17 weight:NSFontWeightRegular]]:emoji?nil:[_icons objectForKey:path];icon.contentTintColor=NSColor.secondaryLabelColor;cell.imageView=icon;[cell addSubview:icon];
+ NSImageView *icon=[[NSImageView alloc] initWithFrame:NSMakeRect(8,(height-28)/2,28,28)];icon.imageScaling=symbol?NSImageScaleNone:NSImageScaleProportionallyUpOrDown;icon.image=symbol?[[NSImage imageWithSystemSymbolName:symbol accessibilityDescription:nil] imageWithSymbolConfiguration:[NSImageSymbolConfiguration configurationWithPointSize:17 weight:NSFontWeightRegular]]:emoji?nil:[_icons objectForKey:path];icon.contentTintColor=NSColor.secondaryLabelColor;if(result[@"color"])icon.image=Swatch(result[@"color"]);cell.imageView=icon;[cell addSubview:icon];
  if(emoji){NSTextField *glyph=[NSTextField labelWithString:result[@"emoji"]];glyph.frame=NSMakeRect(4,(height-30)/2,36,30);glyph.font=[NSFont systemFontOfSize:22];glyph.alignment=NSTextAlignmentCenter;[cell addSubview:glyph];}
  // An app shows its folder only when another result has the same name.
  BOOL shared=NO;for(NSDictionary *other in _results)if(other!=result && [other[@"name"] caseInsensitiveCompare:result[@"name"]]==NSOrderedSame)shared=YES;
@@ -325,6 +330,8 @@ static BOOL Located(NSDictionary *result){return ![@[@"command",@"emoji",@"answe
  NSString *type=result[@"type"];
  add(Located(result) || [@[@"url",@"web"] containsObject:type]?@"Open":[type isEqual:@"command"]?@"Run":[type isEqual:@"clipboard"]?@"Paste":@"Copy",@"open",@"\r",0);
  if([type isEqual:@"clipboard"]){add(@"Copy",@"reveal",@"\r",NSEventModifierFlagCommand);[menu addItem:NSMenuItem.separatorItem];add(@"Delete from History",@"forget",@"",0);return;}
+ // A colour offers each of its forms.
+ if(result[@"formats"]){[menu addItem:NSMenuItem.separatorItem];for(NSString *format in result[@"formats"]){NSMutableDictionary *copy=[result mutableCopy];copy[@"copy"]=format;NSMenuItem *item=[menu addItemWithTitle:[@"Copy " stringByAppendingString:format] action:@selector(chooseAction:) keyEquivalent:@""];item.target=self;item.representedObject=@{@"result":copy,@"action":@"open"};}}
  if(!Located(result))return;
  add(@"Reveal in Finder",@"reveal",@"\r",NSEventModifierFlagCommand);
  if([self action:@"quickLook" appliesTo:result])add(@"Quick Look",@"quickLook",@"y",NSEventModifierFlagCommand);

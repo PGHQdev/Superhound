@@ -132,6 +132,39 @@ static NSArray *Unit(NSString *name) {
  if(!row && name.length>2 && [name hasSuffix:@"s"])row=Units()[[name substringToIndex:name.length-1]];
  return row;
 }
+// "#RGB", "#RRGGBB", "rgb(r, g, b)", or "hsl(h, s%, l%)", with commas or spaces; gives red, green, and blue from 0 to 255.
+static BOOL Color(NSString *input,int rgb[3],BOOL *hex) {
+ static NSRegularExpression *hexForm,*rgbForm,*hslForm;static dispatch_once_t once;
+ dispatch_once(&once,^{
+  hexForm=[NSRegularExpression regularExpressionWithPattern:@"^#([0-9a-f]{3}|[0-9a-f]{6})$" options:NSRegularExpressionCaseInsensitive error:nil];
+  rgbForm=[NSRegularExpression regularExpressionWithPattern:@"^rgb\\( ?([0-9]{1,3}) ?[, ] ?([0-9]{1,3}) ?[, ] ?([0-9]{1,3}) ?\\)$" options:NSRegularExpressionCaseInsensitive error:nil];
+  hslForm=[NSRegularExpression regularExpressionWithPattern:@"^hsl\\( ?([0-9]{1,3}(?:\\.[0-9]+)?)(?:deg)? ?[, ] ?([0-9]{1,3}(?:\\.[0-9]+)?)% ?[, ] ?([0-9]{1,3}(?:\\.[0-9]+)?)% ?\\)$" options:NSRegularExpressionCaseInsensitive error:nil];
+ });
+ NSRange all=NSMakeRange(0,input.length);NSTextCheckingResult *m;
+ if((m=[hexForm firstMatchInString:input options:0 range:all])){
+  NSString *digits=[input substringWithRange:[m rangeAtIndex:1]];
+  if(digits.length==3)digits=[NSString stringWithFormat:@"%C%C%C%C%C%C",[digits characterAtIndex:0],[digits characterAtIndex:0],[digits characterAtIndex:1],[digits characterAtIndex:1],[digits characterAtIndex:2],[digits characterAtIndex:2]];
+  unsigned value=0;[[NSScanner scannerWithString:digits] scanHexInt:&value];rgb[0]=(value>>16)&255;rgb[1]=(value>>8)&255;rgb[2]=value&255;*hex=YES;return YES;
+ }
+ *hex=NO;
+ if((m=[rgbForm firstMatchInString:input options:0 range:all])){
+  for(int i=0;i<3;i++){rgb[i]=[input substringWithRange:[m rangeAtIndex:(NSUInteger)i+1]].intValue;if(rgb[i]>255)return NO;}
+  return YES;
+ }
+ if((m=[hslForm firstMatchInString:input options:0 range:all])){
+  double h=fmod([input substringWithRange:[m rangeAtIndex:1]].doubleValue,360)/60,s=[input substringWithRange:[m rangeAtIndex:2]].doubleValue/100,l=[input substringWithRange:[m rangeAtIndex:3]].doubleValue/100;
+  if(s>1 || l>1)return NO;
+  double c=(1-fabs(2*l-1))*s,x=c*(1-fabs(fmod(h,2)-1)),light=l-c/2,r=0,g=0,b=0;
+  if(h<1){r=c;g=x;}else if(h<2){r=x;g=c;}else if(h<3){g=c;b=x;}else if(h<4){g=x;b=c;}else if(h<5){r=x;b=c;}else {r=c;b=x;}
+  rgb[0]=(int)lround((r+light)*255);rgb[1]=(int)lround((g+light)*255);rgb[2]=(int)lround((b+light)*255);return YES;
+ }
+ return NO;
+}
+static NSArray<NSString *> *ColorForms(const int rgb[3]) {
+ double r=rgb[0]/255.0,g=rgb[1]/255.0,b=rgb[2]/255.0,high=fmax(r,fmax(g,b)),low=fmin(r,fmin(g,b)),d=high-low,l=(high+low)/2,s=d?d/(1-fabs(2*l-1)):0,h=0;
+ if(d){h=high==r?fmod((g-b)/d+6,6):high==g?(b-r)/d+2:(r-g)/d+4;}
+ return @[[NSString stringWithFormat:@"#%02X%02X%02X",rgb[0],rgb[1],rgb[2]],[NSString stringWithFormat:@"rgb(%d, %d, %d)",rgb[0],rgb[1],rgb[2]],[NSString stringWithFormat:@"hsl(%ld, %ld%%, %ld%%)",lround(h*60)%360,lround(s*100),lround(l*100)]];
+}
 @implementation SHAnswer
 + (NSDictionary *)answerForQuery:(NSString *)query {
  NSMutableArray<NSString *> *words=NSMutableArray.array;
@@ -139,6 +172,9 @@ static NSArray *Unit(NSString *name) {
  if(!words.count)return nil;
  NSString *input=[words componentsJoinedByString:@" "];double value=0;
  if(Evaluate(input,YES,&value))return @{@"type":@"answer",@"id":@"answer",@"name":[@"= " stringByAppendingString:Format(value,YES)],@"copy":Format(value,NO),@"detail":input};
+ // A colour shows in another form: a hex value as rgb, and rgb or hsl as hex.
+ int rgb[3];BOOL hex=NO;
+ if(Color(input,rgb,&hex)){NSArray *forms=ColorForms(rgb);NSString *shown=hex?forms[1]:forms[0];return @{@"type":@"answer",@"id":@"answer",@"name":shown,@"copy":shown,@"detail":input,@"color":forms[0],@"formats":forms};}
  // Conversion: "<value> <unit> to <unit>", for example "5 km to mi" or "72f in c".
  NSArray *target=words.count>=3 && [@[@"to",@"in",@"as",@"->",@"→",@"="] containsObject:words[words.count-2].lowercaseString]?Unit(words.lastObject):nil;
  if(!target)return nil;

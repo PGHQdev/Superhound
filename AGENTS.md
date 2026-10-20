@@ -30,7 +30,7 @@ To see a change in the live app: build with a build number one above the install
 | `SHSearchSnapshot.m` | The in-memory search list. Holds the ranking order (`rank:precedes:`; typing-error matches stay below exact matches, also when learned; a result opened for the exact query leads, then an app, settings pane, or command whose name or alias is the whole query, then other learned results), the empty-query app list, and `SHFold` (case, accent, and width folding). |
 | `SHQueryController.m` | Runs searches off the main thread and drops results of an old query. |
 | `SHUsage.m` | Learned ranking. Records which result the user opened for which query, in `usage.plist`. |
-| `SHAnswer.m` | Quick answers: the arithmetic parser, percent rules, and the unit table. |
+| `SHAnswer.m` | Quick answers: the arithmetic parser, percent rules, the unit table, and colour values (hex, rgb, and hsl, each shown as another form; the panel draws a swatch and ⌘K copies each form). |
 | `SHWeb.m` | The web search URL of each engine (Google by default, DuckDuckGo, Bing, Brave Search, Kagi), and web addresses typed in the search field: http and https URLs, localhost and IPv4 addresses with a port, and hosts with a common web ending (a list that leaves out file extensions such as .md and .sh). |
 | `SHEmoji.m` | Emoji search by name and keyword over `app/emoji.tsv`. |
 | `SHClipboard.m` | The clipboard history: the last 500 text copies, the skip rules for concealed and password copies, search, and `clipboard.plist`. |
@@ -65,7 +65,7 @@ To see a change in the live app: build with a build number one above the install
 | File | Covers |
 |---|---|
 | `tests/search.m` | Ranking, typing errors, learned ranking, the query controller |
-| `tests/answer.m` | Calculator and unit conversion |
+| `tests/answer.m` | Calculator, unit conversion, and colours |
 | `tests/web.m` | Web addresses, the text that must not give one, and web search URLs |
 | `tests/emoji.m` | Emoji search |
 | `tests/clipboard.m` | Clipboard history rules, search, limits, and its file |
