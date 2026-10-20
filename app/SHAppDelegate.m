@@ -84,7 +84,7 @@ static NSString *const LicensePublicKey=@"BB1mBfflJqWXPJerDDR+MLSwGOCcP/HFGM8f+H
 - (void)automaticUpdates:(id)sender {(void)sender;_updater.automatic=!_updater.automatic;}
 - (void)about:(id)sender {
  (void)sender;[NSApp activateIgnoringOtherApps:YES];
- NSString *credits=_license.licensed?@"Licensed for this Mac.":@"Unlicensed. A license is $15 for 3 Macs at superhound.app.";
+ NSString *credits=_license.licensed?@"Licensed for this Mac.":@"Free to evaluate. License price: $15 once, for 3 Macs, at superhound.app.";
  [NSApp orderFrontStandardAboutPanelWithOptions:@{NSAboutPanelOptionCredits:[[NSAttributedString alloc] initWithString:credits attributes:@{NSFontAttributeName:[NSFont systemFontOfSize:11],NSForegroundColorAttributeName:NSColor.secondaryLabelColor}]}];
 }
 - (void)settings:(id)sender {(void)sender;[_settings show];}

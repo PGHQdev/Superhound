@@ -8,7 +8,7 @@
 [![macOS 15 or later](https://img.shields.io/badge/macOS-15%2B-111111?style=flat-square&logo=apple)](#-install)
 [![Apple Silicon](https://img.shields.io/badge/Apple%20Silicon-native-111111?style=flat-square)](#-install)
 [![Works offline](https://img.shields.io/badge/works-offline-34c759?style=flat-square)](#-privacy)
-[![$15 once](https://img.shields.io/badge/price-%2415%20once-ff9500?style=flat-square)](https://superhound.app)
+[![Free to evaluate, license $15](https://img.shields.io/badge/free%20to%20evaluate-license%20%2415-ff9500?style=flat-square)](https://superhound.app)
 [![License: AGPL-3.0](https://img.shields.io/github/license/PGHQdev/Superhound?style=flat-square&color=555555)](LICENSE)
 
 ### The fast Spotlight alternative for your Mac
@@ -29,7 +29,7 @@ Press one shortcut. Type a few letters. Your app, file, answer, or emoji is alre
 | 🪶 **Light** | Under 1 MB on disk, about 40 MB of memory. Native Mac code, no web views. |
 | 🔒 **Private** | Works offline. Reads file names, never file contents. No account, no tracking. |
 | 🧠 **Smart** | Forgives typos, ignores accents, and learns which results you open. |
-| 💸 **Fair** | $15 once for 3 Macs. No subscription. Free to try with every feature. |
+| 💸 **Fair** | Free to evaluate, with every feature. License price: $15 once, for 3 Macs. No subscription. |
 
 ## 🔎 What you can do
 
@@ -53,7 +53,7 @@ curl -fsSL https://superhound.app/install | sh
 
 That's it. Superhound downloads, checks the download against its published SHA-256, goes into `~/Applications`, and opens. The hound appears in your menu bar.
 
-Superhound is free to try with every feature, and it shows a reminder now and then. A license is **$15 once for 3 Macs** at [superhound.app](https://superhound.app). To activate, choose **Enter License…** from the menu bar.
+Superhound is free to evaluate, with every feature, and it shows a reminder now and then. License price: **$15 once, for 3 Macs**, at [superhound.app](https://superhound.app). To activate, choose **Enter License…** from the menu bar.
 
 > [!TIP]
 > Want Superhound on ⌘Space? See [Open Superhound with ⌘Space](#open-superhound-with-space).
@@ -99,7 +99,7 @@ Yes. Superhound opens apps, files, and System Settings panes like Spotlight, and
 
 <br>
 
-Superhound is free to try, with every feature and a reminder. A license is a one-time payment of $15 for 3 Macs. Refunds are open for 14 days, for any reason.
+Superhound is free to evaluate, with every feature and a reminder. License price: $15 once, for 3 Macs. Refunds are open for 14 days, for any reason.
 
 </details>
 

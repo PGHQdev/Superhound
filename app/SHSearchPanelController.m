@@ -196,7 +196,7 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
 // Every tenth opening asks for a license. Return does nothing, so a fast Return press cannot open the purchase page.
 - (void)remind {
  NSUserDefaults *d=NSUserDefaults.standardUserDefaults;NSInteger opens=[d integerForKey:@"unlicensedOpens"]+1;[d setInteger:opens forKey:@"unlicensedOpens"];if(opens%10)return;
- NSAlert *alert=NSAlert.new;alert.messageText=@"Superhound is unlicensed";alert.informativeText=@"All features keep working. A license is a one-time payment and covers 3 Macs.";
+ NSAlert *alert=NSAlert.new;alert.messageText=@"Superhound is unlicensed";alert.informativeText=@"Superhound is free to evaluate, and all features keep working. License price: $15 once, for 3 Macs.";
  NSButton *buy=[alert addButtonWithTitle:@"Buy License"];buy.keyEquivalent=@"";NSButton *later=[alert addButtonWithTitle:@"Not Now"];later.keyEquivalent=@"\e";
  [alert beginSheetModalForWindow:self.window completionHandler:^(NSModalResponse response){if(response==NSAlertFirstButtonReturn)[self buy:nil];else [self.window makeFirstResponder:self->_field];}];
 }
