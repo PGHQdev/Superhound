@@ -44,7 +44,7 @@ To see a change in the live app: build with a build number one above the install
 | File | Function |
 |---|---|
 | `SHAppDelegate.m` | Start-up wiring, the menu bar item and its menu, Open at Login, and the pasteboard check twice a second for the clipboard history. |
-| `SHSearchPanelController.m` | The search panel and its clipboard history mode: field, result rows, row order (answer, chosen before, apps, settings panes, and commands, emoji, clipboard items, files), keys, the action menu (⌘K and right-click), Quick Look, copy and open. |
+| `SHSearchPanelController.m` | The search panel and its clipboard history mode: field, result rows, row order (answer, chosen before, apps, settings panes, and commands, emoji, clipboard items, files), keys, the action menu (⌘K and right-click), Quick Look, copy and open, the UNLICENSED link to the left of the wordmark, and the license reminder on every tenth opening (`unlicensedOpens` in the defaults). |
 | `SHSettingsController.m` | The Search Locations window and the two shortcut recorders. |
 | `SHHotKey.m` | Global shortcut registration, one object for each shortcut. |
 | `SHFolderAccess.m` | Security-scoped bookmarks for the user's folders. |

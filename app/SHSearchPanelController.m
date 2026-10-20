@@ -63,13 +63,18 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  _help=[NSTextField labelWithString:@""];_help.frame=NSMakeRect(22,14,456,18);_help.font=[NSFont systemFontOfSize:11];_help.textColor=NSColor.secondaryLabelColor;[view addSubview:_help];
  NSMutableParagraphStyle *right=NSMutableParagraphStyle.new;right.alignment=NSTextAlignmentRight;
  NSTextField *mark=[NSTextField labelWithAttributedString:[[NSAttributedString alloc] initWithString:@"SUPERHOUND" attributes:@{NSFontAttributeName:[NSFont systemFontOfSize:10 weight:NSFontWeightSemibold],NSKernAttributeName:@2,NSForegroundColorAttributeName:NSColor.tertiaryLabelColor,NSParagraphStyleAttributeName:right}]];mark.frame=NSMakeRect(478,14,140,18);mark.accessibilityElement=NO;[view addSubview:mark];
+ // There is no license check yet, so every copy shows the link to the left of the wordmark.
+ NSButton *unlicensed=[NSButton buttonWithTitle:@"" target:self action:@selector(buy:)];unlicensed.bordered=NO;unlicensed.attributedTitle=[[NSAttributedString alloc] initWithString:@"UNLICENSED" attributes:@{NSFontAttributeName:[NSFont systemFontOfSize:10 weight:NSFontWeightSemibold],NSKernAttributeName:@2,NSForegroundColorAttributeName:NSColor.systemOrangeColor}];
+ CGFloat markLeft=618-ceil(mark.attributedStringValue.size.width),width=ceil(unlicensed.attributedTitle.size.width);unlicensed.frame=NSMakeRect(markLeft-14-width,14,width,18);unlicensed.toolTip=@"This copy of Superhound is unlicensed. Click to buy a license.";unlicensed.accessibilityLabel=@"Unlicensed. Buy a license";[view addSubview:unlicensed];
+ _help.frame=NSMakeRect(22,14,NSMinX(unlicensed.frame)-30,18);
  return self;
 }
+- (void)buy:(id)sender {(void)sender;[self dismiss:NO];[NSWorkspace.sharedWorkspace openURL:[NSURL URLWithString:@"https://superhound.app/buy"]];}
 - (void)toggle {[self show:NO];}
 - (void)toggleHistory {[self show:YES];}
 // The other shortcut switches the open panel to its mode and keeps the app to return to.
 - (void)show:(BOOL)history {
- double activated=SHTime();BOOL open=self.window.isVisible && self.window.isKeyWindow;
+ double activated=SHTime();BOOL open=self.window.isVisible && (self.window.isKeyWindow || self.window.attachedSheet);
  if(open && _history==history){[self dismiss:YES];return;}
  if(!open)_previous=NSWorkspace.sharedWorkspace.frontmostApplication;
  if(_history!=history){_history=history;_field.stringValue=@"";_error=nil;[_queries cancel];}
@@ -80,9 +85,17 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  NSRect frame=screen.visibleFrame;[self.window setFrameOrigin:NSMakePoint(NSMidX(frame)-320,NSMaxY(frame)-MIN(frame.size.height-20,100+516))];
  [NSApp activateIgnoringOtherApps:YES];[self.window makeKeyAndOrderFront:nil];[self.window makeFirstResponder:_field];
  [_field selectText:nil];[self search:YES];SHMeasure(@"panel_activation",activated);
+ if(!open)[self remind];
+}
+// Every tenth opening asks for a license. Return does nothing, so a fast Return press cannot open the purchase page.
+- (void)remind {
+ NSUserDefaults *d=NSUserDefaults.standardUserDefaults;NSInteger opens=[d integerForKey:@"unlicensedOpens"]+1;[d setInteger:opens forKey:@"unlicensedOpens"];if(opens%10)return;
+ NSAlert *alert=NSAlert.new;alert.messageText=@"Superhound is unlicensed";alert.informativeText=@"All features keep working. A license is a one-time payment and covers 3 Macs.";
+ NSButton *buy=[alert addButtonWithTitle:@"Buy License"];buy.keyEquivalent=@"";NSButton *later=[alert addButtonWithTitle:@"Not Now"];later.keyEquivalent=@"\e";
+ [alert beginSheetModalForWindow:self.window completionHandler:^(NSModalResponse response){if(response==NSAlertFirstButtonReturn)[self buy:nil];else [self.window makeFirstResponder:self->_field];}];
 }
 - (void)dismiss:(BOOL)restore {
- [_queries cancel];[self.window orderOut:nil];_error=nil;
+ [_queries cancel];if(self.window.attachedSheet)[self.window endSheet:self.window.attachedSheet];[self.window orderOut:nil];_error=nil;
  if(QLPreviewPanel.sharedPreviewPanelExists && QLPreviewPanel.sharedPreviewPanel.isVisible)[QLPreviewPanel.sharedPreviewPanel orderOut:nil];
  if(restore && _previous && _previous.processIdentifier!=NSProcessInfo.processInfo.processIdentifier)[_previous activateWithOptions:0];
 }
