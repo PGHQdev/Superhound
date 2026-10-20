@@ -9,7 +9,7 @@
 [![Apple Silicon](https://img.shields.io/badge/Apple%20Silicon-native-111111?style=flat-square)](#-install)
 [![Works offline](https://img.shields.io/badge/works-offline-34c759?style=flat-square)](#-privacy)
 [![Native Objective-C and C](https://img.shields.io/badge/native-Objective--C%20%26%20C-438eff?style=flat-square)](#-why-superhound)
-[![RAM consumption less than 45 MB](https://img.shields.io/badge/RAM-%3C%2045%20MB-34c759?style=flat-square)](#-why-superhound)
+[![RAM consumption less than 45 MB when idle](https://img.shields.io/badge/RAM%20when%20idle-%3C%2045%20MB-34c759?style=flat-square)](#-why-superhound)
 [![Free to evaluate, license $15](https://img.shields.io/badge/free%20to%20evaluate-license%20%2415-ff9500?style=flat-square)](https://superhound.app)
 [![License: AGPL-3.0](https://img.shields.io/github/license/PGHQdev/Superhound?style=flat-square&color=555555)](LICENSE)
 
@@ -29,7 +29,7 @@ Press one shortcut. Type a few letters. Your app, file, answer, or emoji is alre
 |---|---|
 | ⚡ **Ultrafast** | Searches 100,000 items in about 10 ms. Results appear while you type. |
 | 🛠️ **Native** | Objective-C and C on AppKit, with a search matcher in C. No Electron, no web views, no third-party dependencies. |
-| 🪶 **Light** | RAM consumption less than 45 MB. Under 1 MB on disk. 0% CPU when idle. |
+| 🪶 **Light** | RAM consumption less than 45 MB when idle. About 1 MB on disk. Under 0.2% CPU when idle. |
 | 🔒 **Private** | Works offline. Reads file names, never file contents. No account, no tracking. |
 | 🧠 **Smart** | Forgives typos, ignores accents, and learns which results you open. |
 | 💸 **Fair** | Free to evaluate, with every feature. License price: $15 once, for 3 Macs. No subscription. |
@@ -281,8 +281,9 @@ Measured on an Apple M1 with macOS 15.
 
 | Measure | Result |
 |---|---|
-| App size | 900 KiB |
-| RAM consumption after launch | 28 to 42 MiB over 20 minutes |
+| App size | 1.0 MB (983 KiB); the program itself is 464 KB |
+| RAM consumption when idle | 32 to 38 MB from 1 to 8.5 minutes after launch; 28 to 42 MiB (29 to 44 MB) over 20 minutes in an earlier build. The launch scan peaks higher, at 74 MB. |
+| CPU when idle | 0.14% of one core over 120 seconds, panel closed |
 | Search across 100,000 items | 9.6 ms median, 20.3 ms at the 95th percentile |
 
 The search time comes from a synthetic benchmark. The methods and all results are in [docs/prototype-validation.md](docs/prototype-validation.md).
