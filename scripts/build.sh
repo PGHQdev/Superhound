@@ -3,8 +3,8 @@ set -euo pipefail
 umask 077
 cd "$(dirname "$0")/.."
 [[ "$(uname -s)" == Darwin && "$(uname -m)" == arm64 ]] || { echo 'Requires Apple Silicon macOS 15+.' >&2; exit 1; }
-version="${1:-1}"
-[[ $# -le 1 && "$version" =~ ^[1-9][0-9]{0,5}$ ]] || { echo 'Usage: build.sh [positive build number, 1–6 digits]' >&2; exit 2; }
+version="${1:-1}" short="${2:-0.1.0}"
+[[ $# -le 2 && "$version" =~ ^[1-9][0-9]{0,5}$ && "$short" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'Usage: build.sh [positive build number, 1–6 digits] [version, such as 0.2.0]' >&2; exit 2; }
 mkdir -p .build
 stage="$(mktemp -d .build/stage.XXXXXX)"
 trap 'rm -rf -- "$stage"' EXIT
@@ -22,14 +22,14 @@ cat > "$bundle/Contents/Info.plist" <<PLIST
 <key>CFBundleIconFile</key><string>AppIcon</string>
 <key>CFBundlePackageType</key><string>APPL</string>
 <key>CFBundleURLTypes</key><array><dict><key>CFBundleURLName</key><string>com.superhound.app</string><key>CFBundleURLSchemes</key><array><string>superhound</string></array></dict></array>
-<key>CFBundleShortVersionString</key><string>0.1.0</string>
+<key>CFBundleShortVersionString</key><string>$short</string>
 <key>CFBundleVersion</key><string>$version</string>
 <key>LSMinimumSystemVersion</key><string>15.0</string>
 <key>LSUIElement</key><true/>
 <key>NSHighResolutionCapable</key><true/>
 <key>NSAppTransportSecurity</key><dict><key>NSAllowsLocalNetworking</key><true/></dict>
 <key>NSAppleEventsUsageDescription</key><string>Superhound sends Empty Trash to Finder, Dark Mode to System Events, and Sleep, Restart, Shut Down, and Log Out to the login window.</string>
-<key>NSHumanReadableCopyright</key><string>Superhound local prototype</string>
+<key>NSHumanReadableCopyright</key><string>© 2026 PGHQdev. AGPL-3.0.</string>
 </dict></plist>
 PLIST
 /usr/bin/time -lp xcrun clang -arch arm64 -fobjc-arc -fmodules -O2 -Wall -Wextra -Werror \

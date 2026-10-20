@@ -11,9 +11,10 @@ A native macOS launcher: one panel on a global shortcut that finds apps, files, 
 
 | Command | Function |
 |---|---|
-| `scripts/build.sh [build number]` | Compiles and signs `.build/Superhound.app` with the "Superhound" certificate from the keychain, or ad-hoc without it. Also writes the bundle's `Info.plist`. |
+| `scripts/build.sh [build number] [version]` | Compiles and signs `.build/Superhound.app` with the "Superhound" certificate from the keychain, or ad-hoc without it. Also writes the bundle's `Info.plist`. |
 | `scripts/test.sh` | Builds and runs the eight Objective-C test suites with sanitizers. Run it before each commit. |
 | `scripts/install.sh .build/Superhound.app` | Replaces the installed app. It refuses while Superhound is in operation, and it keeps the previous bundle. |
+| `scripts/release.sh <version> <build number>` | From a clean commit: runs the tests, builds with the certificate, makes `.build/release/<version>/Superhound.zip`, and prints its SHA-256, the publish commands, and the superhound-web release vars. It does not publish. |
 | `scripts/benchmark.sh` | Measures query time, memory, and catalog speed at 10,000 and 100,000 records. |
 | `scripts/update-emoji.py` | Rebuilds `app/emoji.tsv` from Unicode data. The only script that uses the internet. |
 
