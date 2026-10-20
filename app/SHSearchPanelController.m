@@ -42,6 +42,7 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  NSMutableSet *_loadingIcons;
  dispatch_queue_t _iconQueue;
  NSURL *_preview;
+ NSButton *_unlicensed;
 }
 - (instancetype)initWithQueries:(SHQueryController *)queries {
  SHPanel *panel=[[SHPanel alloc] initWithContentRect:NSMakeRect(0,0,640,516) styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskFullSizeContentView backing:NSBackingStoreBuffered defer:NO];
@@ -63,12 +64,12 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  _help=[NSTextField labelWithString:@""];_help.frame=NSMakeRect(22,14,456,18);_help.font=[NSFont systemFontOfSize:11];_help.textColor=NSColor.secondaryLabelColor;[view addSubview:_help];
  NSMutableParagraphStyle *right=NSMutableParagraphStyle.new;right.alignment=NSTextAlignmentRight;
  NSTextField *mark=[NSTextField labelWithAttributedString:[[NSAttributedString alloc] initWithString:@"SUPERHOUND" attributes:@{NSFontAttributeName:[NSFont systemFontOfSize:10 weight:NSFontWeightSemibold],NSKernAttributeName:@2,NSForegroundColorAttributeName:NSColor.tertiaryLabelColor,NSParagraphStyleAttributeName:right}]];mark.frame=NSMakeRect(478,14,140,18);mark.accessibilityElement=NO;[view addSubview:mark];
- // There is no license check yet, so every copy shows the link to the left of the wordmark.
- NSButton *unlicensed=[NSButton buttonWithTitle:@"" target:self action:@selector(buy:)];unlicensed.bordered=NO;unlicensed.attributedTitle=[[NSAttributedString alloc] initWithString:@"UNLICENSED" attributes:@{NSFontAttributeName:[NSFont systemFontOfSize:10 weight:NSFontWeightSemibold],NSKernAttributeName:@2,NSForegroundColorAttributeName:NSColor.systemOrangeColor}];
+ NSButton *unlicensed=_unlicensed=[NSButton buttonWithTitle:@"" target:self action:@selector(buy:)];unlicensed.bordered=NO;unlicensed.attributedTitle=[[NSAttributedString alloc] initWithString:@"UNLICENSED" attributes:@{NSFontAttributeName:[NSFont systemFontOfSize:10 weight:NSFontWeightSemibold],NSKernAttributeName:@2,NSForegroundColorAttributeName:NSColor.systemOrangeColor}];
  CGFloat markLeft=618-ceil(mark.attributedStringValue.size.width),width=ceil(unlicensed.attributedTitle.size.width);unlicensed.frame=NSMakeRect(markLeft-14-width,14,width,18);unlicensed.toolTip=@"This copy of Superhound is unlicensed. Click to buy a license.";unlicensed.accessibilityLabel=@"Unlicensed. Buy a license";[view addSubview:unlicensed];
  _help.frame=NSMakeRect(22,14,NSMinX(unlicensed.frame)-30,18);
  return self;
 }
+- (void)setLicensed:(BOOL)licensed {_licensed=licensed;_unlicensed.hidden=licensed;}
 - (void)buy:(id)sender {(void)sender;[self dismiss:NO];[NSWorkspace.sharedWorkspace openURL:[NSURL URLWithString:@"https://superhound.app/buy"]];}
 - (void)toggle {[self show:NO];}
 - (void)toggleHistory {[self show:YES];}
@@ -85,7 +86,7 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  NSRect frame=screen.visibleFrame;[self.window setFrameOrigin:NSMakePoint(NSMidX(frame)-320,NSMaxY(frame)-MIN(frame.size.height-20,100+516))];
  [NSApp activateIgnoringOtherApps:YES];[self.window makeKeyAndOrderFront:nil];[self.window makeFirstResponder:_field];
  [_field selectText:nil];[self search:YES];SHMeasure(@"panel_activation",activated);
- if(!open)[self remind];
+ if(!open && !_licensed)[self remind];
 }
 // Every tenth opening asks for a license. Return does nothing, so a fast Return press cannot open the purchase page.
 - (void)remind {

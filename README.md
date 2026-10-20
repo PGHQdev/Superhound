@@ -45,6 +45,8 @@ open ~/Applications/Superhound.app
 
 A magnifying glass appears in the menu bar. Choose **Search** to open the panel. Superhound opens at login; turn this off with **Open at Login** in the same menu.
 
+Superhound works fully without a license and shows an unlicensed reminder. A license is a one-time payment of $19 for 3 Macs. To activate one, choose **Enter License…** in the same menu.
+
 To update, pull the latest code, quit Superhound, and run the same build and install commands. The installer keeps the previous version in `~/Applications/.superhound-backup.*`. To go back, quit Superhound and install that `previous.app`.
 
 <details>
@@ -111,7 +113,7 @@ Restart, Shut Down, and Log Out show the macOS confirmation first. Empty Trash a
 
 ## Privacy
 
-Superhound works offline. All of its data stays in `~/Library/Application Support/Superhound/`:
+Superhound works offline. To activate a license, it sends the license key and a one-way device ID to superhound.app. All of its data stays in `~/Library/Application Support/Superhound/`:
 
 | File | Content |
 |---|---|
@@ -119,6 +121,7 @@ Superhound works offline. All of its data stays in `~/Library/Application Suppor
 | `catalog.sqlite` | The list of indexed names. Safe to delete; Superhound builds it again. |
 | `usage.plist` | The results you opened and what you typed for them |
 | `clipboard.plist` | Your clipboard history, readable only by your macOS user |
+| `license.plist` | Your license key and this Mac's activation, readable only by your macOS user |
 | `performance.jsonl` | Timing records |
 
 ## Performance
@@ -138,7 +141,7 @@ The search time comes from a synthetic benchmark. The methods and all results ar
 Superhound is written in Objective-C and C with AppKit, SQLite, and FSEvents. It has no third-party dependencies.
 
 ```sh
-scripts/test.sh       # seven test suites with AddressSanitizer and UndefinedBehaviorSanitizer
+scripts/test.sh       # eight test suites with AddressSanitizer and UndefinedBehaviorSanitizer
 scripts/benchmark.sh  # search and catalog speed at 10,000 and 100,000 items
 tests/install.sh      # installer checks; quit Superhound first
 ```

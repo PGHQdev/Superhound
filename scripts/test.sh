@@ -11,6 +11,8 @@ xcrun clang "${flags[@]}" tests/emoji.m core/SHEmoji.m core/SHSearchSnapshot.m c
 .build/tests/emoji app/emoji.tsv
 xcrun clang "${flags[@]}" tests/clipboard.m core/SHClipboard.m core/SHSearchSnapshot.m core/sh_match.c -framework Foundation -o .build/tests/clipboard
 .build/tests/clipboard
+xcrun clang "${flags[@]}" tests/license.m core/SHLicense.m -framework Foundation -framework Security -o .build/tests/license
+.build/tests/license
 if [[ -f tests/catalog.m ]]; then
  xcrun clang "${flags[@]}" tests/catalog.m core/SHCatalog.m core/SHScanner.m app/SHFolderAccess.m -framework Foundation -lsqlite3 -o .build/tests/catalog
  .build/tests/catalog

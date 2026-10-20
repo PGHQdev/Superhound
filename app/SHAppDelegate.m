@@ -6,10 +6,23 @@
 #import "SHResultActions.h"
 #import "SHMetrics.h"
 #import "SHClipboard.h"
+#import "SHActivation.h"
 #import <Carbon/Carbon.h>
 #import <ServiceManagement/ServiceManagement.h>
 @implementation SHAppDelegate {
- NSStatusItem *_statusItem;SHLibrary *_library;SHHotKey *_hotKey,*_historyKey;SHSettingsController *_settings;SHSearchPanelController *_panel;SHClipboard *_clipboard;NSInteger _pasteboardCount;NSTimer *_pasteboardTimer;
+ NSStatusItem *_statusItem;SHLibrary *_library;SHHotKey *_hotKey,*_historyKey;SHSettingsController *_settings;SHSearchPanelController *_panel;SHClipboard *_clipboard;NSInteger _pasteboardCount;NSTimer *_pasteboardTimer;SHLicense *_license;SHActivation *_activation;
+}
+// The public half of the key that superhound.app signs activations with.
+static NSString *const LicensePublicKey=@"BB1mBfflJqWXPJerDDR+MLSwGOCcP/HFGM8f+HPNMfzveASmPB5nxJDLeVq75oJGlcI+vaNjTXAJLArVLjLUFi4=";
+// The license exists before launch ends, because a superhound://activate link can launch the app.
+- (void)applicationWillFinishLaunching:(NSNotification *)notification {
+ (void)notification;NSURL *base=[NSFileManager.defaultManager URLsForDirectory:NSApplicationSupportDirectory inDomains:NSUserDomainMask].firstObject;
+ _license=[[SHLicense alloc] initWithURL:[base URLByAppendingPathComponent:@"Superhound/license.plist"] publicKey:[[NSData alloc] initWithBase64EncodedString:LicensePublicKey options:0] device:SHLicenseDevice(SHHardwareUUID())];_activation=[[SHActivation alloc] initWithLicense:_license];
+ [NSAppleEventManager.sharedAppleEventManager setEventHandler:self andSelector:@selector(openURLEvent:reply:) forEventClass:kInternetEventClass andEventID:kAEGetURL];
+}
+- (void)openURLEvent:(NSAppleEventDescriptor *)event reply:(NSAppleEventDescriptor *)reply {
+ (void)reply;NSString *text=[event paramDescriptorForKeyword:keyDirectObject].stringValue;NSURL *url=text?[NSURL URLWithString:text]:nil;
+ if(url)dispatch_async(dispatch_get_main_queue(),^{[self->_activation openURL:url];});
 }
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
  (void)notification;double launched=SHTime();
@@ -19,8 +32,10 @@
  _hotKey=[[SHHotKey alloc] initWithName:@"shortcut" identifier:1 code:kVK_Space modifiers:cmdKey label:@"⌘Space" menu:@"Search"];[_hotKey registerSaved];
  _historyKey=[[SHHotKey alloc] initWithName:@"historyShortcut" identifier:2 code:kVK_ANSI_V modifiers:cmdKey|optionKey label:@"⌥⌘V" menu:@"Clipboard History"];[_historyKey registerSaved];
  _panel=[[SHSearchPanelController alloc] initWithQueries:SHQueryController.new];_panel.emoji=[[SHEmoji alloc] initWithURL:[NSBundle.mainBundle URLForResource:@"emoji" withExtension:@"tsv"]];_panel.usage=[[SHUsage alloc] initWithURL:[state URLByAppendingPathComponent:@"usage.plist"]];_settings=[[SHSettingsController alloc] initWithLibrary:_library hotKey:_hotKey historyKey:_historyKey];
+ _panel.licensed=_license.licensed;
  _clipboard=[[SHClipboard alloc] initWithURL:[state URLByAppendingPathComponent:@"clipboard.plist"]];_panel.clipboard=_clipboard;_pasteboardCount=NSPasteboard.generalPasteboard.changeCount;
  __weak typeof(self) weak=self;
+ _activation.changed=^{SHAppDelegate *self=weak;if(self)self->_panel.licensed=self->_license.licensed;};
  _hotKey.invoked=^{[weak search:nil];};_historyKey.invoked=^{[weak history:nil];};
  // macOS sends no notice when the pasteboard changes, so its change count is read twice a second.
  _pasteboardTimer=[NSTimer scheduledTimerWithTimeInterval:0.5 repeats:YES block:^(NSTimer *timer){(void)timer;[weak readPasteboard];}];_pasteboardTimer.tolerance=0.25;
@@ -31,7 +46,7 @@
   NSString *status=[NSString stringWithFormat:@"%lu searchable items%@%@",(unsigned long)items,indexing?[NSString stringWithFormat:@" · %lu locations indexing",(unsigned long)indexing]:@"",unavailable?@" · Check Search Locations for coverage":@""];
   [self->_panel updateSnapshot:snapshot status:status];
  };
- NSMenu *menu=NSMenu.new;[menu addItemWithTitle:@"Search" action:@selector(search:) keyEquivalent:@""];[menu addItemWithTitle:@"Clipboard History" action:@selector(history:) keyEquivalent:@""];[menu addItemWithTitle:@"Search Locations…" action:@selector(settings:) keyEquivalent:@","];[menu addItemWithTitle:@"Refresh Catalog" action:@selector(refresh:) keyEquivalent:@""];[menu addItemWithTitle:@"Clear Clipboard History" action:@selector(clearHistory:) keyEquivalent:@""];[menu addItemWithTitle:@"Open at Login" action:@selector(loginItem:) keyEquivalent:@""];[menu addItem:NSMenuItem.separatorItem];[menu addItemWithTitle:@"Quit Superhound" action:@selector(terminate:) keyEquivalent:@"q"];
+ NSMenu *menu=NSMenu.new;[menu addItemWithTitle:@"Search" action:@selector(search:) keyEquivalent:@""];[menu addItemWithTitle:@"Clipboard History" action:@selector(history:) keyEquivalent:@""];[menu addItemWithTitle:@"Search Locations…" action:@selector(settings:) keyEquivalent:@","];[menu addItemWithTitle:@"Refresh Catalog" action:@selector(refresh:) keyEquivalent:@""];[menu addItemWithTitle:@"Clear Clipboard History" action:@selector(clearHistory:) keyEquivalent:@""];[menu addItemWithTitle:@"Open at Login" action:@selector(loginItem:) keyEquivalent:@""];[menu addItemWithTitle:@"Enter License…" action:@selector(license:) keyEquivalent:@""];[menu addItem:NSMenuItem.separatorItem];[menu addItemWithTitle:@"Quit Superhound" action:@selector(terminate:) keyEquivalent:@"q"];
  for(NSMenuItem *item in menu.itemArray)if(item.action!=@selector(terminate:))item.target=self;
  _statusItem=[NSStatusBar.systemStatusBar statusItemWithLength:NSVariableStatusItemLength];_statusItem.button.image=[NSImage imageWithSystemSymbolName:@"magnifyingglass.circle.fill" accessibilityDescription:@"Superhound"];_statusItem.button.accessibilityIdentifier=@"superhound.menu";_statusItem.button.toolTip=@"Superhound — Search apps and files";_statusItem.menu=menu;
  NSMenu *main=NSMenu.new;NSMenuItem *app=NSMenuItem.new;app.submenu=[menu copy];[main addItem:app];
@@ -55,13 +70,14 @@
  NSArray<NSString *> *types=board.types;NSRunningApplication *front=NSWorkspace.sharedWorkspace.frontmostApplication;BOOL own=[types containsObject:SHOwnCopyType];
  [_clipboard addText:[board stringForType:NSPasteboardTypeString] types:types application:own?nil:front.bundleIdentifier source:own?@"Superhound":front.localizedName];
 }
+- (void)license:(id)sender {(void)sender;if(_license.licensed)[_activation deactivate];else [_activation enterKey:nil];}
 - (void)settings:(id)sender {(void)sender;[_settings show];}
 - (void)refresh:(id)sender {(void)sender;[_library refresh];}
 - (void)loginItem:(id)sender {
  (void)sender;SMAppService *service=SMAppService.mainAppService;NSError *error=nil;
  if(!(service.status==SMAppServiceStatusEnabled?[service unregisterAndReturnError:&error]:[service registerAndReturnError:&error]))[_panel showError:[NSString stringWithFormat:@"Open at Login could not be changed. %@",error.localizedDescription]];
 }
-- (BOOL)validateMenuItem:(NSMenuItem *)item {if(item.action==@selector(clearHistory:))return _clipboard.count>0;if(item.action==@selector(loginItem:))item.state=SMAppService.mainAppService.status==SMAppServiceStatusEnabled?NSControlStateValueOn:NSControlStateValueOff;return YES;}
+- (BOOL)validateMenuItem:(NSMenuItem *)item {if(item.action==@selector(license:))item.title=_license.licensed?@"Deactivate License…":@"Enter License…";if(item.action==@selector(clearHistory:))return _clipboard.count>0;if(item.action==@selector(loginItem:))item.state=SMAppService.mainAppService.status==SMAppServiceStatusEnabled?NSControlStateValueOn:NSControlStateValueOff;return YES;}
 - (void)wake:(NSNotification *)notification {(void)notification;[_library refresh];}
 - (BOOL)applicationShouldHandleReopen:(NSApplication *)sender hasVisibleWindows:(BOOL)flag {(void)sender;(void)flag;[_panel toggle];return NO;}
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender {(void)sender;return NO;}

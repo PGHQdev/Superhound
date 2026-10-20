@@ -11,6 +11,8 @@ extern NSString *const SHOwnCopyType;
 @property(nonatomic,strong) SHUsage *usage;
 @property(nonatomic,strong) SHEmoji *emoji;
 @property(nonatomic,strong) SHClipboard *clipboard;
+// NO shows the UNLICENSED link and the reminder on every tenth opening.
+@property(nonatomic) BOOL licensed;
 - (instancetype)initWithQueries:(SHQueryController *)queries;
 - (void)toggle;
 // Shows the panel with the clipboard history only; Return pastes into the app that was in front.
