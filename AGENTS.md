@@ -38,7 +38,7 @@ To see a change in the live app: build with a build number one above the install
 | `SHSpotlight.m` | The rules for Spotlight's ⌘Space entry (64) in AppleSymbolicHotKeys: on or off, a change of only its enabled flag, and when an uninstall gives ⌘Space back. |
 | `SHCommands.m` | The system commands (Lock Screen, Sleep, Restart, Toggle Mute, Empty Trash, and others) as search entries. `SHLibrary` adds them to each snapshot. |
 | `SHLibrary.m` | Owns the search locations: the fixed app folders, the user's folders, scans, overlap between folders, and snapshot publication. |
-| `SHScanner.m` | Walks one folder and makes entries. Holds the skip rules (hidden items, packages, generated folders, online-only files). |
+| `SHScanner.m` | Walks one folder and makes entries. Holds the skip rules (hidden items, packages, generated folders, online-only files) and the other names of built-in apps (older macOS names and Windows names, by bundle identifier), which go in the alias. |
 | `SHCatalog.m` | The SQLite cache of scanned entries. |
 | `SHChangeMonitor.m` | FSEvents watcher. Reports the changed directories so the library lists only those; a dropped or root event requests a full rescan. |
 | `SHMetrics.m` | Writes timing records to `performance.jsonl`. |

@@ -31,6 +31,13 @@ int main(void){@autoreleasepool{
  assert([@{@"CFBundleDisplayName":@"Shown Name"} writeToURL:[named URLByAppendingPathComponent:@"Contents/Info.plist"] error:nil]);
  NSArray *single=[SHScanner scanURL:named applicationsOnly:YES excludeGenerated:YES progress:nil error:&error];
  assert(single.count==1 && [single[0][@"name"] isEqual:@"Shown Name"] && [single[0][@"alias"] isEqual:@"Named"] && [single[0][@"relative"] isEqual:@"Named.app"] && [single[0][@"type"] isEqual:@"app"]);
+ // A built-in app keeps its other names in the alias, also under a name in another language; a bundle name equal to the file name adds no alias.
+ NSURL *builtIn=[tmp URLByAppendingPathComponent:@"BuiltIn"];
+ void (^App)(NSString *,NSDictionary *)=^(NSString *file,NSDictionary *info){NSURL *contents=[builtIn URLByAppendingPathComponent:[file stringByAppendingString:@".app/Contents"]];[fm createDirectoryAtURL:contents withIntermediateDirectories:YES attributes:nil error:nil];assert([info writeToURL:[contents URLByAppendingPathComponent:@"Info.plist"] error:nil]);};
+ App(@"Contacts",@{@"CFBundleIdentifier":@"com.apple.AddressBook",@"CFBundleDisplayName":@"Contacts"});App(@"System Settings",@{@"CFBundleIdentifier":@"com.apple.systempreferences",@"CFBundleDisplayName":@"Systemeinstellungen"});App(@"Plain",@{@"CFBundleIdentifier":@"com.example.plain",@"CFBundleDisplayName":@"Plain"});
+ NSMutableDictionary *aliases=NSMutableDictionary.dictionary;for(NSDictionary *e in [SHScanner scanURL:builtIn applicationsOnly:YES excludeGenerated:YES progress:nil error:&error])aliases[e[@"name"]]=e[@"alias"];
+ assert(([aliases isEqual:@{@"Contacts":@"Address Book",@"Systemeinstellungen":@"System Settings / System Preferences / Control Panel",@"Plain":@""}]));
+ assert([[[SHScanner scanURL:[builtIn URLByAppendingPathComponent:@"Contacts.app"] applicationsOnly:YES excludeGenerated:YES progress:nil error:&error] firstObject][@"alias"] isEqual:@"Address Book"]);
  assert([[[SHScanner scanURL:[named URLByAppendingPathComponent:@"Contents/Applications"] applicationsOnly:YES excludeGenerated:YES progress:nil error:&error] valueForKey:@"relative"] isEqual:@[@"Inner.app"]]); // Older.app also shows as Inner
  // Settings panes are extensions; other extensions are not listed. A pane named only by sidebar variants takes their localized names.
  NSURL *panes=[tmp URLByAppendingPathComponent:@"Extensions"];
