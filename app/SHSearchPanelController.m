@@ -130,6 +130,8 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  _table=[[SHResultsTable alloc] initWithFrame:scroll.bounds];
  __weak typeof(self) weak=self;
  panel.shortcut=^BOOL(NSEvent *event){return [weak shortcut:event];};
+ // A click in the field places the caret in the typed text, so the completion goes first.
+ [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskLeftMouseDown handler:^NSEvent *(NSEvent *event){SHSearchPanelController *self=weak;if(self && event.window==self.window && NSPointInRect([self->_field convertPoint:event.locationInWindow fromView:nil],self->_field.bounds))[self clearCompletion];return event;}];
  ((SHResultsTable *)_table).command=^BOOL(NSEvent *event){if(event.keyCode==53){[weak escape];return YES;}if(event.keyCode==36 || event.keyCode==76){[weak openSelected:(event.modifierFlags&NSEventModifierFlagCommand)!=0];return YES;}return NO;};_table.headerView=nil;_table.style=NSTableViewStylePlain;_table.intercellSpacing=NSMakeSize(0,0);_table.backgroundColor=NSColor.clearColor;_table.selectionHighlightStyle=NSTableViewSelectionHighlightStyleRegular;_table.delegate=self;_table.dataSource=self;_table.allowsEmptySelection=YES;_table.target=self;_table.doubleAction=@selector(openClicked:);_table.menu=NSMenu.new;_table.menu.delegate=self;_table.accessibilityIdentifier=@"superhound.search.results";_table.accessibilityLabel=@"Search results";
  NSTableColumn *column=[[NSTableColumn alloc] initWithIdentifier:@"result"];column.width=Width-16;[_table addTableColumn:column];scroll.documentView=_table;[view addSubview:scroll];
  NSView *rule=[[NSView alloc] initWithFrame:NSMakeRect(16,40,Width-32,1)];rule.wantsLayer=YES;rule.layer.backgroundColor=[NSColor colorWithWhite:1 alpha:0.1].CGColor;[view addSubview:rule];
@@ -231,7 +233,8 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  [self fit];
 }
 // The field now holds only typed text; a deletion must not bring back the completion it removed.
-- (void)controlTextDidChange:(NSNotification *)notification {(void)notification;_error=nil;_completion=nil;_deleted=_deleting;_deleting=NO;[self search:YES];}
+// A cut that leaves exactly the typed text also removed the completion on purpose.
+- (void)controlTextDidChange:(NSNotification *)notification {(void)notification;_error=nil;_deleted=_deleting || (_completion && [_field.stringValue isEqual:_submitted]);_completion=nil;_deleting=NO;[self search:YES];}
 // The text the user typed: the field without the completion selected after it.
 - (NSString *)query {NSString *text=_field.stringValue;return _completion && [text hasSuffix:_completion]?[text substringToIndex:text.length-_completion.length]:text;}
 // With Complete the top result on in Settings (off by default), the rest of the top result's name follows the typed text, selected, so the next key replaces it.
@@ -262,15 +265,17 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
   SHSearchPanelController *self=weak;if(!self || !self.window.isVisible || self->_history)return;
   // A web address or a calculation takes the first of the eight rows. A result whose name or file name is the typed text, such as Safari.app or logo.ai, stays above the address.
   // Order: web address, answer, results the user chose before, applications, settings panes, and commands, up to 3 emoji, up to 2 clipboard items, files and folders, then the web search, which keeps the last of the eight rows.
-  NSMutableArray *rows=NSMutableArray.array,*otherEmoji=[emoji mutableCopy];BOOL named=NO;NSString *typed=[query stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceCharacterSet];
-  for(NSDictionary *r in results)if([r[@"name"] caseInsensitiveCompare:typed]==NSOrderedSame || [[r[@"path"] lastPathComponent] caseInsensitiveCompare:typed]==NSOrderedSame)named=YES;
-  if(address && !named)[rows addObject:address];if(answer)[rows addObject:answer];
+  NSMutableArray *rows=NSMutableArray.array,*otherEmoji=[emoji mutableCopy];NSUInteger named=NSNotFound;NSString *typed=[query stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceCharacterSet];
+  for(NSUInteger i=0;i<results.count && named==NSNotFound;i++)if([results[i][@"name"] caseInsensitiveCompare:typed]==NSOrderedSame || [[results[i][@"path"] lastPathComponent] caseInsensitiveCompare:typed]==NSOrderedSame)named=i;
+  if(address && named==NSNotFound)[rows addObject:address];if(answer)[rows addObject:answer];
   NSSet *chosen=[NSSet setWithArray:[preferred valueForKey:@"path"]];
   for(NSDictionary *p in preferred)for(NSDictionary *e in emoji)if([e[@"path"] isEqual:p[@"path"]]){[rows addObject:e];[otherEmoji removeObjectIdenticalTo:e];}
   NSUInteger lead=0;while(lead<results.count && (SHLaunchable(results[lead]) || [chosen containsObject:results[lead][@"path"]]))lead++;
-  NSUInteger shown=MIN((NSUInteger)3,otherEmoji.count),limit=web?7:8,reserve=address && named?1:0;
+  // The result named like the address leads with the rows above it, also when it is a plain file.
+  if(named!=NSNotFound)lead=MAX(lead,named+1);
+  NSUInteger shown=MIN((NSUInteger)3,otherEmoji.count),limit=web?7:8,reserve=address && named!=NSNotFound?1:0;
   for(NSUInteger i=0;i<lead && rows.count+shown+clips.count+reserve<limit;i++)[rows addObject:results[i]];
-  if(address && named)[rows addObject:address];
+  if(address && named!=NSNotFound)[rows addObject:address];
   for(NSUInteger i=0;i<shown;i++)[rows addObject:otherEmoji[i]];
   for(NSDictionary *clip in clips)if(rows.count<limit)[rows addObject:clip];
   for(NSUInteger i=lead;i<results.count && rows.count<limit;i++)[rows addObject:results[i]];
@@ -409,6 +414,8 @@ static BOOL Located(NSDictionary *result){return ![@[@"command",@"emoji",@"answe
 - (BOOL)control:(NSControl *)control textView:(NSTextView *)textView doCommandBySelector:(SEL)selector {
  (void)control;if(textView.hasMarkedText)return NO;
  if((selector==@selector(insertTab:) || selector==@selector(moveRight:)) && [self acceptCompletion])return YES;
+ // Any other caret move edits the typed text, so the completion goes first.
+ if([NSStringFromSelector(selector) hasPrefix:@"move"] && selector!=@selector(moveUp:) && selector!=@selector(moveDown:))[self clearCompletion];
  // The flag covers the text change this command makes, and ends with it.
  if([NSStringFromSelector(selector) hasPrefix:@"delete"]){_deleting=YES;dispatch_async(dispatch_get_main_queue(),^{self->_deleting=NO;});}
  if(selector==@selector(moveDown:)){[self move:1];return YES;}

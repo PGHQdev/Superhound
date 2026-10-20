@@ -57,7 +57,7 @@ static NSButton *Button(NSView *view,NSString *title,NSRect frame,id target,SEL 
  NSPopUpButton *engines=[[NSPopUpButton alloc] initWithFrame:NSMakeRect(144,20,170,28) pullsDown:NO];engines.target=self;engines.action=@selector(engine:);engines.accessibilityIdentifier=@"superhound.search.engine";engines.accessibilityLabel=@"Web search engine";
  NSString *chosen=[NSUserDefaults.standardUserDefaults stringForKey:@"searchEngine"];for(NSDictionary *e in SHWeb.engines){[engines addItemWithTitle:e[@"name"]];if([e[@"id"] isEqual:chosen])[engines selectItemAtIndex:engines.numberOfItems-1];}[view addSubview:engines];
  Label(view,@"The last row of each search opens your text with this engine in your browser.",NSMakeRect(320,14,394,36),11,YES);
- // The completion switch sits under the web search row and starts off.
+ // The completion switch sits under the web search row; completion stays off until the user turns it on.
  for(NSView *v in view.subviews)[v setFrameOrigin:NSMakePoint(v.frame.origin.x,v.frame.origin.y+56)];
  NSButton *complete=[NSButton checkboxWithTitle:@"Complete the top result as you type" target:self action:@selector(complete:)];complete.frame=NSMakeRect(24,34,690,24);complete.accessibilityIdentifier=@"superhound.completion";
  complete.state=[NSUserDefaults.standardUserDefaults boolForKey:@"inlineCompletion"]?NSControlStateValueOn:NSControlStateValueOff;[view addSubview:complete];
