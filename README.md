@@ -81,7 +81,7 @@ Spotlight uses ⌘Space, so macOS needs two changes in **System Settings → Key
 1. In **App Shortcuts**, add a shortcut for **Superhound** with the menu title `Search` and the keys ⌘Space.
 2. In **Spotlight**, turn off **Show Spotlight search**.
 
-Then open **Search Locations…** from the menu bar and click **Retry**. To get Spotlight back, quit Superhound and turn **Show Spotlight search** on again.
+Then open **Settings…** from the menu bar and click **Retry**. To get Spotlight back, quit Superhound and turn **Show Spotlight search** on again.
 
 </details>
 
@@ -99,11 +99,11 @@ Then open **Search Locations…** from the menu bar and click **Retry**. To get 
 | ⇧⌘C | Copy path |
 | Esc | Close |
 
-Right-click a result to see the same actions as ⌘K. You can change both shortcuts in **Search Locations…**.
+Right-click a result to see the same actions as ⌘K. You can change both shortcuts in **Settings…**.
 
 ## Search locations
 
-Superhound always searches your app folders. To search your own folders, add them in **Search Locations…**. No personal folder is added for you.
+Superhound always searches your app folders. To search your own folders, add them in **Settings…**. No personal folder is added for you.
 
 - Changes to files appear in a few seconds. **Refresh Catalog** scans everything now.
 - Superhound reads names, never file contents.

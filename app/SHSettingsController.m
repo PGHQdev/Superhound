@@ -21,7 +21,7 @@ static NSButton *Button(NSView *view,NSString *title,NSRect frame,id target,SEL 
 - (instancetype)initWithLibrary:(SHLibrary *)library hotKey:(SHHotKey *)hotKey historyKey:(SHHotKey *)historyKey {
  NSWindow *window=[[NSWindow alloc] initWithContentRect:NSMakeRect(0,0,740,712) styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable|NSWindowStyleMaskMiniaturizable backing:NSBackingStoreBuffered defer:NO];
  if(!(self=[super initWithWindow:window]))return nil;
- _library=library;_hotKey=hotKey;_historyKey=historyKey;_roots=@[];window.title=@"Superhound · Search Locations";window.releasedWhenClosed=NO;window.accessibilityIdentifier=@"superhound.settings";
+ _library=library;_hotKey=hotKey;_historyKey=historyKey;_roots=@[];window.title=@"Superhound Settings";window.releasedWhenClosed=NO;window.accessibilityIdentifier=@"superhound.settings";
  NSView *view=window.contentView;
  Label(view,@"Your apps. Your folders. A shortcut away.",NSMakeRect(24,606,690,30),22,NO);
  Label(view,@"Apps are included automatically. Files are searched only inside folders you select. File contents stay unread.",NSMakeRect(24,558,690,40),13,YES);

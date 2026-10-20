@@ -87,7 +87,7 @@
  chmod(self->_stateURL.fileSystemRepresentation,0700);
  self->_catalog=[[SHCatalog alloc] initWithURL:[self->_stateURL URLByAppendingPathComponent:@"catalog.sqlite"] error:&error];
  if(!self->_catalog){self->_message=@"Cannot open the local catalog. Check available disk space and restart.";[self publish:NO];return;}
- self->_message=self->_catalog.rebuilt?@"Rebuilding a damaged or older catalog. Your selected folders are preserved.":@"Only selected folders are searched. Add a folder in Search Locations.";
+ self->_message=self->_catalog.rebuilt?@"Rebuilding a damaged or older catalog. Your selected folders are preserved.":@"Only selected folders are searched. Click Add Folder… to add one.";
  NSDictionary *settings=[NSDictionary dictionaryWithContentsOfURL:self.settingsURL];
  if(settings[@"excludeGenerated"])self->_exclude=[settings[@"excludeGenerated"] boolValue];
  // Safari lives in the Cryptex folder; its link in /Applications is hidden from directory listings.
