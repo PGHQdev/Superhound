@@ -35,6 +35,8 @@ int main(void){@autoreleasepool{
  assert(indexed==scans);
  [library addURLs:@[[tree URLByAppendingPathComponent:@"normal"]] replacingRoot:nil];
  assert(Until(^BOOL{for(NSDictionary *r in roots)if([r[@"state"] hasPrefix:@"Covered by"] && [r[@"path"] hasSuffix:@"/normal"])return YES;return NO;},15));
+ // The shown label follows the state; in English it is the same text.
+ for(NSDictionary *r in roots)assert([r[@"label"] isEqual:r[@"state"]]);
  assert(chmod(tree.fileSystemRepresentation,0100)==0);
  assert(Until(^BOOL{for(NSDictionary *r in roots)if([r[@"path"] hasSuffix:@"/normal"] && [r[@"state"] isEqual:@"Ready"])return YES;return NO;},15));
  assert([snapshot search:@"superhoundfixture" cancelled:nil].count==1);

@@ -39,13 +39,21 @@
  NSString *_message;
 }
 - (instancetype)initWithStateURL:(NSURL *)url {
- if((self=[super init])){_stateURL=url;_worker=dispatch_queue_create("com.superhound.catalog",dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL,QOS_CLASS_UTILITY,0));_roots=NSMutableArray.array;_exclude=YES;_scheduleLock=NSLock.new;_scheduled=NSMutableSet.set;_again=NSMutableSet.set;_cancelled=NSMutableSet.set;_hiddenRoots=NSMutableSet.set;_message=@"Preparing search…";}return self;
+ if((self=[super init])){_stateURL=url;_worker=dispatch_queue_create("com.superhound.catalog",dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL,QOS_CLASS_UTILITY,0));_roots=NSMutableArray.array;_exclude=YES;_scheduleLock=NSLock.new;_scheduled=NSMutableSet.set;_again=NSMutableSet.set;_cancelled=NSMutableSet.set;_hiddenRoots=NSMutableSet.set;_message=NSLocalizedString(@"Preparing search…",@"Status in Settings while the app starts");}return self;
+}
+// A root's state is a fixed English value that the code compares; Label gives the text that Settings shows for it.
+static NSString *Label(NSString *state){
+ NSString *const covered=@"Covered by ";if([state hasPrefix:covered])return [NSString stringWithFormat:NSLocalizedString(@"Covered by %@",@"State of a search location inside another one; the argument is the other location's path"),[state substringFromIndex:covered.length]];
+ NSDictionary *labels=@{@"Waiting":NSLocalizedString(@"Waiting",@"State of a search location before its scan"),@"Indexing":NSLocalizedString(@"Indexing",@"State of a search location during its scan"),@"Ready":NSLocalizedString(@"Ready",@"State of a search location after its scan"),@"Unavailable":NSLocalizedString(@"Unavailable",@"State of a search location that is missing"),
+  @"Access needed — select this folder again":NSLocalizedString(@"Access needed — select this folder again",@"State of a search location"),@"Rechecking changed location":NSLocalizedString(@"Rechecking changed location",@"State of a search location"),
+  @"Partially indexed — refresh manually; watching unavailable":NSLocalizedString(@"Partially indexed — refresh manually; watching unavailable",@"State of a search location"),@"Partially indexed — access needed; previous catalog preserved":NSLocalizedString(@"Partially indexed — access needed; previous catalog preserved",@"State of a search location")};
+ return labels[state]?:state;
 }
 - (NSURL *)settingsURL {return [_stateURL URLByAppendingPathComponent:@"folders.plist"];}
 - (void)save {
  NSMutableArray *roots=NSMutableArray.array;for(SHRoot *r in _roots)if(!r.apps && r.bookmark)[roots addObject:@{@"id":r.identifier,@"path":r.path,@"bookmark":r.bookmark}];
  NSError *error=nil;NSData *data=[NSPropertyListSerialization dataWithPropertyList:@{@"roots":roots,@"excludeGenerated":@(_exclude)} format:NSPropertyListBinaryFormat_v1_0 options:0 error:&error];
- if(![data writeToURL:self.settingsURL options:NSDataWritingAtomic error:&error])_message=@"Folder settings could not be saved. Check available disk space.";
+ if(![data writeToURL:self.settingsURL options:NSDataWritingAtomic error:&error])_message=NSLocalizedString(@"Folder settings could not be saved. Check available disk space.",nil);
 }
 - (SHRoot *)root:(NSString *)identifier {for(SHRoot *r in _roots)if([r.identifier isEqual:identifier])return r;return nil;}
 - (void)publish:(BOOL)rebuild {
@@ -53,10 +61,10 @@
  if(rebuild){@autoreleasepool{NSMutableArray *entries=[SHCommands.entries mutableCopy];NSMutableSet *seen=NSMutableSet.set;
   for(SHRoot *r in _roots)if(r.included){NSArray *found=[_catalog entriesForRoot:r.identifier];r.count=found.count;for(NSDictionary *e in found){NSString *path=e[@"path"];if(![seen containsObject:path]){[entries addObject:e];[seen addObject:path];}}}
   SHSearchSnapshot *s=[[SHSearchSnapshot alloc] initWithEntries:entries generation:++_generation];
-  if(s)_snapshot=s;else {_snapshot=nil;_message=@"Not enough memory to prepare search. Remove a large search location and refresh.";}
+  if(s)_snapshot=s;else {_snapshot=nil;_message=NSLocalizedString(@"Not enough memory to prepare search. Remove a large search location and refresh.",nil);}
  }}
  NSMutableArray *states=NSMutableArray.array;
- for(SHRoot *r in _roots)[states addObject:@{@"id":r.identifier,@"path":r.path?:@"",@"state":r.state?:@"Waiting",@"count":@(r.count),@"apps":@(r.apps)}];
+ for(SHRoot *r in _roots)[states addObject:@{@"id":r.identifier,@"path":r.path?:@"",@"state":r.state?:@"Waiting",@"label":Label(r.state?:@"Waiting"),@"count":@(r.count),@"apps":@(r.apps)}];
  SHSearchSnapshot *snapshot=_snapshot;NSString *message=[_message copy];
  dispatch_async(dispatch_get_main_queue(),^{self->_publicSnapshot=snapshot;self->_publicRoots=states;self->_publicMessage=message;[self deliver];
   // The previous snapshot and its entries are free now; return their pages instead of keeping them for later allocations.
@@ -65,7 +73,7 @@
 - (void)deliver {
  NSAssert(NSThread.isMainThread,@"main thread");
  SHSearchSnapshot *visible=_hiddenRoots.count?[_publicSnapshot snapshotByExcludingRoots:_hiddenRoots]:_publicSnapshot;
- if(self.updated)self.updated(visible,_publicRoots?:@[],_publicMessage?:@"Updating search locations…");
+ if(self.updated)self.updated(visible,_publicRoots?:@[],_publicMessage?:NSLocalizedString(@"Updating search locations…",@"Status in Settings"));
 }
 - (void)invalidateRoot:(NSString *)identifier {
  [_scheduleLock lock];[_cancelled addObject:identifier];[_scheduleLock unlock];
@@ -83,11 +91,11 @@
 }
 - (void)start {dispatch_async(_worker,^{@autoreleasepool{
  double began=SHTime();NSError *error=nil;
- if(![NSFileManager.defaultManager createDirectoryAtURL:self->_stateURL withIntermediateDirectories:YES attributes:@{NSFilePosixPermissions:@0700} error:&error]){self->_message=@"Cannot create Superhound’s local data directory.";[self publish:NO];return;}
+ if(![NSFileManager.defaultManager createDirectoryAtURL:self->_stateURL withIntermediateDirectories:YES attributes:@{NSFilePosixPermissions:@0700} error:&error]){self->_message=NSLocalizedString(@"Cannot create Superhound’s local data directory.",nil);[self publish:NO];return;}
  chmod(self->_stateURL.fileSystemRepresentation,0700);
  self->_catalog=[[SHCatalog alloc] initWithURL:[self->_stateURL URLByAppendingPathComponent:@"catalog.sqlite"] error:&error];
- if(!self->_catalog){self->_message=@"Cannot open the local catalog. Check available disk space and restart.";[self publish:NO];return;}
- self->_message=self->_catalog.rebuilt?@"Rebuilding a damaged or older catalog. Your selected folders are preserved.":@"Only selected folders are searched. Click Add Folder… to add one.";
+ if(!self->_catalog){self->_message=NSLocalizedString(@"Cannot open the local catalog. Check available disk space and restart.",nil);[self publish:NO];return;}
+ self->_message=self->_catalog.rebuilt?NSLocalizedString(@"Rebuilding a damaged or older catalog. Your selected folders are preserved.",nil):NSLocalizedString(@"Only selected folders are searched. Click Add Folder… to add one.",@"Add Folder… is the button title in Settings");
  NSDictionary *settings=[NSDictionary dictionaryWithContentsOfURL:self.settingsURL];
  if(settings[@"excludeGenerated"])self->_exclude=[settings[@"excludeGenerated"] boolValue];
  // Safari lives in the Cryptex folder; its link in /Applications is hidden from directory listings.
@@ -96,7 +104,7 @@
  for(NSString *path in @[@"/Applications",@"/System/Applications",@"/System/Cryptexes/App/System/Applications",[@"~/Applications" stringByExpandingTildeInPath],@"/System/Library/CoreServices/Applications",@"/System/Library/CoreServices/Finder.app",@"/System/Library/CoreServices/Finder.app/Contents/Applications",@"/System/Library/ExtensionKit/Extensions"]){
   SHRoot *r=SHRoot.new;r.identifier=[@"apps:" stringByAppendingString:path];r.path=path;r.apps=YES;[self->_roots addObject:r];
  }
- for(NSDictionary *saved in settings[@"roots"]){if(![saved[@"id"] isKindOfClass:NSString.class]||![saved[@"bookmark"] isKindOfClass:NSData.class])continue;SHRoot *r=SHRoot.new;r.identifier=saved[@"id"];r.path=saved[@"path"]?:@"Selected folder";r.bookmark=saved[@"bookmark"];[self->_roots addObject:r];}
+ for(NSDictionary *saved in settings[@"roots"]){if(![saved[@"id"] isKindOfClass:NSString.class]||![saved[@"bookmark"] isKindOfClass:NSData.class])continue;SHRoot *r=SHRoot.new;r.identifier=saved[@"id"];r.path=saved[@"path"]?:NSLocalizedString(@"Selected folder",@"Shown in place of a search location whose path is unknown");r.bookmark=saved[@"bookmark"];[self->_roots addObject:r];}
  for(SHRoot *r in self->_roots){[self validate:r];r.included=r.url!=nil;}
  [self publish:YES];SHMeasure(@"cached_catalog_ready",began);for(SHRoot *r in self->_roots)[self request:r.identifier];
  }});}
@@ -194,7 +202,7 @@ static BOOL Covered(NSString *path,NSString *parent){return [path isEqual:parent
  [self reconcileCoverage];[self publish:changed || ![self.includedRoots isEqual:before]];
 }
 - (void)addURLs:(NSArray<NSURL *> *)urls replacingRoot:(NSString *)rootID {if(rootID)[self invalidateRoot:rootID];dispatch_async(_worker,^{@autoreleasepool{
- for(NSURL *url in urls){NSError *error=nil;NSData *bookmark=[SHFolderAccess bookmarkForURL:url error:&error];if(!bookmark){self->_message=@"Could not save access to that folder. Select it again.";continue;}
+ for(NSURL *url in urls){NSError *error=nil;NSData *bookmark=[SHFolderAccess bookmarkForURL:url error:&error];if(!bookmark){self->_message=NSLocalizedString(@"Could not save access to that folder. Select it again.",nil);continue;}
   SHRoot *r=rootID?[self root:rootID]:nil;
   if(!r)for(SHRoot *existing in self->_roots)if(!existing.apps && [existing.path isEqual:url.path]){r=existing;break;}
   if(!r){r=SHRoot.new;r.identifier=NSUUID.UUID.UUIDString;[self->_roots addObject:r];}

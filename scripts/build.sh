@@ -13,12 +13,15 @@ mkdir -p "$bundle/Contents/MacOS" "$bundle/Contents/Resources"
 cp app/emoji.tsv "$bundle/Contents/Resources/emoji.tsv"
 cp app/AppIcon.icns "$bundle/Contents/Resources/AppIcon.icns"
 cp app/LogoTemplate.png "$bundle/Contents/Resources/LogoTemplate.png"
+for folder in app/*.lproj; do if [[ -d "$folder" ]]; then cp -R "$folder" "$bundle/Contents/Resources/"; fi; done
 cat > "$bundle/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
 <key>CFBundleIdentifier</key><string>com.superhound.app</string>
 <key>CFBundleName</key><string>Superhound</string>
+<key>CFBundleDevelopmentRegion</key><string>en</string>
+<key>CFBundleLocalizations</key><array><string>en</string><string>ja</string><string>de</string><string>fr</string><string>es</string><string>zh-Hans</string><string>pt-BR</string></array>
 <key>CFBundleExecutable</key><string>Superhound</string>
 <key>CFBundleIconFile</key><string>AppIcon</string>
 <key>CFBundlePackageType</key><string>APPL</string>

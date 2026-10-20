@@ -30,26 +30,26 @@ static NSURL *NextTo(NSURL *installed,NSString *prefix){
 }
 NSString *SHUpdateInstall(NSURL *zip,SHRelease *release,NSURL *installed,SecRequirementRef requirement){
  NSNumber *linked=nil;[installed getResourceValue:&linked forKey:NSURLIsSymbolicLinkKey error:nil];
- if(linked.boolValue)return [NSString stringWithFormat:@"%@ is a link, so Superhound cannot replace it. Run the install command from superhound.app instead.",installed.path];
- if(release.build<=[[NSDictionary dictionaryWithContentsOfURL:[installed URLByAppendingPathComponent:@"Contents/Info.plist"]][@"CFBundleVersion"] integerValue])return @"This version is not newer than the installed one.";
- if(![SHA256Hex(zip) isEqual:release.sha256])return @"The download does not match the published checksum.";
- NSURL *work=NextTo(installed,@".superhound-update");if(!work)return [NSString stringWithFormat:@"Superhound cannot write to %@. Run the install command from superhound.app instead.",installed.URLByDeletingLastPathComponent.path];
+ if(linked.boolValue)return [NSString stringWithFormat:NSLocalizedString(@"%@ is a link, so Superhound cannot replace it. Run the install command from superhound.app instead.",@"Update error; the argument is the path of the installed app"),installed.path];
+ if(release.build<=[[NSDictionary dictionaryWithContentsOfURL:[installed URLByAppendingPathComponent:@"Contents/Info.plist"]][@"CFBundleVersion"] integerValue])return NSLocalizedString(@"This version is not newer than the installed one.",nil);
+ if(![SHA256Hex(zip) isEqual:release.sha256])return NSLocalizedString(@"The download does not match the published checksum.",nil);
+ NSURL *work=NextTo(installed,@".superhound-update");if(!work)return [NSString stringWithFormat:NSLocalizedString(@"Superhound cannot write to %@. Run the install command from superhound.app instead.",@"Update error; the argument is a folder path"),installed.URLByDeletingLastPathComponent.path];
  NSString *message=nil;NSURL *fresh=[work URLByAppendingPathComponent:@"Superhound.app"];
  NSTask *ditto=NSTask.new;ditto.executableURL=[NSURL fileURLWithPath:@"/usr/bin/ditto"];ditto.arguments=@[@"-x",@"-k",zip.path,work.path];ditto.standardError=NSFileHandle.fileHandleWithNullDevice;
- if(![ditto launchAndReturnError:nil])message=@"The download could not be unpacked.";else{[ditto waitUntilExit];if(ditto.terminationStatus!=0)message=@"The download could not be unpacked.";}
+ if(![ditto launchAndReturnError:nil])message=NSLocalizedString(@"The download could not be unpacked.",nil);else{[ditto waitUntilExit];if(ditto.terminationStatus!=0)message=NSLocalizedString(@"The download could not be unpacked.",nil);}
  NSDictionary *info=message?nil:[NSDictionary dictionaryWithContentsOfURL:[fresh URLByAppendingPathComponent:@"Contents/Info.plist"]],*current=[NSDictionary dictionaryWithContentsOfURL:[installed URLByAppendingPathComponent:@"Contents/Info.plist"]];
- NSNumber *link=nil;[fresh getResourceValue:&link forKey:NSURLIsSymbolicLinkKey error:nil];if(!message && link.boolValue)message=@"The download is not the expected version of Superhound.";
- if(!message && (![info[@"CFBundleIdentifier"] isEqual:current[@"CFBundleIdentifier"]] || [info[@"CFBundleVersion"] integerValue]!=release.build))message=@"The download is not the expected version of Superhound.";
+ NSNumber *link=nil;[fresh getResourceValue:&link forKey:NSURLIsSymbolicLinkKey error:nil];if(!message && link.boolValue)message=NSLocalizedString(@"The download is not the expected version of Superhound.",nil);
+ if(!message && (![info[@"CFBundleIdentifier"] isEqual:current[@"CFBundleIdentifier"]] || [info[@"CFBundleVersion"] integerValue]!=release.build))message=NSLocalizedString(@"The download is not the expected version of Superhound.",nil);
  if(!message){
   SecStaticCodeRef code=NULL;OSStatus status=SecStaticCodeCreateWithPath((__bridge CFURLRef)fresh,kSecCSDefaultFlags,&code);
   if(status==errSecSuccess)status=SecStaticCodeCheckValidity(code,kSecCSStrictValidate|kSecCSCheckAllArchitectures|kSecCSCheckNestedCode,requirement);
-  if(code)CFRelease(code);if(status!=errSecSuccess)message=@"The download does not have the Superhound signature.";
+  if(code)CFRelease(code);if(status!=errSecSuccess)message=NSLocalizedString(@"The download does not have the Superhound signature.",nil);
  }
- NSURL *backup=message?nil:NextTo(installed,@".superhound-backup");if(!message && !backup)message=@"Superhound cannot keep a copy of the current version.";
+ NSURL *backup=message?nil:NextTo(installed,@".superhound-backup");if(!message && !backup)message=NSLocalizedString(@"Superhound cannot keep a copy of the current version.",nil);
  if(!message){
   NSURL *previous=[backup URLByAppendingPathComponent:@"previous.app"];
-  if(rename(installed.fileSystemRepresentation,previous.fileSystemRepresentation)!=0)message=@"Superhound cannot move the current version.";
-  else if(rename(fresh.fileSystemRepresentation,installed.fileSystemRepresentation)!=0){rename(previous.fileSystemRepresentation,installed.fileSystemRepresentation);message=@"Superhound cannot put the new version in place.";}
+  if(rename(installed.fileSystemRepresentation,previous.fileSystemRepresentation)!=0)message=NSLocalizedString(@"Superhound cannot move the current version.",nil);
+  else if(rename(fresh.fileSystemRepresentation,installed.fileSystemRepresentation)!=0){rename(previous.fileSystemRepresentation,installed.fileSystemRepresentation);message=NSLocalizedString(@"Superhound cannot put the new version in place.",nil);}
   if(message)[NSFileManager.defaultManager removeItemAtURL:backup error:nil];
  }
  [NSFileManager.defaultManager removeItemAtURL:work error:nil];return message;

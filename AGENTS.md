@@ -11,11 +11,12 @@ A native macOS launcher: one panel on a global shortcut that finds apps, files, 
 
 | Command | Function |
 |---|---|
-| `scripts/build.sh [build number] [version]` | Compiles and signs `.build/Superhound.app` with the "Superhound" certificate from the keychain, or ad-hoc without it. Also writes the bundle's `Info.plist`. |
+| `scripts/build.sh [build number] [version]` | Compiles and signs `.build/Superhound.app` with the "Superhound" certificate from the keychain, or ad-hoc without it. Also writes the bundle's `Info.plist` and copies each `app/<locale>.lproj` folder. |
 | `scripts/test.sh` | Builds and runs the eleven Objective-C test suites with sanitizers. Run it before each commit. |
 | `scripts/install.sh .build/Superhound.app` | Replaces the installed app. It refuses while Superhound is in operation, and it keeps the previous bundle. |
 | `scripts/release.sh <version> <build number>` | From a clean commit: runs the tests, builds with the certificate, makes `.build/release/<version>/Superhound.zip`, and prints its SHA-256, the publish commands, and the superhound-web release vars. It does not publish. |
 | `scripts/benchmark.sh` | Measures query time, memory, and catalog speed at 10,000 and 100,000 records. |
+| `python3 -I scripts/strings.py [--check]` | Writes `app/en.lproj` from the `NSLocalizedString` calls in `app/` and `core/` and from the permission text in `scripts/build.sh`. `--check` fails when `app/en.lproj` is out of date, or when a locale has a missing or extra key, other format specifiers, or a file that does not parse. `scripts/test.sh` runs the check first. |
 | `scripts/update-emoji.py` | Rebuilds `app/emoji.tsv` from Unicode data. The only script that uses the internet. |
 
 To see a change in the live app: build with a build number one above the installed one, quit Superhound, install, then `open -g ~/Applications/Superhound.app`.
@@ -37,7 +38,7 @@ To see a change in the live app: build with a build number one above the install
 | `SHLicense.m` | The license of this Mac: the device ID, the check of the token that superhound.app signed, and `license.plist`. |
 | `SHUpdate.m` | Updates: the release file from `/api/latest`, the once-a-day rule, and the install of a downloaded zip (SHA-256, build number, signature check against a requirement, swap with a kept previous app). |
 | `SHSpotlight.m` | The rules for Spotlight's ⌘Space entry (64) in AppleSymbolicHotKeys: on or off, a change of only its enabled flag, and when an uninstall gives ⌘Space back. |
-| `SHCommands.m` | The system commands (Lock Screen, Sleep, Restart, Toggle Mute, Empty Trash, and others) as search entries. `SHLibrary` adds them to each snapshot. |
+| `SHCommands.m` | The system commands (Lock Screen, Sleep, Restart, Toggle Mute, Empty Trash, and others) as search entries. The name shows in the user's language; the alias keeps the English name. `SHLibrary` adds them to each snapshot. |
 | `SHLibrary.m` | Owns the search locations: the fixed app folders, the user's folders, scans, overlap between folders, and snapshot publication. |
 | `SHScanner.m` | Walks one folder and makes entries. Holds the skip rules (hidden items, packages, generated folders, online-only files) and the other names of built-in apps (older macOS names and Windows names, by bundle identifier), which go in the alias. |
 | `SHCatalog.m` | The SQLite cache of scanned entries. |
@@ -57,6 +58,7 @@ To see a change in the live app: build with a build number one above the install
 | `SHUpdater.m` | The daily update check, Check for Updates…, the download, and the relaunch. An update must meet the running app's designated requirement, so only a build signed with the "Superhound" certificate can update. Defaults keys: `updateCheckAutomatically`, `updateCheckedAt`; `licenseServer` also points it at a local test server. |
 | `SHResultActions.m` | Opens a result, opens a web address in the default browser, opens a result with another app, shows it in Finder, moves it to the Trash, runs the system commands, and pastes with a ⌘V key press. |
 | `emoji.tsv` | Generated emoji data: emoji, name, keywords. Do not edit by hand. |
+| `en.lproj/`, `<locale>.lproj/` | `Localizable.strings` (the English text is the key) and `InfoPlist.strings` (the permission text). `scripts/strings.py` writes `en.lproj`; do not edit it by hand. The other locales are translations: ja, de, fr, es, zh-Hans, pt-BR. |
 | `AppIcon.icns` | The app icon, made from `docs/media/superhound.png` |
 | `LogoTemplate.png` | The 36 px template logo for the panel footer, made from `docs/media/logo.png` |
 
@@ -109,6 +111,7 @@ All of `docs/` other than `docs/media/` is local: `.gitignore` excludes it, and 
 
 - Keep `docs/` out of git, other than `docs/media/`. `.gitignore` excludes the rest.
 - Match the dense one-line style of the current Objective-C files.
+- Wrap user-visible text in `NSLocalizedString` with the English text as key, and give a comment when a short word, a format argument, or the length is not clear. Run `python3 -I scripts/strings.py` after a text change. Text that the code compares stays a fixed English value; show its translation separately, as `SHLibrary` does with a root's `state` and `label`.
 - The app makes two kinds of network request: license activation and deactivation in `SHActivation.m`, and the daily update check and download in `SHUpdater.m`. Neither sends personal data other than the license key and device ID at activation. Keep everything else offline.
 - The private signing key for activation tokens is `~/.config/superhound/license-signing-key.jwk`. Never print it or copy it into a repository.
 - The code signing certificate is "Superhound" in the login keychain (self-signed, until 2046), with copies in `~/.config/superhound/codesign-key.pem` and `codesign-cert.pem`. Never print the key or copy it into a repository. A different certificate makes macOS ask every user again for the Documents and Accessibility permissions.

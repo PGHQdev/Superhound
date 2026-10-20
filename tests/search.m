@@ -36,6 +36,8 @@ int main(void) { @autoreleasepool {
  // Commands are found by name and by other words, rank with applications, and stay out of the empty-query list.
  NSArray *commands=SHCommands.entries;assert([NSSet setWithArray:[commands valueForKey:@"path"]].count==commands.count);
  for(NSDictionary *c in commands)assert([c[@"type"] isEqual:@"command"] && [c[@"path"] hasPrefix:@"command:"] && [c[@"symbol"] length] && SHLaunchable(c));
+ // In English the shown name is the English name, so the alias holds only the other words.
+ assert([commands[0][@"name"] isEqual:@"Lock Screen"] && [commands[0][@"alias"] isEqual:@"lock computer"]);for(NSDictionary *c in commands)assert(![c[@"alias"] containsString:@" / "]);
  SHSearchSnapshot *system=[[SHSearchSnapshot alloc] initWithEntries:[commands arrayByAddingObjectsFromArray:@[E(1,@"lock notes",@"/work/lock notes",@"file"),E(2,@"Sleep Tracker",@"/apps/Sleep Tracker.app",@"app")]] generation:1];
  NSDictionary *expected=@{@"lock":@"command:lock",@"reboot":@"command:restart",@"shut":@"command:shutdown",@"power off":@"command:shutdown",@"unmute":@"command:mute",@"dark":@"command:dark",@"empty trash":@"command:trash",@"eject":@"command:eject",@"logout":@"command:logout",@"sleep":@"command:sleep",@"display off":@"command:display",@"screen saver":@"command:screensaver"};
  for(NSString *q in expected)assert([[[system search:q cancelled:nil] firstObject][@"path"] isEqual:expected[q]]);

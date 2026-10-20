@@ -25,13 +25,13 @@ static NSString *Version(void){return NSBundle.mainBundle.infoDictionary[@"CFBun
 }
 - (void)checkIfDue {if(self.automatic && !_busy && SHUpdateDue([NSUserDefaults.standardUserDefaults objectForKey:@"updateCheckedAt"],NSDate.date))[self fetch:NO];}
 - (void)check {
- if(!self.supported){Tell(@"This copy cannot update itself",@"This copy of Superhound was built from source. To update it, pull the latest code, then run the build and install commands again.");return;}
+ if(!self.supported){Tell(NSLocalizedString(@"This copy cannot update itself",nil),NSLocalizedString(@"This copy of Superhound was built from source. To update it, pull the latest code, then run the build and install commands again.",nil));return;}
  if(!_busy)[self fetch:YES];
 }
 - (void)setBusy:(BOOL)busy {_busy=busy;if(self.changed)self.changed();}
 - (void)fetch:(BOOL)manual {
  NSString *server=[NSUserDefaults.standardUserDefaults stringForKey:@"licenseServer"]?:@"https://superhound.app";NSURL *url=[NSURL URLWithString:[server stringByAppendingString:@"/api/latest"]];
- if(!url){if(manual)Tell(@"Superhound could not check for updates",[NSString stringWithFormat:@"The server address %@ is not valid.",server]);return;}
+ if(!url){if(manual)Tell(NSLocalizedString(@"Superhound could not check for updates",nil),[NSString stringWithFormat:NSLocalizedString(@"The server address %@ is not valid.",@"The argument is a web address"),server]);return;}
  self.busy=YES;
  [[_session dataTaskWithURL:url completionHandler:^(NSData *data,NSURLResponse *response,NSError *error){
   NSInteger status=[response isKindOfClass:NSHTTPURLResponse.class]?((NSHTTPURLResponse *)response).statusCode:0;SHRelease *latest=status==200?[SHRelease releaseWithJSON:data]:nil;
@@ -40,28 +40,28 @@ static NSString *Version(void){return NSBundle.mainBundle.infoDictionary[@"CFBun
    if(latest)self->_latest=latest.build>[NSBundle.mainBundle.infoDictionary[@"CFBundleVersion"] integerValue]?latest:nil;
    self.busy=NO;if(!manual)return;
    if(self->_latest)[self install];
-   else if(!latest)Tell(@"Superhound could not check for updates",error?error.localizedDescription:@"superhound.app sent an answer that Superhound cannot read. Try again later.");
-   else Tell(@"Superhound is up to date",[NSString stringWithFormat:@"Version %@ is the latest version.",Version()]);
+   else if(!latest)Tell(NSLocalizedString(@"Superhound could not check for updates",nil),error?error.localizedDescription:NSLocalizedString(@"superhound.app sent an answer that Superhound cannot read. Try again later.",nil));
+   else Tell(NSLocalizedString(@"Superhound is up to date",nil),[NSString stringWithFormat:NSLocalizedString(@"Version %@ is the latest version.",@"The argument is a version number such as 0.4.0"),Version()]);
   });
  }] resume];
 }
 - (void)install {
  SHRelease *release=_latest;if(!release || _busy)return;
- [NSApp activateIgnoringOtherApps:YES];NSAlert *alert=NSAlert.new;alert.messageText=[NSString stringWithFormat:@"Superhound %@ is available",release.version];
- alert.informativeText=[NSString stringWithFormat:@"You have version %@. Superhound downloads the update, checks its signature, and opens again.",Version()];
- [alert addButtonWithTitle:@"Install and Relaunch"];[alert addButtonWithTitle:@"Later"];[alert addButtonWithTitle:@"Release Notes"];
+ [NSApp activateIgnoringOtherApps:YES];NSAlert *alert=NSAlert.new;alert.messageText=[NSString stringWithFormat:NSLocalizedString(@"Superhound %@ is available",@"The argument is a version number such as 0.5.0"),release.version];
+ alert.informativeText=[NSString stringWithFormat:NSLocalizedString(@"You have version %@. Superhound downloads the update, checks its signature, and opens again.",@"The argument is the installed version number"),Version()];
+ [alert addButtonWithTitle:NSLocalizedString(@"Install and Relaunch",@"Alert button")];[alert addButtonWithTitle:NSLocalizedString(@"Later",@"Alert button: ask again later")];[alert addButtonWithTitle:NSLocalizedString(@"Release Notes",@"Alert button that opens the release notes web page")];
  NSModalResponse response=[alert runModal];if(response==NSAlertThirdButtonReturn)[NSWorkspace.sharedWorkspace openURL:release.notes];if(response!=NSAlertFirstButtonReturn)return;
  self.busy=YES;SecRequirementRef requirement=(SecRequirementRef)CFRetain(_requirement);NSURL *installed=NSBundle.mainBundle.bundleURL;
  [[_session downloadTaskWithURL:release.url completionHandler:^(NSURL *location,NSURLResponse *answer,NSError *error){
   // The downloaded file is deleted when this block returns, so the install runs here, off the main thread.
   NSInteger status=[answer isKindOfClass:NSHTTPURLResponse.class]?((NSHTTPURLResponse *)answer).statusCode:0;
-  NSString *message=error?[NSString stringWithFormat:@"The download failed. %@",error.localizedDescription]:status!=200?[NSString stringWithFormat:@"The download failed with error %ld.",(long)status]:SHUpdateInstall(location,release,installed,requirement);
+  NSString *message=error?[NSString stringWithFormat:NSLocalizedString(@"The download failed. %@",@"The argument is the system network error text"),error.localizedDescription]:status!=200?[NSString stringWithFormat:NSLocalizedString(@"The download failed with error %ld.",@"The argument is an HTTP status code such as 404"),(long)status]:SHUpdateInstall(location,release,installed,requirement);
   CFRelease(requirement);
   dispatch_async(dispatch_get_main_queue(),^{
-   self.busy=NO;if(message){Tell(@"Superhound is not updated",message);return;}
+   self.busy=NO;if(message){Tell(NSLocalizedString(@"Superhound is not updated",nil),message);return;}
    // A shell waits until this process ends, then opens the new app at the same path.
    NSTask *task=NSTask.new;task.executableURL=[NSURL fileURLWithPath:@"/bin/sh"];task.arguments=@[@"-c",@"while /bin/kill -0 \"$0\" 2>/dev/null; do /bin/sleep 0.2; done; /usr/bin/open \"$1\"",[NSString stringWithFormat:@"%d",NSProcessInfo.processInfo.processIdentifier],installed.path];
-   if([task launchAndReturnError:nil])[NSApp terminate:nil];else Tell(@"Superhound is updated",@"Quit Superhound and open it again to use the new version.");
+   if([task launchAndReturnError:nil])[NSApp terminate:nil];else Tell(NSLocalizedString(@"Superhound is updated",nil),NSLocalizedString(@"Quit Superhound and open it again to use the new version.",nil));
   });
  }] resume];
 }

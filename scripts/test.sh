@@ -2,6 +2,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/tests
+python3 -I scripts/strings.py --check
 flags=(-fobjc-arc -fmodules -Wall -Wextra -Werror -g -O1 -mmacosx-version-min=15.0 -Icore -Iapp -fsanitize=address,undefined)
 xcrun clang "${flags[@]}" tests/search.m core/SHCommands.m core/SHSearchSnapshot.m core/SHQueryController.m core/SHUsage.m core/sh_match.c -framework Foundation -o .build/tests/search
 .build/tests/search

@@ -47,6 +47,6 @@ static BOOL Number(NSString *text,NSUInteger digits,NSUInteger maximum) {
  // Only unreserved characters stay as they are, so + & / ? # in the text reach the engine as text.
  NSCharacterSet *plain=[NSCharacterSet characterSetWithCharactersInString:@"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~"];
  NSString *text=[words componentsJoinedByString:@" "],*encoded=[text stringByAddingPercentEncodingWithAllowedCharacters:plain];if(!encoded)return nil;
- return @{@"type":@"web",@"id":@"web",@"name":[NSString stringWithFormat:@"Search %@ for “%@”",chosen[@"name"],text],@"url":[chosen[@"url"] stringByAppendingString:encoded]};
+ return @{@"type":@"web",@"id":@"web",@"name":[NSString stringWithFormat:NSLocalizedString(@"Search %@ for “%@”",@"Last row of the search results; the first argument is a search engine name such as Google, the second is the typed text"),chosen[@"name"],text],@"url":[chosen[@"url"] stringByAppendingString:encoded]};
 }
 @end

@@ -1,0 +1,2 @@
+/* Privacy text that macOS shows when Superhound asks to control Finder, System Events, or the login window */
+"NSAppleEventsUsageDescription" = "Superhound sends Empty Trash to Finder, Dark Mode to System Events, and Sleep, Restart, Shut Down, and Log Out to the login window.";
