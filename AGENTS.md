@@ -108,3 +108,4 @@ All in `~/Library/Application Support/Superhound/`:
 - Add tests for changes to `core/`. The panel window has no automated test; state when a change was not seen on screen.
 - Do not take full-screen captures to check the app. The screen shows the user's private windows. Ask the user to look instead.
 - One commit for each change, with a `feat:`, `fix:`, `perf:`, or `docs:` prefix.
+- In a `/harness` run, commit a step only after the `verifier` passes it.
