@@ -36,4 +36,17 @@ static BOOL Number(NSString *text,NSUInteger digits,NSUInteger maximum) {
  }
  return address?@{@"type":@"url",@"id":@"url",@"name":text,@"url":address}:nil;
 }
++ (NSArray<NSDictionary *> *)engines {
+ return @[@{@"id":@"google",@"name":@"Google",@"url":@"https://www.google.com/search?q="},@{@"id":@"duckduckgo",@"name":@"DuckDuckGo",@"url":@"https://duckduckgo.com/?q="},@{@"id":@"bing",@"name":@"Bing",@"url":@"https://www.bing.com/search?q="},
+  @{@"id":@"brave",@"name":@"Brave Search",@"url":@"https://search.brave.com/search?q="},@{@"id":@"kagi",@"name":@"Kagi",@"url":@"https://kagi.com/search?q="}];
+}
++ (NSDictionary *)searchForQuery:(NSString *)query engine:(NSString *)engine {
+ NSMutableArray *words=NSMutableArray.array;for(NSString *w in [query componentsSeparatedByCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet])if(w.length)[words addObject:w];
+ if(!words.count)return nil;
+ NSDictionary *chosen=self.engines.firstObject;for(NSDictionary *e in self.engines)if([e[@"id"] isEqual:engine])chosen=e;
+ // Only unreserved characters stay as they are, so + & / ? # in the text reach the engine as text.
+ NSCharacterSet *plain=[NSCharacterSet characterSetWithCharactersInString:@"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~"];
+ NSString *text=[words componentsJoinedByString:@" "],*encoded=[text stringByAddingPercentEncodingWithAllowedCharacters:plain];if(!encoded)return nil;
+ return @{@"type":@"web",@"id":@"web",@"name":[NSString stringWithFormat:@"Search %@ for “%@”",chosen[@"name"],text],@"url":[chosen[@"url"] stringByAppendingString:encoded]};
+}
 @end

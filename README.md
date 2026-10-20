@@ -40,6 +40,7 @@ Press one shortcut. Type a few letters. Your app, file, answer, or emoji is alre
 | 🧮 **Calculate** | `48*12`, `15% of 240`, `240 + 15%` | Copy the answer |
 | 📏 **Convert units** | `5 km to mi`, `72f to c` | Copy the answer |
 | 🌐 **Open websites** | `github.com`, `localhost:3000` | Open it in your browser |
+| 🔍 **Search the web** | Anything, in the last row | Search it with Google, or the engine you choose in **Settings…** |
 | 😀 **Find emoji** | `fire`, `happy`, `japan` | Copy the emoji |
 | 💤 **Run commands** | `sleep`, `restart`, `mute`, `dark`, `empty trash` | Run it |
 | 📋 **Paste from clipboard history** | Press ⌥⌘V | Paste it |
@@ -81,6 +82,8 @@ Superhound works offline. It makes only two kinds of network request:
 
 - **A daily update check.** It carries no license key and no device ID. Turn it off with **Check for Updates Automatically**.
 - **License activation.** It sends your license key and a one-way device ID to superhound.app, once.
+
+Web addresses and web searches open in your browser, which loads the page. Superhound itself sends nothing for them.
 
 Superhound reads file names, never file contents. All its data stays on your Mac in `~/Library/Application Support/Superhound/`.
 

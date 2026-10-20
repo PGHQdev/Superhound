@@ -1,5 +1,6 @@
 #import "SHSettingsController.h"
 #import "SHSpotlight.h"
+#import "SHWeb.h"
 @interface SHShortcutButton : NSButton
 @property(copy) void (^recorded)(NSEvent *);
 @property BOOL recording;
@@ -20,7 +21,7 @@ static NSTextField *Label(NSView *view,NSString *text,NSRect frame,CGFloat size,
 }
 static NSButton *Button(NSView *view,NSString *title,NSRect frame,id target,SEL action) {NSButton *button=[NSButton buttonWithTitle:title target:target action:action];button.frame=frame;[view addSubview:button];return button;}
 - (instancetype)initWithLibrary:(SHLibrary *)library hotKey:(SHHotKey *)hotKey historyKey:(SHHotKey *)historyKey {
- NSWindow *window=[[NSWindow alloc] initWithContentRect:NSMakeRect(0,0,740,712) styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable|NSWindowStyleMaskMiniaturizable backing:NSBackingStoreBuffered defer:NO];
+ NSWindow *window=[[NSWindow alloc] initWithContentRect:NSMakeRect(0,0,740,756) styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable|NSWindowStyleMaskMiniaturizable backing:NSBackingStoreBuffered defer:NO];
  if(!(self=[super initWithWindow:window]))return nil;
  _library=library;_hotKey=hotKey;_historyKey=historyKey;_roots=@[];window.title=@"Superhound Settings";window.releasedWhenClosed=NO;window.accessibilityIdentifier=@"superhound.settings";
  NSView *view=window.contentView;
@@ -50,6 +51,12 @@ static NSButton *Button(NSView *view,NSString *title,NSRect frame,id target,SEL 
  _historyRecorder.recorded=^(NSEvent *event){SHSettingsController *self=weak;[self->_historyKey recordEvent:event];self->_historyRecorder.title=@"Record Shortcut…";[self shortcutStatus];};
  Button(view,[@"Use " stringByAppendingString:historyKey.defaultLabel],NSMakeRect(320,18,120,32),self,@selector(defaultHistoryShortcut:));
  _historyStatus=Label(view,@"",NSMakeRect(448,12,270,40),11,YES);_historyStatus.accessibilityIdentifier=@"superhound.history.shortcut.status";
+ // The web search row sits under the clipboard row.
+ for(NSView *v in view.subviews)[v setFrameOrigin:NSMakePoint(v.frame.origin.x,v.frame.origin.y+44)];
+ Label(view,@"Web search",NSMakeRect(24,24,115,24),15,NO);
+ NSPopUpButton *engines=[[NSPopUpButton alloc] initWithFrame:NSMakeRect(144,20,170,28) pullsDown:NO];engines.target=self;engines.action=@selector(engine:);engines.accessibilityIdentifier=@"superhound.search.engine";engines.accessibilityLabel=@"Web search engine";
+ NSString *chosen=[NSUserDefaults.standardUserDefaults stringForKey:@"searchEngine"];for(NSDictionary *e in SHWeb.engines){[engines addItemWithTitle:e[@"name"]];if([e[@"id"] isEqual:chosen])[engines selectItemAtIndex:engines.numberOfItems-1];}[view addSubview:engines];
+ Label(view,@"The last row of each search opens your text with this engine in your browser.",NSMakeRect(320,14,394,36),11,YES);
  [self shortcutStatus];[self updateButtons];[window center];return self;
 }
 - (void)show {[NSApp activateIgnoringOtherApps:YES];[self.window makeKeyAndOrderFront:nil];[self shortcutStatus];}
@@ -88,5 +95,6 @@ static NSButton *Button(NSView *view,NSString *title,NSRect frame,id target,SEL 
  if(take)[_hotKey useDefault];else [_hotKey leaveCommandSpace];
  [self shortcutStatus];
 }
+- (void)engine:(NSPopUpButton *)sender {[NSUserDefaults.standardUserDefaults setObject:SHWeb.engines[(NSUInteger)sender.indexOfSelectedItem][@"id"] forKey:@"searchEngine"];}
 - (void)keyboardSettings:(id)sender {(void)sender;[_hotKey openKeyboardSettings];}
 @end

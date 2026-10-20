@@ -16,5 +16,16 @@ int main(void){@autoreleasepool{
   @"-bad.com",@"bad-.com",@"a..com",@".com",@"github.com:99999",@"github.com:port",@"user@example.com",@"https://",@"http:///path",@"www.example.123",@"ftp://example.com",@"café.com"])
   if([SHWeb addressForQuery:q]){fprintf(stderr,"'%s' must give no address\n",q.UTF8String);abort();}
  for(int k=0;k<20000;k++){unichar c[40];NSUInteger n=arc4random_uniform(40);const char *set="abcmo0123456789.:/?#-_ wh@tps";for(NSUInteger i=0;i<n;i++)c[i]=(unichar)set[arc4random_uniform(29)];[SHWeb addressForQuery:[NSString stringWithCharacters:c length:n]];}
- puts("PASS web: addresses, local and numeric hosts, ports, rejected file names and text, 20000 random inputs");
+ // Web search: the default engine, each engine, unknown ids, encoding, and collapsed spaces.
+ NSArray *engines=SHWeb.engines;assert(engines.count==5 && [engines[0][@"id"] isEqual:@"google"]);
+ NSDictionary *web=[SHWeb searchForQuery:@"  hello   world " engine:nil];
+ assert(([web[@"type"] isEqual:@"web"] && [web[@"id"] isEqual:@"web"] && [web[@"name"] isEqual:@"Search Google for “hello world”"] && [web[@"url"] isEqual:@"https://www.google.com/search?q=hello%20world"]));
+ assert([[SHWeb searchForQuery:@"c++ & a/b?#x=1" engine:@"google"][@"url"] isEqual:@"https://www.google.com/search?q=c%2B%2B%20%26%20a%2Fb%3F%23x%3D1"]);
+ assert([[SHWeb searchForQuery:@"東京 café" engine:@"google"][@"url"] isEqual:@"https://www.google.com/search?q=%E6%9D%B1%E4%BA%AC%20caf%C3%A9"]);
+ assert([[SHWeb searchForQuery:@"x" engine:@"unknown"][@"url"] isEqual:@"https://www.google.com/search?q=x"]);
+ NSDictionary *expected=@{@"google":@"https://www.google.com/search?q=x",@"duckduckgo":@"https://duckduckgo.com/?q=x",@"bing":@"https://www.bing.com/search?q=x",@"brave":@"https://search.brave.com/search?q=x",@"kagi":@"https://kagi.com/search?q=x"};
+ for(NSDictionary *e in engines)assert([[SHWeb searchForQuery:@"x" engine:e[@"id"]][@"url"] isEqual:expected[e[@"id"]]]);
+ assert([[SHWeb searchForQuery:@"x" engine:@"brave"][@"name"] isEqual:@"Search Brave Search for “x”"]);
+ for(NSString *q in @[@"",@"   ",@"\n\t"])assert(![SHWeb searchForQuery:q engine:nil]);
+ puts("PASS web: addresses, local and numeric hosts, ports, rejected file names and text, search engines and encoding, 20000 random inputs");
 }return 0;}

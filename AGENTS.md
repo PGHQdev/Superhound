@@ -31,7 +31,7 @@ To see a change in the live app: build with a build number one above the install
 | `SHQueryController.m` | Runs searches off the main thread and drops results of an old query. |
 | `SHUsage.m` | Learned ranking. Records which result the user opened for which query, in `usage.plist`. |
 | `SHAnswer.m` | Quick answers: the arithmetic parser, percent rules, and the unit table. |
-| `SHWeb.m` | Web addresses typed in the search field: http and https URLs, localhost and IPv4 addresses with a port, and hosts with a common web ending (a list that leaves out file extensions such as .md and .sh). |
+| `SHWeb.m` | The web search URL of each engine (Google by default, DuckDuckGo, Bing, Brave Search, Kagi), and web addresses typed in the search field: http and https URLs, localhost and IPv4 addresses with a port, and hosts with a common web ending (a list that leaves out file extensions such as .md and .sh). |
 | `SHEmoji.m` | Emoji search by name and keyword over `app/emoji.tsv`. |
 | `SHClipboard.m` | The clipboard history: the last 500 text copies, the skip rules for concealed and password copies, search, and `clipboard.plist`. |
 | `SHLicense.m` | The license of this Mac: the device ID, the check of the token that superhound.app signed, and `license.plist`. |
@@ -49,8 +49,8 @@ To see a change in the live app: build with a build number one above the install
 | File | Function |
 |---|---|
 | `SHAppDelegate.m` | Start-up wiring, the menu bar item and its menu, Open at Login, the pasteboard check twice a second for the clipboard history, the license, update, and About menu items, Uninstall Superhound… (frees the activation, gives ⌘Space back to Spotlight when Superhound took it, removes the login item, the data, the defaults, the app, and its kept previous versions), and `superhound://` links. |
-| `SHSearchPanelController.m` | The search panel and its clipboard history mode: the dark blurred borderless window, 600 pt wide, with a height that follows the rows (it grows at once and shrinks after 0.15 s); the shared columns (16 pt margin, 28 pt icon column, text at x 52); field (Return during a search opens the result when it arrives; Escape closes Quick Look before the panel), the label band ("Suggested", errors, no matches, indexing note), one-line app rows and two-line file rows with folder context, row order (web address, answer, chosen before, apps, settings panes, and commands, emoji, clipboard items, files), keys, the action menu (⌘K and right-click), Quick Look, copy and open, the footer (key hints, the Update to and Activate license links, the logo and name, which open the menu bar menu), and the license reminder on every tenth opening (`unlicensedOpens` in the defaults). |
-| `SHSettingsController.m` | The Settings window (⌘,): the search locations with the item counts, the two shortcut recorders, and the switch Use ⌘Space in place of Spotlight. |
+| `SHSearchPanelController.m` | The search panel and its clipboard history mode: the dark blurred borderless window, 600 pt wide, with a height that follows the rows (it grows at once and shrinks after 0.15 s); the shared columns (16 pt margin, 28 pt icon column, text at x 52); field (Return during a search opens the result when it arrives; Escape closes Quick Look before the panel), the label band ("Suggested", errors, no matches, indexing note), one-line app rows and two-line file rows with folder context, row order (web address, answer, chosen before, apps, settings panes, and commands, emoji, clipboard items, files, and the web search in the last row), keys, the action menu (⌘K and right-click), Quick Look, copy and open, the footer (key hints, the Update to and Activate license links, the logo and name, which open the menu bar menu), and the license reminder on every tenth opening (`unlicensedOpens` in the defaults). |
+| `SHSettingsController.m` | The Settings window (⌘,): the search locations with the item counts, the two shortcut recorders, the switch Use ⌘Space in place of Spotlight, and the web search engine (defaults key `searchEngine`; the engines are in `SHWeb.m`). |
 | `SHHotKey.m` | Global shortcut registration, one object for each shortcut. It refuses the other shortcut's keys, and it keeps the previous keys when new keys fail to register. It also reads and writes Spotlight's ⌘Space shortcut in `com.apple.symbolichotkeys`, with a private call that applies the change at once. |
 | `SHFolderAccess.m` | Security-scoped bookmarks for the user's folders. |
 | `SHActivation.m` | Activation and deactivation requests to superhound.app, the license key window, and `superhound://activate?key=` links. The defaults key `licenseServer` points it at a local test server. |
@@ -66,7 +66,7 @@ To see a change in the live app: build with a build number one above the install
 |---|---|
 | `tests/search.m` | Ranking, typing errors, learned ranking, the query controller |
 | `tests/answer.m` | Calculator and unit conversion |
-| `tests/web.m` | Web addresses and the text that must not give one |
+| `tests/web.m` | Web addresses, the text that must not give one, and web search URLs |
 | `tests/emoji.m` | Emoji search |
 | `tests/clipboard.m` | Clipboard history rules, search, limits, and its file |
 | `tests/license.m` | Device ID, token checks with a WebCrypto test token, and the license file |

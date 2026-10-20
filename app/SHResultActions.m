@@ -65,7 +65,7 @@ static void Paste(void (^completion)(NSString *)){
 }
 + (void)perform:(NSString *)action result:(NSDictionary *)result application:(NSURL *)application completion:(void (^)(NSString *))completion {
  if([action isEqual:@"paste"]){Paste(completion);return;}
- if([result[@"type"] isEqual:@"url"]){NSURL *url=[NSURL URLWithString:result[@"url"]];completion(url && [NSWorkspace.sharedWorkspace openURL:url]?nil:@"Could not open this web address.");return;}
+ if([@[@"url",@"web"] containsObject:result[@"type"]]){NSURL *url=[NSURL URLWithString:result[@"url"]];completion(url && [NSWorkspace.sharedWorkspace openURL:url]?nil:@"Could not open this in your browser.");return;}
  BOOL reveal=[action isEqual:@"reveal"];
  if([result[@"type"] isEqual:@"command"]){if(reveal)completion(@"A command has no location in Finder.");else [self run:result[@"path"] completion:completion];return;}
  NSURL *url=[NSURL fileURLWithPath:result[@"path"]];
