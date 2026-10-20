@@ -1,6 +1,7 @@
 #import "SHSearchPanelController.h"
 #import "SHMetrics.h"
 #import "SHAnswer.h"
+#import "SHWeb.h"
 #import <Quartz/Quartz.h>
 NSString *const SHOwnCopyType=@"com.superhound.copy";
 static NSString *Copied(NSDictionary *result){
@@ -228,15 +229,15 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  if(changedQuery){_navigated=NO;_selectedID=nil;_queuedOpen=nil;}
  if(_history){_pending=NO;[self present:[_clipboard search:_field.stringValue limit:100]];return;}
  // The previous rows stay visible until the new results arrive; _pending stops Return opening them.
- __weak typeof(self) weak=self;NSDictionary *answer=[SHAnswer answerForQuery:_field.stringValue];
+ __weak typeof(self) weak=self;NSDictionary *answer=[SHAnswer answerForQuery:_field.stringValue],*address=[SHWeb addressForQuery:_field.stringValue];
  NSArray<NSDictionary *> *preferred=[_usage preferredForQuery:_field.stringValue],*emoji=[_emoji search:_field.stringValue limit:8];
  // Shorter queries would match too much copied text.
  NSArray<NSDictionary *> *clips=[_field.stringValue stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceCharacterSet].length>=3?[_clipboard search:_field.stringValue limit:2]:@[];
  [_queries submit:_field.stringValue preferred:preferred completion:^(NSArray<NSDictionary *> *results){
   SHSearchPanelController *self=weak;if(!self || !self.window.isVisible || self->_history)return;
-  // A calculation or conversion takes the first of the eight rows.
-  // Order: answer, results the user chose before, applications, settings panes, and commands, up to 3 emoji, up to 2 clipboard items, then files and folders.
-  NSMutableArray *rows=NSMutableArray.array,*otherEmoji=[emoji mutableCopy];if(answer)[rows addObject:answer];
+  // A web address or a calculation takes the first of the eight rows.
+  // Order: web address, answer, results the user chose before, applications, settings panes, and commands, up to 3 emoji, up to 2 clipboard items, then files and folders.
+  NSMutableArray *rows=NSMutableArray.array,*otherEmoji=[emoji mutableCopy];if(address)[rows addObject:address];if(answer)[rows addObject:answer];
   NSSet *chosen=[NSSet setWithArray:[preferred valueForKey:@"path"]];
   for(NSDictionary *p in preferred)for(NSDictionary *e in emoji)if([e[@"path"] isEqual:p[@"path"]]){[rows addObject:e];[otherEmoji removeObjectIdenticalTo:e];}
   NSUInteger lead=0;while(lead<results.count && (SHLaunchable(results[lead]) || [chosen containsObject:results[lead][@"path"]]))lead++;
@@ -266,15 +267,15 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView {(void)tableView;return (NSInteger)_results.count;}
 - (NSView *)tableView:(NSTableView *)tableView viewForTableColumn:(NSTableColumn *)column row:(NSInteger)row {
  (void)tableView;(void)column;
- NSDictionary *result=_results[(NSUInteger)row];NSString *path=result[@"path"],*kind=result[@"type"];BOOL emoji=[kind isEqual:@"emoji"],clip=[kind isEqual:@"clipboard"],answer=emoji || clip || [kind isEqual:@"answer"],compact=SHLaunchable(result),located=!answer && !compact;
+ NSDictionary *result=_results[(NSUInteger)row];NSString *path=result[@"path"],*kind=result[@"type"];BOOL emoji=[kind isEqual:@"emoji"],clip=[kind isEqual:@"clipboard"],web=[kind isEqual:@"url"],answer=emoji || clip || web || [kind isEqual:@"answer"],compact=SHLaunchable(result),located=!answer && !compact;
  CGFloat height=compact?40:48;NSTableCellView *cell=[[NSTableCellView alloc] initWithFrame:NSMakeRect(0,0,Width-16,height)];
  // Every row has the same 28-point icon box; file icons scale with their proportions and symbols keep one size.
- NSString *symbol=emoji?nil:clip?@"doc.on.clipboard":answer?@"equal.circle":result[@"symbol"];
+ NSString *symbol=emoji?nil:clip?@"doc.on.clipboard":web?@"globe":answer?@"equal.circle":result[@"symbol"];
  NSImageView *icon=[[NSImageView alloc] initWithFrame:NSMakeRect(8,(height-28)/2,28,28)];icon.imageScaling=symbol?NSImageScaleNone:NSImageScaleProportionallyUpOrDown;icon.image=symbol?[[NSImage imageWithSystemSymbolName:symbol accessibilityDescription:nil] imageWithSymbolConfiguration:[NSImageSymbolConfiguration configurationWithPointSize:17 weight:NSFontWeightRegular]]:emoji?nil:[_icons objectForKey:path];icon.contentTintColor=NSColor.secondaryLabelColor;cell.imageView=icon;[cell addSubview:icon];
  if(emoji){NSTextField *glyph=[NSTextField labelWithString:result[@"emoji"]];glyph.frame=NSMakeRect(4,(height-30)/2,36,30);glyph.font=[NSFont systemFontOfSize:22];glyph.alignment=NSTextAlignmentCenter;[cell addSubview:glyph];}
  // An app shows its folder only when another result has the same name.
  BOOL shared=NO;for(NSDictionary *other in _results)if(other!=result && [other[@"name"] caseInsensitiveCompare:result[@"name"]]==NSOrderedSame)shared=YES;
- NSString *detail=emoji?@"Emoji · Return to copy":clip?Copied(result):answer?[result[@"detail"] stringByAppendingString:@" · Return to copy"]:[kind isEqual:@"settings"]?@"System Settings":[kind isEqual:@"command"]?@"Command":[kind isEqual:@"app"] && !shared?@"":Context(result,_results);
+ NSString *detail=emoji?@"Emoji · Return to copy":clip?Copied(result):web?@"Web address · Return to open in your browser":answer?[result[@"detail"] stringByAppendingString:@" · Return to copy"]:[kind isEqual:@"settings"]?@"System Settings":[kind isEqual:@"command"]?@"Command":[kind isEqual:@"app"] && !shared?@"":Context(result,_results);
  NSTextField *name=[NSTextField labelWithAttributedString:Marked(result[@"name"],_field.stringValue)];cell.textField=name;[cell addSubview:name];
  NSTextField *info=[NSTextField labelWithString:detail];info.font=[NSFont systemFontOfSize:12];info.textColor=NSColor.secondaryLabelColor;info.lineBreakMode=located || [kind isEqual:@"app"]?NSLineBreakByTruncatingHead:NSLineBreakByTruncatingTail;[cell addSubview:info];
  if(compact){CGFloat width=detail.length?MIN(ceil(info.intrinsicContentSize.width),Text/2):0;name.frame=NSMakeRect(44,(height-18)/2,Text-width-(width?8:0),18);info.frame=NSMakeRect(44+Text-width,(height-16)/2,width,16);info.alignment=NSTextAlignmentRight;}
@@ -308,7 +309,7 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  if([self action:action appliesTo:result])[self perform:action result:result application:nil];else NSBeep();
  return YES;
 }
-static BOOL Located(NSDictionary *result){return ![@[@"command",@"emoji",@"answer",@"clipboard"] containsObject:result[@"type"]];}
+static BOOL Located(NSDictionary *result){return ![@[@"command",@"emoji",@"answer",@"clipboard",@"url"] containsObject:result[@"type"]];}
 - (BOOL)action:(NSString *)action appliesTo:(NSDictionary *)result {
  if([action isEqual:@"quickLook"])return Located(result) && ![result[@"type"] isEqual:@"settings"];
  if([action isEqual:@"copyPath"])return Located(result);
@@ -319,7 +320,7 @@ static BOOL Located(NSDictionary *result){return ![@[@"command",@"emoji",@"answe
  NSMenuItem *(^add)(NSString *,NSString *,NSString *,NSEventModifierFlags)=^NSMenuItem *(NSString *title,NSString *action,NSString *key,NSEventModifierFlags flags){
   NSMenuItem *item=[menu addItemWithTitle:title action:@selector(chooseAction:) keyEquivalent:key];item.keyEquivalentModifierMask=flags;item.target=self;item.representedObject=@{@"result":result,@"action":action};return item;};
  NSString *type=result[@"type"];
- add(Located(result)?@"Open":[type isEqual:@"command"]?@"Run":[type isEqual:@"clipboard"]?@"Paste":@"Copy",@"open",@"\r",0);
+ add(Located(result) || [type isEqual:@"url"]?@"Open":[type isEqual:@"command"]?@"Run":[type isEqual:@"clipboard"]?@"Paste":@"Copy",@"open",@"\r",0);
  if([type isEqual:@"clipboard"]){add(@"Copy",@"reveal",@"\r",NSEventModifierFlagCommand);[menu addItem:NSMenuItem.separatorItem];add(@"Delete from History",@"forget",@"",0);return;}
  if(!Located(result))return;
  add(@"Reveal in Finder",@"reveal",@"\r",NSEventModifierFlagCommand);
@@ -358,7 +359,8 @@ static BOOL Located(NSDictionary *result){return ![@[@"command",@"emoji",@"answe
  }
  if([result[@"type"] isEqual:@"emoji"])[_usage recordQuery:_field.stringValue result:result];
  if(result[@"copy"]){Copy(result[@"copy"]);[self dismiss:YES];return;}
- [_usage recordQuery:_field.stringValue result:result];[self dismiss:[result[@"type"] isEqual:@"command"]];if(self.openResult)self.openResult(result,action,application);
+ // A web address exists only for the text typed, so it teaches the ranking nothing.
+ if(![result[@"type"] isEqual:@"url"])[_usage recordQuery:_field.stringValue result:result];[self dismiss:[result[@"type"] isEqual:@"command"]];if(self.openResult)self.openResult(result,action,application);
 }
 // Escape closes Quick Look before the panel; the ⌘K menu handles its own Escape.
 - (void)escape {if(QLPreviewPanel.sharedPreviewPanelExists && QLPreviewPanel.sharedPreviewPanel.isVisible)[QLPreviewPanel.sharedPreviewPanel orderOut:nil];else [self dismiss:YES];}

@@ -39,6 +39,7 @@ Press one shortcut. Type a few letters. Your app, file, answer, or emoji is alre
 | ⚙️ **Go to System Settings** | `storage`, `displays` | Open the pane |
 | 🧮 **Calculate** | `48*12`, `15% of 240`, `240 + 15%` | Copy the answer |
 | 📏 **Convert units** | `5 km to mi`, `72f to c` | Copy the answer |
+| 🌐 **Open websites** | `github.com`, `localhost:3000` | Open it in your browser |
 | 😀 **Find emoji** | `fire`, `happy`, `japan` | Copy the emoji |
 | 💤 **Run commands** | `sleep`, `restart`, `mute`, `dark`, `empty trash` | Run it |
 | 📋 **Paste from clipboard history** | Press ⌥⌘V | Paste it |

@@ -42,7 +42,7 @@ static NSString *const LicensePublicKey=@"BB1mBfflJqWXPJerDDR+MLSwGOCcP/HFGM8f+H
  _hotKey.invoked=^{[weak search:nil];};_historyKey.invoked=^{[weak history:nil];};_hotKey.other=_historyKey;_historyKey.other=_hotKey;
  // macOS sends no notice when the pasteboard changes, so its change count is read twice a second.
  _pasteboardTimer=[NSTimer scheduledTimerWithTimeInterval:0.5 repeats:YES block:^(NSTimer *timer){(void)timer;[weak readPasteboard];}];_pasteboardTimer.tolerance=0.25;
- _panel.openResult=^(NSDictionary *result,NSString *action,NSURL *application){[SHResultActions perform:action result:result application:application completion:^(NSString *error){SHAppDelegate *self=weak;if(error){[self->_panel showError:error];if(![@[@"command",@"clipboard"] containsObject:result[@"type"]])[self->_library refresh];}}];};
+ _panel.openResult=^(NSDictionary *result,NSString *action,NSURL *application){[SHResultActions perform:action result:result application:application completion:^(NSString *error){SHAppDelegate *self=weak;if(error){[self->_panel showError:error];if(![@[@"command",@"clipboard",@"url"] containsObject:result[@"type"]])[self->_library refresh];}}];};
  _library.updated=^(SHSearchSnapshot *snapshot,NSArray<NSDictionary *> *roots,NSString *message){
   SHAppDelegate *self=weak;if(!self)return;
   // The item count is shown in Settings; the panel shows only indexing and coverage notes.

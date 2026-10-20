@@ -12,7 +12,7 @@ A native macOS launcher: one panel on a global shortcut that finds apps, files, 
 | Command | Function |
 |---|---|
 | `scripts/build.sh [build number] [version]` | Compiles and signs `.build/Superhound.app` with the "Superhound" certificate from the keychain, or ad-hoc without it. Also writes the bundle's `Info.plist`. |
-| `scripts/test.sh` | Builds and runs the ten Objective-C test suites with sanitizers. Run it before each commit. |
+| `scripts/test.sh` | Builds and runs the eleven Objective-C test suites with sanitizers. Run it before each commit. |
 | `scripts/install.sh .build/Superhound.app` | Replaces the installed app. It refuses while Superhound is in operation, and it keeps the previous bundle. |
 | `scripts/release.sh <version> <build number>` | From a clean commit: runs the tests, builds with the certificate, makes `.build/release/<version>/Superhound.zip`, and prints its SHA-256, the publish commands, and the superhound-web release vars. It does not publish. |
 | `scripts/benchmark.sh` | Measures query time, memory, and catalog speed at 10,000 and 100,000 records. |
@@ -31,6 +31,7 @@ To see a change in the live app: build with a build number one above the install
 | `SHQueryController.m` | Runs searches off the main thread and drops results of an old query. |
 | `SHUsage.m` | Learned ranking. Records which result the user opened for which query, in `usage.plist`. |
 | `SHAnswer.m` | Quick answers: the arithmetic parser, percent rules, and the unit table. |
+| `SHWeb.m` | Web addresses typed in the search field: http and https URLs, localhost and IPv4 addresses with a port, and hosts with a common web ending (a list that leaves out file extensions such as .md and .sh). |
 | `SHEmoji.m` | Emoji search by name and keyword over `app/emoji.tsv`. |
 | `SHClipboard.m` | The clipboard history: the last 500 text copies, the skip rules for concealed and password copies, search, and `clipboard.plist`. |
 | `SHLicense.m` | The license of this Mac: the device ID, the check of the token that superhound.app signed, and `license.plist`. |
@@ -48,13 +49,13 @@ To see a change in the live app: build with a build number one above the install
 | File | Function |
 |---|---|
 | `SHAppDelegate.m` | Start-up wiring, the menu bar item and its menu, Open at Login, the pasteboard check twice a second for the clipboard history, the license, update, and About menu items, Uninstall Superhound… (frees the activation, gives ⌘Space back to Spotlight when Superhound took it, removes the login item, the data, the defaults, the app, and its kept previous versions), and `superhound://` links. |
-| `SHSearchPanelController.m` | The search panel and its clipboard history mode: the dark blurred borderless window, 600 pt wide, with a height that follows the rows (it grows at once and shrinks after 0.15 s); the shared columns (16 pt margin, 28 pt icon column, text at x 52); field (Return during a search opens the result when it arrives; Escape closes Quick Look before the panel), the label band ("Suggested", errors, no matches, indexing note), one-line app rows and two-line file rows with folder context, row order (answer, chosen before, apps, settings panes, and commands, emoji, clipboard items, files), keys, the action menu (⌘K and right-click), Quick Look, copy and open, the footer (key hints, the Update to and Activate license links, the logo and name, which open the menu bar menu), and the license reminder on every tenth opening (`unlicensedOpens` in the defaults). |
+| `SHSearchPanelController.m` | The search panel and its clipboard history mode: the dark blurred borderless window, 600 pt wide, with a height that follows the rows (it grows at once and shrinks after 0.15 s); the shared columns (16 pt margin, 28 pt icon column, text at x 52); field (Return during a search opens the result when it arrives; Escape closes Quick Look before the panel), the label band ("Suggested", errors, no matches, indexing note), one-line app rows and two-line file rows with folder context, row order (web address, answer, chosen before, apps, settings panes, and commands, emoji, clipboard items, files), keys, the action menu (⌘K and right-click), Quick Look, copy and open, the footer (key hints, the Update to and Activate license links, the logo and name, which open the menu bar menu), and the license reminder on every tenth opening (`unlicensedOpens` in the defaults). |
 | `SHSettingsController.m` | The Settings window (⌘,): the search locations with the item counts, the two shortcut recorders, and the switch Use ⌘Space in place of Spotlight. |
 | `SHHotKey.m` | Global shortcut registration, one object for each shortcut. It refuses the other shortcut's keys, and it keeps the previous keys when new keys fail to register. It also reads and writes Spotlight's ⌘Space shortcut in `com.apple.symbolichotkeys`, with a private call that applies the change at once. |
 | `SHFolderAccess.m` | Security-scoped bookmarks for the user's folders. |
 | `SHActivation.m` | Activation and deactivation requests to superhound.app, the license key window, and `superhound://activate?key=` links. The defaults key `licenseServer` points it at a local test server. |
 | `SHUpdater.m` | The daily update check, Check for Updates…, the download, and the relaunch. An update must meet the running app's designated requirement, so only a build signed with the "Superhound" certificate can update. Defaults keys: `updateCheckAutomatically`, `updateCheckedAt`; `licenseServer` also points it at a local test server. |
-| `SHResultActions.m` | Opens a result, opens it with another app, shows it in Finder, moves it to the Trash, runs the system commands, and pastes with a ⌘V key press. |
+| `SHResultActions.m` | Opens a result, opens a web address in the default browser, opens a result with another app, shows it in Finder, moves it to the Trash, runs the system commands, and pastes with a ⌘V key press. |
 | `emoji.tsv` | Generated emoji data: emoji, name, keywords. Do not edit by hand. |
 | `AppIcon.icns` | The app icon, made from `docs/media/superhound.png` |
 | `LogoTemplate.png` | The 36 px template logo for the panel footer, made from `docs/media/logo.png` |
@@ -65,6 +66,7 @@ To see a change in the live app: build with a build number one above the install
 |---|---|
 | `tests/search.m` | Ranking, typing errors, learned ranking, the query controller |
 | `tests/answer.m` | Calculator and unit conversion |
+| `tests/web.m` | Web addresses and the text that must not give one |
 | `tests/emoji.m` | Emoji search |
 | `tests/clipboard.m` | Clipboard history rules, search, limits, and its file |
 | `tests/license.m` | Device ID, token checks with a WebCrypto test token, and the license file |

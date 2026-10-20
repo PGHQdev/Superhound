@@ -7,6 +7,8 @@ xcrun clang "${flags[@]}" tests/search.m core/SHCommands.m core/SHSearchSnapshot
 .build/tests/search
 xcrun clang "${flags[@]}" tests/answer.m core/SHAnswer.m -framework Foundation -o .build/tests/answer
 .build/tests/answer
+xcrun clang "${flags[@]}" tests/web.m core/SHWeb.m -framework Foundation -o .build/tests/web
+.build/tests/web
 xcrun clang "${flags[@]}" tests/emoji.m core/SHEmoji.m core/SHSearchSnapshot.m core/sh_match.c -framework Foundation -framework CoreText -o .build/tests/emoji
 .build/tests/emoji app/emoji.tsv
 xcrun clang "${flags[@]}" tests/clipboard.m core/SHClipboard.m core/SHSearchSnapshot.m core/sh_match.c -framework Foundation -o .build/tests/clipboard
