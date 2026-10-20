@@ -1,6 +1,6 @@
 <div align="center">
 
-<a href="https://superhound.app"><img src="docs/media/banner.png" alt="Superhound: a fast launcher for macOS. Open apps and files, do quick math, find emoji, and paste from your clipboard history." width="100%"></a>
+<a href="https://superhound.app"><img src="docs/media/banner.png" alt="Superhound: the ultrafast Spotlight alternative for macOS. Open apps and files, do quick math, find emoji, and paste from your clipboard history." width="100%"></a>
 
 <br>
 
@@ -8,10 +8,12 @@
 [![macOS 15 or later](https://img.shields.io/badge/macOS-15%2B-111111?style=flat-square&logo=apple)](#-install)
 [![Apple Silicon](https://img.shields.io/badge/Apple%20Silicon-native-111111?style=flat-square)](#-install)
 [![Works offline](https://img.shields.io/badge/works-offline-34c759?style=flat-square)](#-privacy)
+[![Native Objective-C and C](https://img.shields.io/badge/native-Objective--C%20%26%20C-438eff?style=flat-square)](#-why-superhound)
+[![RAM consumption less than 45 MB](https://img.shields.io/badge/RAM-%3C%2045%20MB-34c759?style=flat-square)](#-why-superhound)
 [![Free to evaluate, license $15](https://img.shields.io/badge/free%20to%20evaluate-license%20%2415-ff9500?style=flat-square)](https://superhound.app)
 [![License: AGPL-3.0](https://img.shields.io/github/license/PGHQdev/Superhound?style=flat-square&color=555555)](LICENSE)
 
-### The fast Spotlight alternative for your Mac
+### The ultrafast Spotlight alternative for your Mac
 
 Press one shortcut. Type a few letters. Your app, file, answer, or emoji is already there.
 
@@ -25,8 +27,9 @@ Press one shortcut. Type a few letters. Your app, file, answer, or emoji is alre
 
 | | |
 |---|---|
-| ⚡ **Fast** | Searches 100,000 items in about 10 ms. Results appear while you type. |
-| 🪶 **Light** | Under 1 MB on disk, about 40 MB of memory. Native Mac code, no web views. |
+| ⚡ **Ultrafast** | Searches 100,000 items in about 10 ms. Results appear while you type. |
+| 🛠️ **Native** | Objective-C and C on AppKit, with a search matcher in C. No Electron, no web views, no third-party dependencies. |
+| 🪶 **Light** | RAM consumption less than 45 MB. Under 1 MB on disk. 0% CPU when idle. |
 | 🔒 **Private** | Works offline. Reads file names, never file contents. No account, no tracking. |
 | 🧠 **Smart** | Forgives typos, ignores accents, and learns which results you open. |
 | 💸 **Fair** | Free to evaluate, with every feature. License price: $15 once, for 3 Macs. No subscription. |
@@ -279,7 +282,7 @@ Measured on an Apple M1 with macOS 15.
 | Measure | Result |
 |---|---|
 | App size | 900 KiB |
-| Memory after launch | 28 to 42 MiB over 20 minutes |
+| RAM consumption after launch | 28 to 42 MiB over 20 minutes |
 | Search across 100,000 items | 9.6 ms median, 20.3 ms at the 95th percentile |
 
 The search time comes from a synthetic benchmark. The methods and all results are in [docs/prototype-validation.md](docs/prototype-validation.md).
