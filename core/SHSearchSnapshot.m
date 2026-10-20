@@ -137,11 +137,11 @@ typedef struct { NSUInteger index; unsigned learned,worst,total,pathTerms; size_
  }
 }
 - (BOOL)rank:(Ranked)a precedes:(Ranked)b {
+ // Exact matches precede typing-error matches, also when the user chose the typing-error match before; learned results lead within each group.
+ if((a.worst>4)!=(b.worst>4))return a.worst<=4;
  if(a.learned!=b.learned)return a.learned>b.learned;
  // An application, settings pane, or command matched by its name or alias precedes every file, folder, and link.
- // Exact matches precede typing-error matches; within each group, those results come first.
  BOOL aa=a.worst!=4 && (_records[a.index].flags&Launchable),ba=b.worst!=4 && (_records[b.index].flags&Launchable);
- if((a.worst>4)!=(b.worst>4))return a.worst<=4;
  if(aa!=ba)return aa;
  if(a.worst!=b.worst)return a.worst<b.worst;
  if(a.total!=b.total)return a.total<b.total;

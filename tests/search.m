@@ -62,6 +62,9 @@ int main(void) { @autoreleasepool {
  assert(([[[s search:@"code" preferred:[usage preferredForQuery:@"code"] cancelled:nil] valueForKey:@"id"] isEqual:@[@5,@2,@1,@3,@4]]));
  assert(([[[s search:@"cod" preferred:[usage preferredForQuery:@"cod"] cancelled:nil] valueForKey:@"id"] isEqual:@[@2,@5,@1,@3,@4]]));
  assert([[[s search:@"vsc" preferred:[usage preferredForQuery:@"vsc"] cancelled:nil] firstObject][@"id"] isEqual:@3]);
+ // A learned result reached only through a typing error stays below an exact match.
+ [usage recordQuery:@"main" result:typos[3]];
+ assert(([[[t search:@"main" preferred:[usage preferredForQuery:@"main"] cancelled:nil] valueForKey:@"id"] isEqual:@[@5,@4]]));
  assert(([[[s search:@"" preferred:[usage preferredForQuery:@""] cancelled:nil] valueForKey:@"id"] isEqual:@[@1,@3]]));
  [usage recordQuery:@"" result:entries[2]];
  assert(([[[s search:@"" preferred:[usage preferredForQuery:@""] cancelled:nil] valueForKey:@"id"] isEqual:@[@3,@1]]));
