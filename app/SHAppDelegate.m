@@ -7,10 +7,11 @@
 #import "SHMetrics.h"
 #import "SHClipboard.h"
 #import "SHActivation.h"
+#import "SHUpdater.h"
 #import <Carbon/Carbon.h>
 #import <ServiceManagement/ServiceManagement.h>
 @implementation SHAppDelegate {
- NSStatusItem *_statusItem;SHLibrary *_library;SHHotKey *_hotKey,*_historyKey;SHSettingsController *_settings;SHSearchPanelController *_panel;SHClipboard *_clipboard;NSInteger _pasteboardCount;NSTimer *_pasteboardTimer;SHLicense *_license;SHActivation *_activation;
+ NSStatusItem *_statusItem;SHLibrary *_library;SHHotKey *_hotKey,*_historyKey;SHSettingsController *_settings;SHSearchPanelController *_panel;SHClipboard *_clipboard;NSInteger _pasteboardCount;NSTimer *_pasteboardTimer;SHLicense *_license;SHActivation *_activation;SHUpdater *_updater;
 }
 // The public half of the key that superhound.app signs activations with.
 static NSString *const LicensePublicKey=@"BB1mBfflJqWXPJerDDR+MLSwGOCcP/HFGM8f+HPNMfzveASmPB5nxJDLeVq75oJGlcI+vaNjTXAJLArVLjLUFi4=";
@@ -36,6 +37,7 @@ static NSString *const LicensePublicKey=@"BB1mBfflJqWXPJerDDR+MLSwGOCcP/HFGM8f+H
  _clipboard=[[SHClipboard alloc] initWithURL:[state URLByAppendingPathComponent:@"clipboard.plist"]];_panel.clipboard=_clipboard;_pasteboardCount=NSPasteboard.generalPasteboard.changeCount;
  __weak typeof(self) weak=self;
  _activation.changed=^{SHAppDelegate *self=weak;if(self)self->_panel.licensed=self->_license.licensed;};
+ _updater=SHUpdater.new;_updater.changed=^{SHAppDelegate *self=weak;if(self)self->_panel.update=self->_updater.busy?nil:self->_updater.latest.version;};_panel.installUpdate=^{SHAppDelegate *self=weak;[self->_updater install];};
  _hotKey.invoked=^{[weak search:nil];};_historyKey.invoked=^{[weak history:nil];};
  // macOS sends no notice when the pasteboard changes, so its change count is read twice a second.
  _pasteboardTimer=[NSTimer scheduledTimerWithTimeInterval:0.5 repeats:YES block:^(NSTimer *timer){(void)timer;[weak readPasteboard];}];_pasteboardTimer.tolerance=0.25;
@@ -46,13 +48,13 @@ static NSString *const LicensePublicKey=@"BB1mBfflJqWXPJerDDR+MLSwGOCcP/HFGM8f+H
   NSString *status=[NSString stringWithFormat:@"%lu searchable items%@%@",(unsigned long)items,indexing?[NSString stringWithFormat:@" · %lu locations indexing",(unsigned long)indexing]:@"",unavailable?@" · Check Search Locations for coverage":@""];
   [self->_panel updateSnapshot:snapshot status:status];
  };
- NSMenu *menu=NSMenu.new;[menu addItemWithTitle:@"Search" action:@selector(search:) keyEquivalent:@""];[menu addItemWithTitle:@"Clipboard History" action:@selector(history:) keyEquivalent:@""];[menu addItemWithTitle:@"Search Locations…" action:@selector(settings:) keyEquivalent:@","];[menu addItemWithTitle:@"Refresh Catalog" action:@selector(refresh:) keyEquivalent:@""];[menu addItemWithTitle:@"Clear Clipboard History" action:@selector(clearHistory:) keyEquivalent:@""];[menu addItemWithTitle:@"Open at Login" action:@selector(loginItem:) keyEquivalent:@""];[menu addItemWithTitle:@"Enter License…" action:@selector(license:) keyEquivalent:@""];[menu addItem:NSMenuItem.separatorItem];[menu addItemWithTitle:@"Quit Superhound" action:@selector(terminate:) keyEquivalent:@"q"];
+ NSMenu *menu=NSMenu.new;[menu addItemWithTitle:@"Update" action:@selector(installUpdate:) keyEquivalent:@""];[menu addItemWithTitle:@"Search" action:@selector(search:) keyEquivalent:@""];[menu addItemWithTitle:@"Clipboard History" action:@selector(history:) keyEquivalent:@""];[menu addItemWithTitle:@"Search Locations…" action:@selector(settings:) keyEquivalent:@","];[menu addItemWithTitle:@"Refresh Catalog" action:@selector(refresh:) keyEquivalent:@""];[menu addItemWithTitle:@"Clear Clipboard History" action:@selector(clearHistory:) keyEquivalent:@""];[menu addItemWithTitle:@"Open at Login" action:@selector(loginItem:) keyEquivalent:@""];[menu addItemWithTitle:@"Enter License…" action:@selector(license:) keyEquivalent:@""];[menu addItem:NSMenuItem.separatorItem];[menu addItemWithTitle:@"About Superhound" action:@selector(about:) keyEquivalent:@""];[menu addItemWithTitle:@"Check for Updates…" action:@selector(checkUpdates:) keyEquivalent:@""];[menu addItemWithTitle:@"Check for Updates Automatically" action:@selector(automaticUpdates:) keyEquivalent:@""];[menu addItem:NSMenuItem.separatorItem];[menu addItemWithTitle:@"Quit Superhound" action:@selector(terminate:) keyEquivalent:@"q"];
  for(NSMenuItem *item in menu.itemArray)if(item.action!=@selector(terminate:))item.target=self;
  _statusItem=[NSStatusBar.systemStatusBar statusItemWithLength:NSVariableStatusItemLength];_statusItem.button.image=[NSImage imageWithSystemSymbolName:@"magnifyingglass.circle.fill" accessibilityDescription:@"Superhound"];_statusItem.button.accessibilityIdentifier=@"superhound.menu";_statusItem.button.toolTip=@"Superhound — Search apps and files";_statusItem.menu=menu;
  NSMenu *main=NSMenu.new;NSMenuItem *app=NSMenuItem.new;app.submenu=[menu copy];[main addItem:app];
  NSMenuItem *edit=NSMenuItem.new;edit.title=@"Edit";NSMenu *editMenu=[[NSMenu alloc] initWithTitle:@"Edit"];[editMenu addItemWithTitle:@"Cut" action:@selector(cut:) keyEquivalent:@"x"];[editMenu addItemWithTitle:@"Copy" action:@selector(copy:) keyEquivalent:@"c"];[editMenu addItemWithTitle:@"Paste" action:@selector(paste:) keyEquivalent:@"v"];[editMenu addItemWithTitle:@"Select All" action:@selector(selectAll:) keyEquivalent:@"a"];edit.submenu=editMenu;[main addItem:edit];NSApp.mainMenu=main;
  [NSWorkspace.sharedWorkspace.notificationCenter addObserver:self selector:@selector(wake:) name:NSWorkspaceDidWakeNotification object:nil];
- [_library start];
+ [_library start];[_updater start];
  if(![NSUserDefaults.standardUserDefaults boolForKey:@"setupShown"]){[_settings show];[NSUserDefaults.standardUserDefaults setBool:YES forKey:@"setupShown"];}
  // Registered once; later launches respect the choice made in the menu or System Settings.
  if(![NSUserDefaults.standardUserDefaults boolForKey:@"loginItemOffered"]){[SMAppService.mainAppService registerAndReturnError:nil];[NSUserDefaults.standardUserDefaults setBool:YES forKey:@"loginItemOffered"];}
@@ -71,13 +73,24 @@ static NSString *const LicensePublicKey=@"BB1mBfflJqWXPJerDDR+MLSwGOCcP/HFGM8f+H
  [_clipboard addText:[board stringForType:NSPasteboardTypeString] types:types application:own?nil:front.bundleIdentifier source:own?@"Superhound":front.localizedName];
 }
 - (void)license:(id)sender {(void)sender;if(_license.licensed)[_activation deactivate];else [_activation enterKey:nil];}
+- (void)installUpdate:(id)sender {(void)sender;[_updater install];}
+- (void)checkUpdates:(id)sender {(void)sender;[_updater check];}
+- (void)automaticUpdates:(id)sender {(void)sender;_updater.automatic=!_updater.automatic;}
+- (void)about:(id)sender {
+ (void)sender;[NSApp activateIgnoringOtherApps:YES];
+ NSString *credits=_license.licensed?@"Licensed for this Mac.":@"Unlicensed. A license is $19 for 3 Macs at superhound.app.";
+ [NSApp orderFrontStandardAboutPanelWithOptions:@{NSAboutPanelOptionCredits:[[NSAttributedString alloc] initWithString:credits attributes:@{NSFontAttributeName:[NSFont systemFontOfSize:11],NSForegroundColorAttributeName:NSColor.secondaryLabelColor}]}];
+}
 - (void)settings:(id)sender {(void)sender;[_settings show];}
 - (void)refresh:(id)sender {(void)sender;[_library refresh];}
 - (void)loginItem:(id)sender {
  (void)sender;SMAppService *service=SMAppService.mainAppService;NSError *error=nil;
  if(!(service.status==SMAppServiceStatusEnabled?[service unregisterAndReturnError:&error]:[service registerAndReturnError:&error]))[_panel showError:[NSString stringWithFormat:@"Open at Login could not be changed. %@",error.localizedDescription]];
 }
-- (BOOL)validateMenuItem:(NSMenuItem *)item {if(item.action==@selector(license:))item.title=_license.licensed?@"Deactivate License…":@"Enter License…";if(item.action==@selector(clearHistory:))return _clipboard.count>0;if(item.action==@selector(loginItem:))item.state=SMAppService.mainAppService.status==SMAppServiceStatusEnabled?NSControlStateValueOn:NSControlStateValueOff;return YES;}
+- (BOOL)validateMenuItem:(NSMenuItem *)item {
+ if(item.action==@selector(installUpdate:)){item.hidden=!_updater.latest;item.title=_updater.latest?[NSString stringWithFormat:@"Update to %@…",_updater.latest.version]:@"Update";return !_updater.busy;}
+ if(item.action==@selector(checkUpdates:))return !_updater.busy;if(item.action==@selector(automaticUpdates:)){item.hidden=!_updater.supported;item.state=_updater.automatic?NSControlStateValueOn:NSControlStateValueOff;}
+ if(item.action==@selector(license:))item.title=_license.licensed?@"Deactivate License…":@"Enter License…";if(item.action==@selector(clearHistory:))return _clipboard.count>0;if(item.action==@selector(loginItem:))item.state=SMAppService.mainAppService.status==SMAppServiceStatusEnabled?NSControlStateValueOn:NSControlStateValueOff;return YES;}
 - (void)wake:(NSNotification *)notification {(void)notification;[_library refresh];}
 - (BOOL)applicationShouldHandleReopen:(NSApplication *)sender hasVisibleWindows:(BOOL)flag {(void)sender;(void)flag;[_panel toggle];return NO;}
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender {(void)sender;return NO;}

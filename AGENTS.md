@@ -12,7 +12,7 @@ A native macOS launcher: one panel on a global shortcut that finds apps, files, 
 | Command | Function |
 |---|---|
 | `scripts/build.sh [build number] [version]` | Compiles and signs `.build/Superhound.app` with the "Superhound" certificate from the keychain, or ad-hoc without it. Also writes the bundle's `Info.plist`. |
-| `scripts/test.sh` | Builds and runs the eight Objective-C test suites with sanitizers. Run it before each commit. |
+| `scripts/test.sh` | Builds and runs the nine Objective-C test suites with sanitizers. Run it before each commit. |
 | `scripts/install.sh .build/Superhound.app` | Replaces the installed app. It refuses while Superhound is in operation, and it keeps the previous bundle. |
 | `scripts/release.sh <version> <build number>` | From a clean commit: runs the tests, builds with the certificate, makes `.build/release/<version>/Superhound.zip`, and prints its SHA-256, the publish commands, and the superhound-web release vars. It does not publish. |
 | `scripts/benchmark.sh` | Measures query time, memory, and catalog speed at 10,000 and 100,000 records. |
@@ -34,6 +34,7 @@ To see a change in the live app: build with a build number one above the install
 | `SHEmoji.m` | Emoji search by name and keyword over `app/emoji.tsv`. |
 | `SHClipboard.m` | The clipboard history: the last 500 text copies, the skip rules for concealed and password copies, search, and `clipboard.plist`. |
 | `SHLicense.m` | The license of this Mac: the device ID, the check of the token that superhound.app signed, and `license.plist`. |
+| `SHUpdate.m` | Updates: the release file from `/api/latest`, the once-a-day rule, and the install of a downloaded zip (SHA-256, build number, signature check against a requirement, swap with a kept previous app). |
 | `SHCommands.m` | The system commands (Lock Screen, Sleep, Restart, Toggle Mute, Empty Trash, and others) as search entries. `SHLibrary` adds them to each snapshot. |
 | `SHLibrary.m` | Owns the search locations: the fixed app folders, the user's folders, scans, overlap between folders, and snapshot publication. |
 | `SHScanner.m` | Walks one folder and makes entries. Holds the skip rules (hidden items, packages, generated folders, online-only files). |
@@ -45,12 +46,13 @@ To see a change in the live app: build with a build number one above the install
 
 | File | Function |
 |---|---|
-| `SHAppDelegate.m` | Start-up wiring, the menu bar item and its menu, Open at Login, the pasteboard check twice a second for the clipboard history, the license menu item, and `superhound://` links. |
-| `SHSearchPanelController.m` | The search panel and its clipboard history mode: field, result rows, row order (answer, chosen before, apps, settings panes, and commands, emoji, clipboard items, files), keys, the action menu (⌘K and right-click), Quick Look, copy and open, the UNLICENSED link to the left of the wordmark, and the license reminder on every tenth opening (`unlicensedOpens` in the defaults). |
+| `SHAppDelegate.m` | Start-up wiring, the menu bar item and its menu, Open at Login, the pasteboard check twice a second for the clipboard history, the license, update, and About menu items, and `superhound://` links. |
+| `SHSearchPanelController.m` | The search panel and its clipboard history mode: field, result rows, row order (answer, chosen before, apps, settings panes, and commands, emoji, clipboard items, files), keys, the action menu (⌘K and right-click), Quick Look, copy and open, the UPDATE TO and UNLICENSED links to the left of the wordmark, and the license reminder on every tenth opening (`unlicensedOpens` in the defaults). |
 | `SHSettingsController.m` | The Search Locations window and the two shortcut recorders. |
 | `SHHotKey.m` | Global shortcut registration, one object for each shortcut. |
 | `SHFolderAccess.m` | Security-scoped bookmarks for the user's folders. |
 | `SHActivation.m` | Activation and deactivation requests to superhound.app, the license key window, and `superhound://activate?key=` links. The defaults key `licenseServer` points it at a local test server. |
+| `SHUpdater.m` | The daily update check, Check for Updates…, the download, and the relaunch. An update must meet the running app's designated requirement, so only a build signed with the "Superhound" certificate can update. Defaults keys: `updateCheckAutomatically`, `updateCheckedAt`; `licenseServer` also points it at a local test server. |
 | `SHResultActions.m` | Opens a result, opens it with another app, shows it in Finder, moves it to the Trash, runs the system commands, and pastes with a ⌘V key press. |
 | `emoji.tsv` | Generated emoji data: emoji, name, keywords. Do not edit by hand. |
 | `AppIcon.icns` | The app icon, made from `docs/media/superhound.png` |
@@ -64,6 +66,7 @@ To see a change in the live app: build with a build number one above the install
 | `tests/emoji.m` | Emoji search |
 | `tests/clipboard.m` | Clipboard history rules, search, limits, and its file |
 | `tests/license.m` | Device ID, token checks with a WebCrypto test token, and the license file |
+| `tests/update.m` | The release file, the daily rule, and installs of signed test bundles, with each failure case |
 | `tests/catalog.m` | Scanner rules and the SQLite cache |
 | `tests/library.m` | Search locations with live file changes |
 | `tests/snapshot-equivalence.m` | 40 result sets compared with `snapshot-equivalence.expected`. A ranking change needs a reviewed update of that file. |
@@ -98,7 +101,7 @@ All in `~/Library/Application Support/Superhound/`:
 ## Conventions
 
 - Match the dense one-line style of the current Objective-C files.
-- The app makes no network request, except license activation and deactivation in `SHActivation.m`. Keep everything else offline.
+- The app makes two kinds of network request: license activation and deactivation in `SHActivation.m`, and the daily update check and download in `SHUpdater.m`. Neither sends personal data other than the license key and device ID at activation. Keep everything else offline.
 - The private signing key for activation tokens is `~/.config/superhound/license-signing-key.jwk`. Never print it or copy it into a repository.
 - The code signing certificate is "Superhound" in the login keychain (self-signed, until 2046), with copies in `~/.config/superhound/codesign-key.pem` and `codesign-cert.pem`. Never print the key or copy it into a repository. A different certificate makes macOS ask every user again for the Documents and Accessibility permissions.
 - Add tests for changes to `core/`. The panel window has no automated test; state when a change was not seen on screen.

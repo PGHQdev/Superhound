@@ -13,6 +13,9 @@ extern NSString *const SHOwnCopyType;
 @property(nonatomic,strong) SHClipboard *clipboard;
 // NO shows the UNLICENSED link and the reminder on every tenth opening.
 @property(nonatomic) BOOL licensed;
+// A newer version shows an UPDATE TO link in the footer; installUpdate runs when the user clicks it.
+@property(nonatomic,copy) NSString *update;
+@property(nonatomic,copy) void (^installUpdate)(void);
 - (instancetype)initWithQueries:(SHQueryController *)queries;
 - (void)toggle;
 // Shows the panel with the clipboard history only; Return pastes into the app that was in front.

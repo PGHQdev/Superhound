@@ -13,6 +13,8 @@ xcrun clang "${flags[@]}" tests/clipboard.m core/SHClipboard.m core/SHSearchSnap
 .build/tests/clipboard
 xcrun clang "${flags[@]}" tests/license.m core/SHLicense.m -framework Foundation -framework Security -o .build/tests/license
 .build/tests/license
+xcrun clang "${flags[@]}" tests/update.m core/SHUpdate.m -framework Foundation -framework Security -o .build/tests/update
+.build/tests/update
 if [[ -f tests/catalog.m ]]; then
  xcrun clang "${flags[@]}" tests/catalog.m core/SHCatalog.m core/SHScanner.m app/SHFolderAccess.m -framework Foundation -lsqlite3 -o .build/tests/catalog
  .build/tests/catalog

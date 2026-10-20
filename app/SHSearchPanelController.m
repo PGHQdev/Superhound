@@ -42,7 +42,8 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  NSMutableSet *_loadingIcons;
  dispatch_queue_t _iconQueue;
  NSURL *_preview;
- NSButton *_unlicensed;
+ NSButton *_unlicensed,*_updateLink;
+ CGFloat _markLeft;
 }
 - (instancetype)initWithQueries:(SHQueryController *)queries {
  SHPanel *panel=[[SHPanel alloc] initWithContentRect:NSMakeRect(0,0,640,516) styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskFullSizeContentView backing:NSBackingStoreBuffered defer:NO];
@@ -65,11 +66,25 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  NSMutableParagraphStyle *right=NSMutableParagraphStyle.new;right.alignment=NSTextAlignmentRight;
  NSTextField *mark=[NSTextField labelWithAttributedString:[[NSAttributedString alloc] initWithString:@"SUPERHOUND" attributes:@{NSFontAttributeName:[NSFont systemFontOfSize:10 weight:NSFontWeightSemibold],NSKernAttributeName:@2,NSForegroundColorAttributeName:NSColor.tertiaryLabelColor,NSParagraphStyleAttributeName:right}]];mark.frame=NSMakeRect(478,14,140,18);mark.accessibilityElement=NO;[view addSubview:mark];
  NSButton *unlicensed=_unlicensed=[NSButton buttonWithTitle:@"" target:self action:@selector(buy:)];unlicensed.bordered=NO;unlicensed.attributedTitle=[[NSAttributedString alloc] initWithString:@"UNLICENSED" attributes:@{NSFontAttributeName:[NSFont systemFontOfSize:10 weight:NSFontWeightSemibold],NSKernAttributeName:@2,NSForegroundColorAttributeName:NSColor.systemOrangeColor}];
- CGFloat markLeft=618-ceil(mark.attributedStringValue.size.width),width=ceil(unlicensed.attributedTitle.size.width);unlicensed.frame=NSMakeRect(markLeft-14-width,14,width,18);unlicensed.toolTip=@"This copy of Superhound is unlicensed. Click to buy a license.";unlicensed.accessibilityLabel=@"Unlicensed. Buy a license";[view addSubview:unlicensed];
- _help.frame=NSMakeRect(22,14,NSMinX(unlicensed.frame)-30,18);
+ _markLeft=618-ceil(mark.attributedStringValue.size.width);unlicensed.toolTip=@"This copy of Superhound is unlicensed. Click to buy a license.";unlicensed.accessibilityLabel=@"Unlicensed. Buy a license";[view addSubview:unlicensed];
+ _updateLink=[NSButton buttonWithTitle:@"" target:self action:@selector(openUpdate:)];_updateLink.bordered=NO;_updateLink.hidden=YES;[view addSubview:_updateLink];
+ [self layoutFooter];
  return self;
 }
-- (void)setLicensed:(BOOL)licensed {_licensed=licensed;_unlicensed.hidden=licensed;}
+// The links sit right to left from the wordmark; the key help takes the rest of the line, without ⌘↩ when both links show.
+- (void)layoutFooter {
+ CGFloat left=_markLeft;for(NSButton *link in @[_unlicensed,_updateLink])if(!link.hidden){CGFloat width=ceil(link.attributedTitle.size.width);left-=14+width;link.frame=NSMakeRect(left,14,width,18);}
+ _help.frame=NSMakeRect(22,14,left-30,18);
+ NSString *full=_history?@"↑ ↓ Move    ↩ Paste    ⌘↩ Copy    ⌘K Actions    Esc Close":@"↑ ↓ Move    ↩ Open    ⌘↩ Reveal in Finder    ⌘K Actions    Esc Close";
+ _help.stringValue=[full sizeWithAttributes:@{NSFontAttributeName:_help.font}].width<=NSWidth(_help.frame)?full:_history?@"↑ ↓ Move    ↩ Paste    ⌘K Actions    Esc Close":@"↑ ↓ Move    ↩ Open    ⌘K Actions    Esc Close";
+}
+- (void)setLicensed:(BOOL)licensed {_licensed=licensed;_unlicensed.hidden=licensed;[self layoutFooter];}
+- (void)setUpdate:(NSString *)update {
+ _update=[update copy];_updateLink.hidden=!update;
+ if(update){_updateLink.attributedTitle=[[NSAttributedString alloc] initWithString:[@"UPDATE TO " stringByAppendingString:update] attributes:@{NSFontAttributeName:[NSFont systemFontOfSize:10 weight:NSFontWeightSemibold],NSKernAttributeName:@2,NSForegroundColorAttributeName:NSColor.controlAccentColor}];_updateLink.toolTip=[NSString stringWithFormat:@"Superhound %@ is available. Click to install it.",update];_updateLink.accessibilityLabel=_updateLink.toolTip;}
+ [self layoutFooter];
+}
+- (void)openUpdate:(id)sender {(void)sender;[self dismiss:NO];if(self.installUpdate)self.installUpdate();}
 - (void)buy:(id)sender {(void)sender;[self dismiss:NO];[NSWorkspace.sharedWorkspace openURL:[NSURL URLWithString:@"https://superhound.app/buy"]];}
 - (void)toggle {[self show:NO];}
 - (void)toggleHistory {[self show:YES];}
@@ -80,7 +95,7 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  if(!open)_previous=NSWorkspace.sharedWorkspace.frontmostApplication;
  if(_history!=history){_history=history;_field.stringValue=@"";_error=nil;[_queries cancel];}
  _field.placeholderString=history?@"Search clipboard history":@"Search apps and files";_field.accessibilityLabel=history?@"Search clipboard history":@"Search apps and selected folders";
- _help.stringValue=history?@"↑ ↓ Move    ↩ Paste    ⌘↩ Copy    ⌘K Actions    Esc Close":@"↑ ↓ Move    ↩ Open    ⌘↩ Reveal in Finder    ⌘K Actions    Esc Close";
+ [self layoutFooter];
  NSScreen *screen=NSScreen.mainScreen?:NSScreen.screens.firstObject;
  NSPoint mouse=NSEvent.mouseLocation;for(NSScreen *candidate in NSScreen.screens)if(NSPointInRect(mouse,candidate.frame)){screen=candidate;break;}
  NSRect frame=screen.visibleFrame;[self.window setFrameOrigin:NSMakePoint(NSMidX(frame)-320,NSMaxY(frame)-MIN(frame.size.height-20,100+516))];

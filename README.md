@@ -33,6 +33,26 @@ Search ignores case and accents, accepts small typing errors, and learns which r
 
 ## Install
 
+Paste this in Terminal:
+
+```sh
+curl -fsSL https://superhound.app/install | sh
+```
+
+The command downloads Superhound, checks the download against the published SHA-256, puts Superhound in `~/Applications`, and opens it.
+
+A magnifying glass appears in the menu bar. Choose **Search** to open the panel. Superhound opens at login; turn this off with **Open at Login** in the same menu.
+
+Superhound works fully without a license and shows an unlicensed reminder. A license is a one-time payment of $19 for 3 Macs at [superhound.app](https://superhound.app). To activate one, choose **Enter License…** in the same menu. To move a license to another Mac, choose **Deactivate License…** on the old Mac first.
+
+### Updates
+
+Superhound checks for a new version once a day. When there is one, the panel shows **UPDATE TO** and the menu shows **Update to…**. Superhound downloads the update, checks that it has the Superhound signature, and opens again. It keeps the previous version in `~/Applications/.superhound-backup.*`. To go back, quit Superhound and put that `previous.app` in place of `~/Applications/Superhound.app`.
+
+To turn off the daily check, turn off **Check for Updates Automatically** in the menu. **Check for Updates…** checks at once.
+
+### Build from source
+
 You need the Apple Command Line Tools (`xcode-select --install`). Nothing else.
 
 ```sh
@@ -43,11 +63,13 @@ scripts/install.sh .build/Superhound.app
 open ~/Applications/Superhound.app
 ```
 
-A magnifying glass appears in the menu bar. Choose **Search** to open the panel. Superhound opens at login; turn this off with **Open at Login** in the same menu.
+A build from source cannot update itself. To update it, pull the latest code, quit Superhound, and run the same build and install commands.
 
-Superhound works fully without a license and shows an unlicensed reminder. A license is a one-time payment of $19 for 3 Macs. To activate one, choose **Enter License…** in the same menu.
+### Uninstall
 
-To update, pull the latest code, quit Superhound, and run the same build and install commands. The installer keeps the previous version in `~/Applications/.superhound-backup.*`. To go back, quit Superhound and install that `previous.app`.
+1. If this Mac has a license, choose **Deactivate License…** to free the activation.
+2. Quit Superhound.
+3. Delete `~/Applications/Superhound.app` and `~/Library/Application Support/Superhound/`.
 
 <details>
 <summary><b>Open Superhound with ⌘Space</b></summary>
@@ -113,7 +135,7 @@ Restart, Shut Down, and Log Out show the macOS confirmation first. Empty Trash a
 
 ## Privacy
 
-Superhound works offline. To activate a license, it sends the license key and a one-way device ID to superhound.app. All of its data stays in `~/Library/Application Support/Superhound/`:
+Superhound works offline. Once a day it asks superhound.app for the latest version; this request carries no license key and no device ID, and **Check for Updates Automatically** turns it off. A build from source does not check. To activate a license, it sends the license key and a one-way device ID to superhound.app. All of its data stays in `~/Library/Application Support/Superhound/`:
 
 | File | Content |
 |---|---|
@@ -141,7 +163,7 @@ The search time comes from a synthetic benchmark. The methods and all results ar
 Superhound is written in Objective-C and C with AppKit, SQLite, and FSEvents. It has no third-party dependencies.
 
 ```sh
-scripts/test.sh       # eight test suites with AddressSanitizer and UndefinedBehaviorSanitizer
+scripts/test.sh       # nine test suites with AddressSanitizer and UndefinedBehaviorSanitizer
 scripts/benchmark.sh  # search and catalog speed at 10,000 and 100,000 items
 tests/install.sh      # installer checks; quit Superhound first
 ```
@@ -152,13 +174,13 @@ tests/install.sh      # installer checks; quit Superhound first
 | `app/` | The panel, the settings window, shortcuts, and macOS actions |
 | `tests/` | Test suites for `core/` and the installer |
 | `bench/` | Benchmark programs |
-| `scripts/` | Build, test, install, and benchmark |
+| `scripts/` | Build, test, install, release, and benchmark |
 
 [AGENTS.md](AGENTS.md) describes each file. The first design and plan are in [docs/superpowers](docs/superpowers).
 
 ## Status
 
-Superhound is an early version. There is no signed download yet, so you build it from source.
+Superhound is an early version.
 
 ## License
 
