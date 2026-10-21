@@ -126,7 +126,7 @@ If your files do not show up, add their folders in **Settings…** and click **A
 | Tab or → | Keep the completion of the top result. Turn on **Complete the top result as you type** in **Settings…** first; it is off by default. |
 | Esc | Close |
 
-Right-click a result for the same actions as ⌘K. Click the logo at the bottom of the panel for the menu.
+Click or tap a result to open it, and ⌘-click to show it in Finder. Right-click a result for the same actions as ⌘K. Click the logo at the bottom of the panel for the menu.
 
 ## 🔒 Privacy
 
