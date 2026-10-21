@@ -3,13 +3,36 @@
 #include <stdlib.h>
 // op: an operator or function was used, so a plain number gives no answer.
 // percent: the value just parsed is a bare percent such as "15%".
-typedef struct { const unichar *s; NSUInteger n,i; BOOL ok,op,percent; } Parser;
+// comma: the locale writes a decimal comma, so "1,234" is one point two three four.
+typedef struct { const unichar *s; NSUInteger n,i; BOOL ok,op,percent,comma; } Parser;
 static double Expression(Parser *p);
 static double Unary(Parser *p);
 static unichar Peek(Parser *p) {while(p->i<p->n && p->s[p->i]==' ')p->i++;return p->i<p->n?p->s[p->i]:0;}
 static BOOL Letter(unichar c) {return c<128 && ((c>='a' && c<='z') || (c>='A' && c<='Z'));}
 static BOOL Digit(unichar c) {return c>='0' && c<='9';}
 static BOOL StartsValue(unichar c) {return Digit(c) || c=='.' || c=='(';}
+// Turns typed digits with commas and points into the form strtod reads, or returns NO.
+// The last of two kinds of separator is the decimal one ("1,234.5", "1.234,5"). A lone comma is decimal unless 3 digits follow it
+// and the locale writes a decimal point ("1,5", "1,200"). Group separators must have 3 digits after each.
+static BOOL Number(const char *raw,BOOL comma,char *out) {
+ size_t n=strlen(raw),commas=0,points=0,lastComma=0,lastPoint=0;
+ for(size_t i=0;i<n;i++){if(raw[i]==',')commas++,lastComma=i;else if(raw[i]=='.')points++,lastPoint=i;}
+ char decimal='.',group=0;
+ if(commas && points){decimal=lastComma>lastPoint?',':'.';group=decimal==','?'.':',';}
+ else if(commas==1){if(comma || n-lastComma-1!=3)decimal=',';else group=',';}
+ else if(commas)group=',';
+ else if(points>1)group='.';
+ size_t k=0,run=0;BOOL grouped=NO,fraction=NO;
+ for(size_t i=0;i<n;i++){
+  char c=raw[i];
+  if(c==group){if(fraction || (grouped && run!=3) || (!grouped && (run<1 || run>3)))return NO;grouped=YES;run=0;}
+  else if(c==decimal){if(fraction || (grouped && run!=3))return NO;fraction=YES;out[k++]='.';}
+  else if(Digit((unichar)c)){out[k++]=c;run++;}
+  else return NO;
+ }
+ if(grouped && !fraction && run!=3)return NO;
+ out[k]=0;return YES;
+}
 static BOOL Word(Parser *p,const char *word) {
  Peek(p);NSUInteger k=p->i;
  for(;*word;word++,k++)if(k>=p->n || (p->s[k]|32)!=(unichar)*word)return NO;
@@ -23,12 +46,12 @@ static double Primary(Parser *p) {
   char digits[64];size_t length=0;BOOL any=NO;
   while(p->i<p->n && length<63){
    c=p->s[p->i];
-   if(Digit(c)){digits[length++]=(char)c;any=YES;}
-   else if(c=='.')digits[length++]='.';
-   else if(!(c==',' && p->i+1<p->n && Digit(p->s[p->i+1])))break;
-   p->i++;
+   if(Digit(c))any=YES;
+   else if(c!='.' && !(c==',' && p->i+1<p->n && Digit(p->s[p->i+1])))break;
+   digits[length++]=(char)c;p->i++;
   }
-  digits[length]=0;char *end=NULL;double v=strtod(digits,&end);if(!any || *end)p->ok=NO;return v;
+  digits[length]=0;char number[64],*end=NULL;if(!any || !Number(digits,p->comma,number)){p->ok=NO;return 0;}
+  double v=strtod(number,&end);if(*end)p->ok=NO;return v;
  }
  static const char *names[]={"sqrt","abs","round","floor","ceil","sin","cos","tan","ln","log"};
  for(int f=0;f<10;f++)if(Word(p,names[f])){
@@ -86,15 +109,15 @@ static double Expression(Parser *p) {
  }
  return v;
 }
-static BOOL Evaluate(NSString *text,BOOL needsOperator,double *value) {
+static BOOL Evaluate(NSString *text,BOOL needsOperator,BOOL comma,double *value) {
  NSUInteger n=text.length;if(!n || n>200)return NO;
  unichar buffer[200];[text getCharacters:buffer range:NSMakeRange(0,n)];
- Parser p={buffer,n,0,YES,NO,NO};double v=Expression(&p);Peek(&p);
+ Parser p={buffer,n,0,YES,NO,NO,comma};double v=Expression(&p);Peek(&p);
  if(!p.ok || p.i!=n || (needsOperator && !p.op) || !isfinite(v))return NO;
  *value=v;return YES;
 }
-static NSString *Format(double value,BOOL grouping) {
- NSNumberFormatter *f=NSNumberFormatter.new;f.locale=[NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];f.numberStyle=NSNumberFormatterDecimalStyle;
+static NSString *Format(double value,BOOL grouping,NSLocale *locale) {
+ NSNumberFormatter *f=NSNumberFormatter.new;f.locale=locale;f.numberStyle=NSNumberFormatterDecimalStyle;
  f.usesSignificantDigits=YES;f.minimumSignificantDigits=1;f.maximumSignificantDigits=10;f.usesGroupingSeparator=grouping;
  if(value!=0 && (fabs(value)>=1e15 || fabs(value)<1e-9))f.numberStyle=NSNumberFormatterScientificStyle;
  return [f stringFromNumber:@(value==0?0:value)];
@@ -166,12 +189,14 @@ static NSArray<NSString *> *ColorForms(const int rgb[3]) {
  return @[[NSString stringWithFormat:@"#%02X%02X%02X",rgb[0],rgb[1],rgb[2]],[NSString stringWithFormat:@"rgb(%d, %d, %d)",rgb[0],rgb[1],rgb[2]],[NSString stringWithFormat:@"hsl(%ld, %ld%%, %ld%%)",lround(h*60)%360,lround(s*100),lround(l*100)]];
 }
 @implementation SHAnswer
-+ (NSDictionary *)answerForQuery:(NSString *)query {
++ (NSDictionary *)answerForQuery:(NSString *)query {return [self answerForQuery:query locale:NSLocale.autoupdatingCurrentLocale];}
++ (NSDictionary *)answerForQuery:(NSString *)query locale:(NSLocale *)locale {
+ BOOL comma=[locale.decimalSeparator isEqual:@","];
  NSMutableArray<NSString *> *words=NSMutableArray.array;
  for(NSString *w in [query componentsSeparatedByCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet])if(w.length)[words addObject:w];
  if(!words.count)return nil;
  NSString *input=[words componentsJoinedByString:@" "];double value=0;
- if(Evaluate(input,YES,&value))return @{@"type":@"answer",@"id":@"answer",@"name":[@"= " stringByAppendingString:Format(value,YES)],@"copy":Format(value,NO),@"detail":input};
+ if(Evaluate(input,YES,comma,&value))return @{@"type":@"answer",@"id":@"answer",@"name":[@"= " stringByAppendingString:Format(value,YES,locale)],@"copy":Format(value,NO,locale),@"detail":input};
  // A colour shows in another form: a hex value as rgb, and rgb or hsl as hex.
  int rgb[3];BOOL hex=NO;
  if(Color(input,rgb,&hex)){NSArray *forms=ColorForms(rgb);NSString *shown=hex?forms[1]:forms[0];return @{@"type":@"answer",@"id":@"answer",@"name":shown,@"copy":shown,@"detail":input,@"color":forms[0],@"formats":forms};}
@@ -183,9 +208,9 @@ static NSArray<NSString *> *ColorForms(const int rgb[3]) {
  while(split>0 && ([NSCharacterSet.letterCharacterSet characterIsMember:[source characterAtIndex:split-1]] || [source characterAtIndex:split-1]==0xB0))split--;
  NSArray *from=Unit([source substringFromIndex:split]);
  NSString *amount=[[source substringToIndex:split] stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceCharacterSet];
- if(!from || ![[[from[0] class] baseUnit] isEqual:[[target[0] class] baseUnit]] || !Evaluate(amount,NO,&value))return nil;
+ if(!from || ![[[from[0] class] baseUnit] isEqual:[[target[0] class] baseUnit]] || !Evaluate(amount,NO,comma,&value))return nil;
  double converted=[[[NSMeasurement alloc] initWithDoubleValue:value unit:from[0]] measurementByConvertingToUnit:target[0]].doubleValue;
  if(!isfinite(converted))return nil;
- return @{@"type":@"answer",@"id":@"answer",@"name":[NSString stringWithFormat:@"%@ %@",Format(converted,YES),target[1]],@"copy":Format(converted,NO),@"detail":[NSString stringWithFormat:@"%@ %@",Format(value,YES),from[1]]};
+ return @{@"type":@"answer",@"id":@"answer",@"name":[NSString stringWithFormat:@"%@ %@",Format(converted,YES,locale),target[1]],@"copy":Format(converted,NO,locale),@"detail":[NSString stringWithFormat:@"%@ %@",Format(value,YES,locale),from[1]]};
 }
 @end

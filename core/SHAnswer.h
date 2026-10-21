@@ -5,4 +5,6 @@
 // Keys: type "answer", id, name (text to show), copy (text for the pasteboard), detail (the input).
 // A colour also has color (its "#RRGGBB" value) and formats (hex, rgb, and hsl).
 + (NSDictionary *)answerForQuery:(NSString *)query;
+// The same with the number format of locale: its decimal separator decides "1,234", and answers show its separators.
++ (NSDictionary *)answerForQuery:(NSString *)query locale:(NSLocale *)locale;
 @end
