@@ -132,7 +132,7 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  panel.shortcut=^BOOL(NSEvent *event){return [weak shortcut:event];};
  // A click in the field places the caret in the typed text, so the completion goes first.
  [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskLeftMouseDown handler:^NSEvent *(NSEvent *event){SHSearchPanelController *self=weak;if(self && event.window==self.window && NSPointInRect([self->_field convertPoint:event.locationInWindow fromView:nil],self->_field.bounds))[self clearCompletion];return event;}];
- ((SHResultsTable *)_table).command=^BOOL(NSEvent *event){if(event.keyCode==53){[weak escape];return YES;}if(event.keyCode==36 || event.keyCode==76){[weak openSelected:(event.modifierFlags&NSEventModifierFlagCommand)!=0];return YES;}return NO;};_table.headerView=nil;_table.style=NSTableViewStylePlain;_table.intercellSpacing=NSMakeSize(0,0);_table.backgroundColor=NSColor.clearColor;_table.selectionHighlightStyle=NSTableViewSelectionHighlightStyleRegular;_table.delegate=self;_table.dataSource=self;_table.allowsEmptySelection=YES;_table.target=self;_table.doubleAction=@selector(openClicked:);_table.menu=NSMenu.new;_table.menu.delegate=self;_table.accessibilityIdentifier=@"superhound.search.results";_table.accessibilityLabel=NSLocalizedString(@"Search results",@"VoiceOver label of the result list");
+ ((SHResultsTable *)_table).command=^BOOL(NSEvent *event){if(event.keyCode==53){[weak escape];return YES;}if(event.keyCode==36 || event.keyCode==76){[weak openSelected:(event.modifierFlags&NSEventModifierFlagCommand)!=0];return YES;}return NO;};_table.headerView=nil;_table.style=NSTableViewStylePlain;_table.intercellSpacing=NSMakeSize(0,0);_table.backgroundColor=NSColor.clearColor;_table.selectionHighlightStyle=NSTableViewSelectionHighlightStyleRegular;_table.delegate=self;_table.dataSource=self;_table.allowsEmptySelection=YES;_table.target=self;_table.action=@selector(openClicked:);_table.menu=NSMenu.new;_table.menu.delegate=self;_table.accessibilityIdentifier=@"superhound.search.results";_table.accessibilityLabel=NSLocalizedString(@"Search results",@"VoiceOver label of the result list");
  NSTableColumn *column=[[NSTableColumn alloc] initWithIdentifier:@"result"];column.width=Width-16;[_table addTableColumn:column];scroll.documentView=_table;[view addSubview:scroll];
  NSView *rule=[[NSView alloc] initWithFrame:NSMakeRect(16,40,Width-32,1)];rule.wantsLayer=YES;rule.layer.backgroundColor=[NSColor colorWithWhite:1 alpha:0.1].CGColor;[view addSubview:rule];
  _help=[NSTextField labelWithString:@""];_help.lineBreakMode=NSLineBreakByClipping;[view addSubview:_help];
@@ -330,7 +330,12 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  row=row<0?(delta>0?0:(NSInteger)_results.count-1):MAX(0,MIN((NSInteger)_results.count-1,row+delta));
  [_table selectRowIndexes:[NSIndexSet indexSetWithIndex:(NSUInteger)row] byExtendingSelection:NO];[_table scrollRowToVisible:row];_selectedID=_results[(NSUInteger)row][@"id"];
 }
-- (void)openClicked:(id)sender {(void)sender;[self openSelected:NO];}
+// One click or tap opens the clicked row, as Return does; ⌘-click shows it in Finder, as ⌘Return does. The second click of a double click does nothing more.
+// The row on screen opens also while a newer search runs: the click names it, unlike Return.
+- (void)openClicked:(id)sender {
+ (void)sender;NSEvent *event=NSApp.currentEvent;NSInteger row=_table.clickedRow;if(row<0 || row>=(NSInteger)_results.count || event.clickCount>1)return;
+ NSDictionary *result=_results[(NSUInteger)row];[_table selectRowIndexes:[NSIndexSet indexSetWithIndex:(NSUInteger)row] byExtendingSelection:NO];_selectedID=result[@"id"];[self perform:(event.modifierFlags&NSEventModifierFlagCommand)?@"reveal":@"open" result:result application:nil];
+}
 - (NSDictionary *)selected {NSInteger row=_table.selectedRow;return !_pending && row>=0 && row<(NSInteger)_results.count?_results[(NSUInteger)row]:nil;}
 // Return during a search waits for its results, so typing fast and pressing Return opens the new first result.
 - (void)openSelected:(BOOL)reveal {if(_pending){_queuedOpen=@(reveal);return;}NSDictionary *result=self.selected;if(result)[self perform:reveal?@"reveal":@"open" result:result application:nil];else NSBeep();}
