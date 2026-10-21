@@ -353,7 +353,7 @@
 /* System command name in search results: restart the Mac */
 "Restart" = "Restart";
 
-/* Settings button: register the shortcuts again; 70 points wide */
+/* Settings button: register the shortcuts again; 100 points wide */
 "Retry" = "Retry";
 
 /* Action menu item */
