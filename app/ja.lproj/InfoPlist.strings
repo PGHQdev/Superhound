@@ -1,0 +1,2 @@
+/* Privacy text that macOS shows when Superhound asks to control Finder, System Events, or the login window */
+"NSAppleEventsUsageDescription" = "SuperhoundはFinderに「ゴミ箱を空にする」、System Eventsに「ダークモード」、ログインウインドウに「スリープ」「再起動」「システム終了」「ログアウト」を送信します。";

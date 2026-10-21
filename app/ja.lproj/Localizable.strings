@@ -1,0 +1,684 @@
+/* Open With submenu item; the argument is an app name */
+"%@ (default)" = "%@（デフォルト）";
+
+/* The argument is an error sentence from the license server or the network */
+"%@ Write to support@superhound.app to free it." = "%@ アクティベーションを解除するには、support@superhound.appまでご連絡ください。";
+
+/* The argument is an error sentence from the license server or the network */
+"%@ You can remove the license from this Mac anyway. Its activation then stays in use; write to support@superhound.app to free it." = "%@ それでもこのMacからライセンスを削除できます。その場合、アクティベーションは使用中のままになります。解除するには、support@superhound.appまでご連絡ください。";
+
+/* Update error; the argument is the path of the installed app */
+"%@ is a link, so Superhound cannot replace it. Run the install command from superhound.app instead." = "%@はリンクのため、Superhoundは置き換えられません。代わりにsuperhound.appのインストールコマンドを実行してください。";
+
+/* Settings status; both arguments are shortcuts such as ⌘Space */
+"%@ is in use by another app. Superhound keeps %@." = "%1$@はほかのアプリで使用中です。Superhoundは引き続き%2$@を使用します。";
+
+/* Settings status; the first argument is a shortcut such as ⌘Space, the second a menu item name such as Search */
+"%@ is in use by another app. Use %@ in the menu bar, or choose other keys." = "%1$@はほかのアプリで使用中です。メニューバーの「%2$@」を使用するか、ほかのキーを選択してください。";
+
+/* Settings status; the first argument is a shortcut such as ⌥⌘V, the second a menu item name such as Clipboard History */
+"%@ is the %@ shortcut. Choose other keys." = "%1$@は「%2$@」のショートカットです。ほかのキーを選択してください。";
+
+/* Settings status; the first and third arguments are shortcuts, the second an error number */
+"%@ is unavailable (error %d). Superhound keeps %@." = "%1$@は使用できません（エラー%2$d）。Superhoundは引き続き%3$@を使用します。";
+
+/* Settings status; the first argument is a shortcut, the second an error number, the third a menu item name such as Search; Retry is a button title */
+"%@ is unavailable (error %d). Use %@ in the menu bar, change the competing shortcut, then Retry." = "%1$@は使用できません（エラー%2$d）。メニューバーの「%3$@」を使い、競合するショートカットを変更して再試行してください。";
+
+/* Note at the right of the clipboard history panel; the argument is 1 */
+"%@ item · Kept on this Mac only" = "%@項目 · このMacにのみ保存";
+
+/* Note at the right of the clipboard history panel; the argument is a number other than 1 */
+"%@ items · Kept on this Mac only" = "%@項目 · このMacにのみ保存";
+
+/* Settings status; the argument is a shortcut such as ⌘Space */
+"%@ registered. Try it from another app and confirm only Superhound opens." = "%@を登録しました。ほかのアプリから試して、Superhoundだけが開くことを確認してください。";
+
+/* Status line in Settings; the first argument is a number of items, the second is a status sentence */
+"%@ searchable items. %@" = "%1$@項目を検索できます。%2$@";
+
+/* Search location row in Settings; the first argument is a state such as Ready, the second a number */
+"%@ · %@ items" = "%1$@ · %2$@項目";
+
+/* Search location row in Settings; the first argument is a state such as Ready, the second a number */
+"%@ · %@ items · applications only" = "%1$@ · %2$@項目 · アプリのみ";
+
+/* Clipboard row detail; the first argument is the app that copied the text, the second a relative time such as 5 min. ago; Return is the key name */
+"%@ · %@ · Return to paste" = "%1$@ · %2$@ · Returnでペースト";
+
+/* Row detail of a calculation, conversion, or colour; the argument is the typed input such as 2+2; Return is the key name */
+"%@ · Return to copy" = "%@ · Returnでコピー";
+
+/* Clipboard row detail; the argument is a relative time such as 5 min. ago; Return is the key name */
+"%@ · Return to paste" = "%@ · Returnでペースト";
+
+/* The first argument is the number of failed disks, the second the number of all disks */
+"%lu of %lu disks could not be ejected. An app may be using them." = "%2$lu個中%1$lu個のディスクを取り出せませんでした。アプリが使用している可能性があります。";
+
+/* No comment */
+"A command has no location in Finder." = "コマンドにはFinder上の場所がありません。";
+
+/* Menu bar menu item; keep it short */
+"About Superhound" = "Superhoundについて";
+
+/* State of a search location */
+"Access needed — select this folder again" = "アクセス権が必要です。このフォルダを再度選択してください";
+
+/* Footer hint next to ⌘K: show the action menu; keep it short */
+"Actions" = "アクション";
+
+/* Alert button: activate the license key */
+"Activate" = "アクティベート";
+
+/* No comment */
+"Activate Superhound" = "Superhoundをアクティベート";
+
+/* Link in the panel footer; keep it short */
+"Activate license" = "ライセンスをアクティベート";
+
+/* Settings button; 120 points wide */
+"Add Folder…" = "フォルダ追加…";
+
+/* The argument is the number of items */
+"All %@ copied items are deleted from this Mac. You cannot undo this." = "コピーした%@項目がすべてこのMacから削除されます。この操作は取り消せません。";
+
+/* No comment */
+"Apps are included automatically. Files are searched only inside folders you select. File contents stay unread." = "アプリは自動的に含まれます。ファイルは選択したフォルダ内でのみ検索されます。ファイルの内容は読み取りません。";
+
+/* Alert button */
+"Cancel" = "キャンセル";
+
+/* No comment */
+"Cannot create Superhound’s local data directory." = "Superhoundのローカルデータフォルダを作成できません。";
+
+/* No comment */
+"Cannot open the local catalog. Check available disk space and restart." = "ローカルカタログを開けません。ディスクの空き容量を確認して、再起動してください。";
+
+/* Note at the right of the search panel when a search location is unavailable; keep it short */
+"Check Settings for coverage" = "設定で検索範囲を確認";
+
+/* Menu bar menu item with a check mark */
+"Check for Updates Automatically" = "アップデートを自動的に確認";
+
+/* Menu bar menu item; keep it short */
+"Check for Updates…" = "アップデートを確認…";
+
+/* Menu bar menu item; keep it short */
+"Clear Clipboard History" = "クリップボード履歴を消去";
+
+/* Alert button */
+"Clear History" = "履歴を消去";
+
+/* No comment */
+"Clear the clipboard history?" = "クリップボード履歴を消去しますか？";
+
+/* Section label: the clipboard history; Settings row label and search panel band; keep it short */
+"Clipboard" = "クリップボード";
+
+/* Menu bar menu item that opens the clipboard history; keep it short */
+"Clipboard History" = "クリップボード履歴";
+
+/* Footer hint next to Esc: close the panel; keep it short */
+"Close" = "閉じる";
+
+/* Row detail of a system command such as Lock Screen; a noun */
+"Command" = "コマンド";
+
+/* Settings check box */
+"Complete the top result as you type" = "入力中に最上位の結果を補完";
+
+/* Menu item verb: copy to the clipboard */
+"Copy" = "コピー";
+
+/* Action menu item; the argument is a colour value such as #FF8800 or rgb(255, 136, 0) */
+"Copy %@" = "%@をコピー";
+
+/* Action menu item */
+"Copy Path" = "パスをコピー";
+
+/* Error when the app could not come to the front */
+"Could not activate this app." = "このアプリを前面に表示できませんでした。";
+
+/* No comment */
+"Could not change mute." = "消音を切り替えられませんでした。";
+
+/* No comment */
+"Could not move this item to the Trash. Check access and try again." = "この項目をゴミ箱に入れられませんでした。アクセス権を確認して、もう一度お試しください。";
+
+/* No comment */
+"Could not open this app. Check access and try again." = "このアプリを開けませんでした。アクセス権を確認して、もう一度お試しください。";
+
+/* No comment */
+"Could not open this in your browser." = "ブラウザで開けませんでした。";
+
+/* No comment */
+"Could not open this item with that app." = "そのアプリでこの項目を開けませんでした。";
+
+/* No comment */
+"Could not open this item. Check access and try again." = "この項目を開けませんでした。アクセス権を確認して、もう一度お試しください。";
+
+/* A System Settings pane */
+"Could not open this setting." = "この設定を開けませんでした。";
+
+/* No comment */
+"Could not save access to that folder. Select it again." = "そのフォルダへのアクセス権を保存できませんでした。もう一度選択してください。";
+
+/* No comment */
+"Could not sleep the display." = "ディスプレイをスリープにできませんでした。";
+
+/* No comment */
+"Could not start the screen saver." = "スクリーンセーバを開始できませんでした。";
+
+/* State of a search location inside another one; the argument is the other location's path */
+"Covered by %@" = "%@に含まれています";
+
+/* Standard Edit menu item */
+"Cut" = "カット";
+
+/* Alert button: free this Mac’s license activation */
+"Deactivate" = "解除";
+
+/* Menu bar menu item; keep it short */
+"Deactivate License…" = "ライセンスを解除…";
+
+/* No comment */
+"Deactivate this Mac?" = "このMacのアクティベーションを解除しますか？";
+
+/* Action menu item for a clipboard history item */
+"Delete from History" = "履歴から削除";
+
+/* Standard Edit menu title */
+"Edit" = "編集";
+
+/* System command name in search results */
+"Eject All Disks" = "すべてのディスクを取り出す";
+
+/* Row detail; Return is the key name */
+"Emoji · Return to copy" = "絵文字 · Returnでコピー";
+
+/* Alert button
+   System command name in search results */
+"Empty Trash" = "ゴミ箱を空にする";
+
+/* No comment */
+"Empty the Trash?" = "ゴミ箱を空にしますか？";
+
+/* Menu bar menu item; keep it short */
+"Enter License…" = "ライセンスを入力…";
+
+/* Tooltip of the Activate license link */
+"Enter your license key, or get a license." = "ライセンスキーを入力するか、ライセンスを入手してください。";
+
+/* No comment */
+"Folder settings could not be saved. Check available disk space." = "フォルダ設定を保存できませんでした。ディスクの空き容量を確認してください。";
+
+/* About window credits */
+"Free to evaluate. License price: $15 once, for 3 Macs, at superhound.app." = "無料で試用できます。ライセンス価格：$15（1回払い、Mac 3台分）。superhound.appで購入できます。";
+
+/* Button that opens the purchase page */
+"Get a License" = "ライセンスを入手";
+
+/* No comment */
+"Hidden descendants, package contents, online-only placeholders, and Superhound’s own data are skipped. Symbolic links are listed without following them." = "非表示の項目、パッケージの内容、オンライン専用のプレースホルダ、Superhound自身のデータはスキップされます。シンボリックリンクはリンク先をたどらずに一覧に含まれます。";
+
+/* State of a search location during its scan */
+"Indexing" = "インデックス作成中";
+
+/* Note at the right of the search panel; the argument is a number above 1; keep it short */
+"Indexing %@ locations" = "%@か所をインデックス作成中";
+
+/* Note at the right of the search panel; keep it short */
+"Indexing 1 location" = "1か所をインデックス作成中";
+
+/* Alert button */
+"Install and Relaunch" = "インストールして再起動";
+
+/* Settings button that opens System Settings → Keyboard; 199 points wide */
+"Keyboard Settings…" = "キーボード設定…";
+
+/* Alert button: ask again later */
+"Later" = "あとで";
+
+/* Placeholder of the license key field */
+"License key" = "ライセンスキー";
+
+/* About window credits */
+"Licensed for this Mac." = "このMacのライセンスは有効です。";
+
+/* System command name in search results */
+"Lock Screen" = "画面をロック";
+
+/* System command name in search results */
+"Log Out" = "ログアウト";
+
+/* Action menu item */
+"Move to Trash" = "ゴミ箱に入れる";
+
+/* Label above the result list */
+"No matches" = "一致する項目なし";
+
+/* No comment */
+"No sound output is available." = "使用できるサウンド出力がありません。";
+
+/* Alert button */
+"Not Now" = "今はしない";
+
+/* No comment */
+"Not enough memory to prepare search. Remove a large search location and refresh." = "検索の準備に必要なメモリが足りません。大きな検索場所を削除して、更新してください。";
+
+/* Alert button */
+"OK" = "OK";
+
+/* Add Folder… is the button title in Settings */
+"Only selected folders are searched. Click Add Folder… to add one." = "選択したフォルダのみが検索されます。追加するには「フォルダ追加…」をクリックしてください。";
+
+/* Menu item and footer hint verb: open the selected result; keep it short */
+"Open" = "開く";
+
+/* Action menu item with a submenu of apps */
+"Open With" = "このアプリケーションで開く";
+
+/* Menu bar menu item with a check mark: start Superhound when the user logs in */
+"Open at Login" = "ログイン時に開く";
+
+/* Error in the search panel; the argument is the system error text */
+"Open at Login could not be changed. %@" = "「ログイン時に開く」を変更できませんでした。%@";
+
+/* Settings row label for the search shortcut; 115 points wide */
+"Open search" = "検索を開く";
+
+/* State of a search location */
+"Partially indexed — access needed; previous catalog preserved" = "一部のみインデックス済み — アクセス権が必要です。以前のカタログを保持しています";
+
+/* State of a search location */
+"Partially indexed — refresh manually; watching unavailable" = "一部のみインデックス済み — 手動で更新してください。変更の監視は使用できません";
+
+/* Menu item and footer hint verb: paste the text */
+"Paste" = "ペースト";
+
+/* Status in Settings while the app starts */
+"Preparing catalog…" = "カタログを準備中…";
+
+/* Note at the right of the search panel while the app starts; keep it short */
+"Preparing search" = "検索を準備中";
+
+/* Status in Settings while the app starts */
+"Preparing search…" = "検索を準備中…";
+
+/* Button in Settings while it records a shortcut; 170 points wide */
+"Press shortcut…" = "ショートカットを入力…";
+
+/* Action menu item; the name of the macOS preview feature */
+"Quick Look" = "クイックルック";
+
+/* Menu bar menu item; keep it short */
+"Quit Superhound" = "Superhoundを終了";
+
+/* No comment */
+"Quit Superhound and open it again to use the new version." = "新しいバージョンを使用するには、Superhoundを終了してもう一度開いてください。";
+
+/* State of a search location after its scan */
+"Ready" = "準備完了";
+
+/* No comment */
+"Rebuilding a damaged or older catalog. Your selected folders are preserved." = "破損したカタログまたは古いカタログを再構築しています。選択したフォルダは保持されます。";
+
+/* State of a search location */
+"Rechecking changed location" = "変更された場所を再確認中";
+
+/* Button in Settings that starts a shortcut recording; 170 points wide */
+"Record Shortcut…" = "ショートカットを記録…";
+
+/* VoiceOver label of the shortcut button */
+"Record clipboard history shortcut" = "クリップボード履歴のショートカットを記録";
+
+/* VoiceOver label of the shortcut button */
+"Record global search shortcut" = "グローバル検索のショートカットを記録";
+
+/* Standard Edit menu item */
+"Redo" = "やり直す";
+
+/* Menu item and Settings button: scan the search locations again */
+"Refresh Catalog" = "カタログを更新";
+
+/* Alert button that opens the release notes web page */
+"Release Notes" = "リリースノート";
+
+/* Settings button: remove the selected search location; 90 points wide */
+"Remove" = "削除";
+
+/* Alert button */
+"Remove Anyway" = "それでも削除";
+
+/* System command name in search results: restart the Mac */
+"Restart" = "再起動";
+
+/* Settings button: register the shortcuts again; 100 points wide */
+"Retry" = "再試行";
+
+/* Action menu item */
+"Reveal in Finder" = "Finderに表示";
+
+/* Action menu item verb: run a system command */
+"Run" = "実行";
+
+/* Menu bar menu item that opens the search panel; keep it short */
+"Search" = "検索";
+
+/* Last row of the search results; the first argument is a search engine name such as Google, the second is the typed text */
+"Search %@ for “%@”" = "%1$@で「%2$@」を検索";
+
+/* Button of the folder selection window */
+"Search This Folder" = "このフォルダを検索";
+
+/* Placeholder of the search field */
+"Search apps and files" = "アプリとファイルを検索";
+
+/* VoiceOver label of the search field */
+"Search apps and selected folders" = "アプリと選択したフォルダを検索";
+
+/* Placeholder of the search field and its VoiceOver label in clipboard history mode */
+"Search clipboard history" = "クリップボード履歴を検索";
+
+/* VoiceOver label of the list of search locations */
+"Search locations and coverage" = "検索場所と検索範囲";
+
+/* Message in the folder selection window */
+"Search names in this folder and its local subfolders. File contents are not read." = "このフォルダとそのローカルのサブフォルダ内の名前を検索します。ファイルの内容は読み取りません。";
+
+/* VoiceOver label of the result list */
+"Search results" = "検索結果";
+
+/* Settings button: select the folder again to give access; 135 points wide */
+"Select Again…" = "再度選択…";
+
+/* Standard Edit menu item */
+"Select All" = "すべてを選択";
+
+/* Shown in place of a search location whose path is unknown */
+"Selected folder" = "選択したフォルダ";
+
+/* Tooltip of the logo in the panel footer, which opens the app menu */
+"Settings and more" = "設定など";
+
+/* Menu bar menu item; keep it short */
+"Settings…" = "設定…";
+
+/* System command name in search results */
+"Shut Down" = "システム終了";
+
+/* Settings check box; keep the folder names as they are */
+"Skip generated folders (.git, node_modules, vendor, build, dist, DerivedData)" = "生成されたフォルダをスキップ（.git、node_modules、vendor、build、dist、DerivedData）";
+
+/* System command name in search results: put the Mac to sleep */
+"Sleep" = "スリープ";
+
+/* System command name in search results: turn the display off */
+"Sleep Display" = "ディスプレイをスリープ";
+
+/* System command name in search results */
+"Start Screen Saver" = "スクリーンセーバを開始";
+
+/* Section label above the apps shown before the user types */
+"Suggested" = "おすすめ";
+
+/* The argument is a version number such as 0.5.0 */
+"Superhound %@ is available" = "Superhound %@を利用できます";
+
+/* Tooltip of the Update to link; the argument is a version number */
+"Superhound %@ is available. Click to install it." = "Superhound %@を利用できます。クリックしてインストールします。";
+
+/* Settings window title */
+"Superhound Settings" = "Superhound設定";
+
+/* No comment */
+"Superhound cannot keep a copy of the current version." = "Superhoundは現在のバージョンのコピーを保持できません。";
+
+/* No comment */
+"Superhound cannot move the current version." = "Superhoundは現在のバージョンを移動できません。";
+
+/* No comment */
+"Superhound cannot put the new version in place." = "Superhoundは新しいバージョンを配置できません。";
+
+/* Update error; the argument is a folder path */
+"Superhound cannot write to %@. Run the install command from superhound.app instead." = "Superhoundは%@に書き込めません。代わりにsuperhound.appのインストールコマンドを実行してください。";
+
+/* No comment */
+"Superhound could not check for updates" = "Superhoundはアップデートを確認できませんでした";
+
+/* Uninstall alert text when this Mac has no license */
+"Superhound gives ⌘Space back to Spotlight if it took it, deletes its settings, catalog, learned ranking, and clipboard history, and moves itself to the Trash. Your files stay as they are." = "Superhoundは、⌘SpaceをSpotlightから引き継いでいる場合はSpotlightに戻し、設定、カタログ、学習した並び順、クリップボード履歴を削除して、自身をゴミ箱に入れます。ファイルはそのまま残ります。";
+
+/* No comment */
+"Superhound is already licensed" = "Superhoundのライセンスはすでに有効です";
+
+/* No comment */
+"Superhound is free to evaluate, and all features keep working. License price: $15 once, for 3 Macs." = "Superhoundは無料で試用でき、すべての機能を引き続き使用できます。ライセンス価格：$15（1回払い、Mac 3台分）。";
+
+/* No comment */
+"Superhound is licensed" = "Superhoundのライセンスは有効です";
+
+/* No comment */
+"Superhound is not activated" = "Superhoundはアクティベートされていません";
+
+/* No comment */
+"Superhound is not updated" = "Superhoundはアップデートされませんでした";
+
+/* No comment */
+"Superhound is unlicensed" = "Superhoundにはライセンスがありません";
+
+/* No comment */
+"Superhound is up to date" = "Superhoundは最新の状態です";
+
+/* No comment */
+"Superhound is updated" = "Superhoundはアップデートされました";
+
+/* VoiceOver label of the logo in the panel footer, which opens the app menu */
+"Superhound menu" = "Superhoundメニュー";
+
+/* No comment */
+"Superhound sends the license key and a device ID to superhound.app. The device ID is a one-way hash, so it does not identify you. A license covers 3 Macs." = "SuperhoundはライセンスキーとデバイスIDをsuperhound.appに送信します。デバイスIDは一方向ハッシュのため、個人を特定しません。1つのライセンスでMac 3台まで使用できます。";
+
+/* Tooltip of the menu bar icon */
+"Superhound — Search apps and files" = "Superhound — アプリとファイルを検索";
+
+/* Row detail of a System Settings pane; the name of the macOS app */
+"System Settings" = "システム設定";
+
+/* Note at the right of the clipboard history panel; keep it short */
+"Text you copy in any app comes here" = "どのアプリでコピーしたテキストもここに入ります";
+
+/* No comment */
+"Thank you for your purchase." = "ご購入ありがとうございます。";
+
+/* No comment */
+"The activation from superhound.app is not valid for this Mac." = "superhound.appからのアクティベーションは、このMacでは有効ではありません。";
+
+/* Label above the result list */
+"The clipboard history is empty" = "クリップボード履歴は空です";
+
+/* Error in the search panel */
+"The command did not finish." = "コマンドが完了しませんでした。";
+
+/* No comment */
+"The download could not be unpacked." = "ダウンロードしたファイルを展開できませんでした。";
+
+/* No comment */
+"The download does not have the Superhound signature." = "ダウンロードしたファイルにSuperhoundの署名がありません。";
+
+/* No comment */
+"The download does not match the published checksum." = "ダウンロードしたファイルが公開されているチェックサムと一致しません。";
+
+/* The argument is an HTTP status code such as 404 */
+"The download failed with error %ld." = "ダウンロードに失敗しました（エラー%ld）。";
+
+/* The argument is the system network error text */
+"The download failed. %@" = "ダウンロードに失敗しました。%@";
+
+/* No comment */
+"The download is not the expected version of Superhound." = "ダウンロードしたファイルは想定されたバージョンのSuperhoundではありません。";
+
+/* No comment */
+"The items in the Trash are deleted permanently. You cannot undo this." = "ゴミ箱の項目は完全に削除されます。この操作は取り消せません。";
+
+/* No comment */
+"The last row of each search opens your text with this engine in your browser." = "各検索の最後の行で、入力したテキストをこの検索エンジンを使ってブラウザで開きます。";
+
+/* No comment */
+"The license activation is still in use" = "ライセンスのアクティベーションはまだ使用中です";
+
+/* The argument is a web address */
+"The license server address %@ is not valid." = "ライセンスサーバのアドレス%@は無効です。";
+
+/* Tab is the key name */
+"The rest of the top result’s name appears after your text, selected. Tab or → keeps it; any other key replaces it." = "最上位の結果の名前の残りが、入力したテキストの後に選択状態で表示されます。Tabまたは→で確定し、ほかのキーで置き換わります。";
+
+/* The argument is a web address */
+"The server address %@ is not valid." = "サーバのアドレス%@は無効です。";
+
+/* No comment */
+"The text is copied. Superhound could not return to the previous app, so nothing was pasted." = "テキストをコピーしました。Superhoundが前のアプリに戻れなかったため、ペーストされませんでした。";
+
+/* System Settings → Privacy & Security → Accessibility is the place in System Settings */
+"The text is copied. To paste with Return, allow Superhound in System Settings → Privacy & Security → Accessibility." = "テキストをコピーしました。Returnでペーストするには、「システム設定」→「プライバシーとセキュリティ」→「アクセシビリティ」でSuperhoundを許可してください。";
+
+/* No comment */
+"There are no disks to eject." = "取り出せるディスクがありません。";
+
+/* No comment */
+"This Mac already has an active license." = "このMacにはすでに有効なライセンスがあります。";
+
+/* No comment */
+"This Mac is still activated" = "このMacはまだアクティベートされています";
+
+/* Uninstall alert text when this Mac has a license */
+"This Mac’s license activation is freed. Superhound gives ⌘Space back to Spotlight if it took it, deletes its settings, catalog, learned ranking, and clipboard history, and moves itself to the Trash. Your files stay as they are." = "このMacのライセンスのアクティベーションが解除されます。Superhoundは、⌘SpaceをSpotlightから引き継いでいる場合はSpotlightに戻し、設定、カタログ、学習した並び順、クリップボード履歴を削除して、自身をゴミ箱に入れます。ファイルはそのまま残ります。";
+
+/* No comment */
+"This command is not available." = "このコマンドは使用できません。";
+
+/* No comment */
+"This copy cannot update itself" = "このSuperhoundは自身をアップデートできません";
+
+/* No comment */
+"This copy of Superhound was built from source. To update it, pull the latest code, then run the build and install commands again." = "このSuperhoundはソースからビルドされています。アップデートするには、最新のコードを取得してから、ビルドコマンドとインストールコマンドを再度実行してください。";
+
+/* No comment */
+"This frees one of the 3 activations of your license. Superhound keeps working and shows the unlicensed reminder again." = "ライセンスの3つのアクティベーションのうち1つが解除されます。Superhoundは引き続き動作し、ライセンスがない場合のリマインダーを再び表示します。";
+
+/* No comment */
+"This item is unavailable. Refreshing its location…" = "この項目は使用できません。場所を更新しています…";
+
+/* No comment */
+"This macOS does not let apps lock the screen." = "このmacOSでは、アプリから画面をロックできません。";
+
+/* No comment */
+"This sound output cannot be muted." = "このサウンド出力は消音できません。";
+
+/* No comment */
+"This version is not newer than the installed one." = "このバージョンはインストール済みのバージョンより新しくありません。";
+
+/* System command name in search results: switch between dark and light appearance */
+"Toggle Dark Mode" = "ダークモードを切り替える";
+
+/* System command name in search results: mute or unmute the sound */
+"Toggle Mute" = "消音を切り替える";
+
+/* Alert button */
+"Try Again" = "やり直す";
+
+/* Uninstall Superhound… is a menu item title */
+"Turns off Spotlight’s ⌘Space shortcut and opens Superhound with ⌘Space. To give ⌘Space back to Spotlight, turn this off, or choose Uninstall Superhound… in the menu bar." = "Spotlightの⌘Spaceショートカットをオフにして、⌘SpaceでSuperhoundを開きます。⌘SpaceをSpotlightに戻すには、この設定をオフにするか、メニューバーで「Superhoundをアンインストール…」を選択してください。";
+
+/* State of a search location that is missing */
+"Unavailable" = "使用できません";
+
+/* Standard Edit menu item */
+"Undo" = "取り消す";
+
+/* Alert button */
+"Uninstall" = "アンインストール";
+
+/* No comment */
+"Uninstall Superhound?" = "Superhoundをアンインストールしますか？";
+
+/* Menu bar menu item; keep it short */
+"Uninstall Superhound…" = "Superhoundをアンインストール…";
+
+/* Menu bar menu item; shown only when an update is ready */
+"Update" = "アップデート";
+
+/* Link in the panel footer; the argument is a version number such as 0.5.0; keep it short */
+"Update to %@" = "%@にアップデート";
+
+/* Menu bar menu item; the argument is a version number such as 0.5.0 */
+"Update to %@…" = "%@にアップデート…";
+
+/* Status in Settings */
+"Updating search locations…" = "検索場所を更新中…";
+
+/* Settings button that restores the default shortcut; the argument is a shortcut such as ⌥⌘V; 120 points wide */
+"Use %@" = "%@を使用";
+
+/* Settings status; Command, Option, and Control are the modifier keys */
+"Use Command, Option, or Control with a key. Bare typing keys are not allowed." = "Command、Option、Controlのいずれかとキーを組み合わせてください。文字キーだけでは使用できません。";
+
+/* Search is the menu item title */
+"Use Search in the menu bar while setting up your shortcut." = "ショートカットの設定中は、メニューバーの「検索」を使用してください。";
+
+/* Settings check box */
+"Use ⌘Space in place of Spotlight" = "Spotlightの代わりに⌘Spaceを使用";
+
+/* The argument is a version number such as 0.4.0 */
+"Version %@ is the latest version." = "バージョン%@が最新バージョンです。";
+
+/* State of a search location before its scan */
+"Waiting" = "待機中";
+
+/* Row detail; Return is the key name */
+"Web address · Return to open in your browser" = "Webアドレス · Returnでブラウザに表示";
+
+/* Settings row label; 115 points wide */
+"Web search" = "Web検索";
+
+/* VoiceOver label of the search engine menu */
+"Web search engine" = "Web検索エンジン";
+
+/* Row detail; Return is the key name */
+"Web search · Return to open in your browser" = "Web検索 · Returnでブラウザに表示";
+
+/* The argument is the installed version number */
+"You have version %@. Superhound downloads the update, checks its signature, and opens again." = "現在のバージョンは%@です。Superhoundはアップデートをダウンロードし、署名を確認してから、再度開きます。";
+
+/* Heading at the top of Settings */
+"Your apps. Your folders. A shortcut away." = "アプリも、フォルダも、ショートカットひとつで。";
+
+/* VoiceOver kind of a result: an application; a noun */
+"app" = "アプリ";
+
+/* VoiceOver kind of a result; a noun */
+"file" = "ファイル";
+
+/* VoiceOver kind of a result; a noun */
+"folder" = "フォルダ";
+
+/* VoiceOver kind of a result: a symbolic link or alias; a noun */
+"link" = "リンク";
+
+/* Error in the search panel; Privacy & Security → Automation is the place in System Settings */
+"macOS blocked this command. Allow Superhound in Privacy & Security → Automation." = "macOSがこのコマンドをブロックしました。「プライバシーとセキュリティ」→「オートメーション」でSuperhoundを許可してください。";
+
+/* Keyboard Settings… is the button title */
+"macOS did not save the Spotlight shortcut. Change it in Keyboard Settings…." = "macOSはSpotlightのショートカットを保存しませんでした。「キーボード設定…」で変更してください。";
+
+/* The argument is an HTTP status code such as 500 */
+"superhound.app answered with error %ld." = "superhound.appからエラー%ldが返されました。";
+
+/* The argument is the system network error text */
+"superhound.app could not be reached. %@" = "superhound.appに接続できませんでした。%@";
+
+/* No comment */
+"superhound.app sent an answer that Superhound cannot read." = "superhound.appから、Superhoundが読み取れない応答が返されました。";
+
+/* No comment */
+"superhound.app sent an answer that Superhound cannot read. Try again later." = "superhound.appから、Superhoundが読み取れない応答が返されました。あとでもう一度お試しください。";

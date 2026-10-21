@@ -1,0 +1,2 @@
+/* Privacy text that macOS shows when Superhound asks to control Finder, System Events, or the login window */
+"NSAppleEventsUsageDescription" = "Superhound会向“访达”发送“清倒废纸篓”，向“系统事件”发送“深色模式”，并向登录窗口发送“睡眠”“重新启动”“关机”和“退出登录”。";

@@ -1,0 +1,2 @@
+/* Privacy text that macOS shows when Superhound asks to control Finder, System Events, or the login window */
+"NSAppleEventsUsageDescription" = "Superhound envía “Vaciar papelera” al Finder, “Modo oscuro” a System Events, y “Reposo”, “Reiniciar”, “Apagar” y “Cerrar sesión” a la ventana de inicio de sesión.";

@@ -1,0 +1,2 @@
+/* Privacy text that macOS shows when Superhound asks to control Finder, System Events, or the login window */
+"NSAppleEventsUsageDescription" = "Superhound sendet „Papierkorb entleeren“ an den Finder, „Dunkelmodus“ an System Events sowie „Ruhezustand“, „Neustart“, „Ausschalten“ und „Abmelden“ an das Anmeldefenster.";

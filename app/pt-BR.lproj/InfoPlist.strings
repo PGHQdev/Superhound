@@ -1,0 +1,2 @@
+/* Privacy text that macOS shows when Superhound asks to control Finder, System Events, or the login window */
+"NSAppleEventsUsageDescription" = "O Superhound envia Esvaziar Lixo ao Finder, Modo Escuro ao System Events, e Repousar, Reiniciar, Desligar e Finalizar Sessão à janela de início de sessão.";

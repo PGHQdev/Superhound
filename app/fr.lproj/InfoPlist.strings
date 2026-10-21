@@ -1,0 +1,2 @@
+/* Privacy text that macOS shows when Superhound asks to control Finder, System Events, or the login window */
+"NSAppleEventsUsageDescription" = "Superhound envoie Vider la corbeille au Finder, Mode sombre à System Events, ainsi que Suspendre l’activité, Redémarrer, Éteindre et Fermer la session à la fenêtre de connexion.";
