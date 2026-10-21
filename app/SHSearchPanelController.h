@@ -23,6 +23,8 @@ extern NSString *const SHOwnCopyType;
 - (void)toggle;
 // Shows the panel with the clipboard history only; Return pastes into the app that was in front.
 - (void)toggleHistory;
+// YES while a search location is still indexing, so a query without matches says that more can come.
+@property(nonatomic) BOOL indexing;
 - (void)updateSnapshot:(SHSearchSnapshot *)snapshot status:(NSString *)status;
 - (void)showError:(NSString *)error;
 @end

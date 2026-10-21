@@ -267,6 +267,9 @@
 /* Label above the result list */
 "No matches" = "Keine Treffer";
 
+/* Label above the result list while a search location is still indexing; keep it short */
+"No matches yet. Still indexing." = "Noch keine Treffer. Die Indizierung läuft noch.";
+
 /* No comment */
 "No sound output is available." = "Es ist keine Tonausgabe verfügbar.";
 

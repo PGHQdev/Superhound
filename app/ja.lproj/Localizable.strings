@@ -267,6 +267,9 @@
 /* Label above the result list */
 "No matches" = "一致する項目なし";
 
+/* Label above the result list while a search location is still indexing; keep it short */
+"No matches yet. Still indexing." = "まだ一致する項目がありません。インデックス作成中です。";
+
 /* No comment */
 "No sound output is available." = "使用できるサウンド出力がありません。";
 

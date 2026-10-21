@@ -267,6 +267,9 @@
 /* Label above the result list */
 "No matches" = "无匹配项";
 
+/* Label above the result list while a search location is still indexing; keep it short */
+"No matches yet. Still indexing." = "暂无匹配项。仍在索引。";
+
 /* No comment */
 "No sound output is available." = "没有可用的声音输出。";
 

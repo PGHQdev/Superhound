@@ -267,6 +267,9 @@
 /* Label above the result list */
 "No matches" = "Sin coincidencias";
 
+/* Label above the result list while a search location is still indexing; keep it short */
+"No matches yet. Still indexing." = "Aún no hay coincidencias. Indexación en curso.";
+
 /* No comment */
 "No sound output is available." = "No hay ninguna salida de sonido disponible.";
 
