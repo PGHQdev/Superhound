@@ -2,14 +2,24 @@
 #import "SHSpotlight.h"
 #import "SHWeb.h"
 #import "SHUpdater.h"
-@interface SHShortcutButton : NSButton
-@property(copy) void (^recorded)(NSEvent *);
-@property BOOL recording;
-@end
-@implementation SHShortcutButton
-- (BOOL)acceptsFirstResponder{return YES;}
-- (void)keyDown:(NSEvent *)event {if(_recording){_recording=NO;if(event.keyCode==53){self.title=NSLocalizedString(@"Record Shortcut…",@"Button in Settings that starts a shortcut recording; 170 points wide");return;}if(self.recorded)self.recorded(event);}else [super keyDown:event];}
-- (BOOL)performKeyEquivalent:(NSEvent *)event {if(_recording){[self keyDown:event];return YES;}return [super performKeyEquivalent:event];}
+@implementation SHShortcutButton {SHHotKey *_hotKey;id _monitor;}
+- (instancetype)initWithFrame:(NSRect)frame hotKey:(SHHotKey *)hotKey {
+ if((self=[super initWithFrame:frame])){_hotKey=hotKey;self.bezelStyle=NSBezelStyleRounded;self.title=hotKey.label;self.target=self;self.action=@selector(record:);}return self;
+}
+// The local monitor sees each key press before the window and the menus, also with Command.
+- (void)record:(id)sender {
+ (void)sender;if(_monitor)return;[_hotKey pause];[_hotKey.other pause];self.title=NSLocalizedString(@"Press shortcut…",@"Button in Settings while it records a shortcut; 170 points wide");
+ __weak typeof(self) weak=self;_monitor=[NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskKeyDown|NSEventMaskLeftMouseDown|NSEventMaskRightMouseDown handler:^NSEvent *(NSEvent *event){SHShortcutButton *self=weak;if(!self)return event;if(event.type!=NSEventTypeKeyDown){[self stop:nil];return event;}[self stop:event.keyCode==53?nil:event];return nil;}];
+ [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(resigned:) name:NSWindowDidResignKeyNotification object:self.window];
+}
+- (void)showKeys {if(!_monitor)self.title=_hotKey.label;}
+- (void)resigned:(NSNotification *)notification {(void)notification;[self stop:nil];}
+// The shortcuts register again before the new keys, so a refused recording keeps its reason in the status.
+- (void)stop:(NSEvent *)keys {
+ if(!_monitor)return;[NSEvent removeMonitor:_monitor];_monitor=nil;[NSNotificationCenter.defaultCenter removeObserver:self name:NSWindowDidResignKeyNotification object:self.window];
+ [_hotKey registerSaved];[_hotKey.other registerSaved];if(keys)[_hotKey recordEvent:keys];[self showKeys];if(self.changed)self.changed();
+}
+- (void)viewWillMoveToWindow:(NSWindow *)window {if(!window)[self stop:nil];[super viewWillMoveToWindow:window];}
 @end
 @interface SHSettingsController () <NSTableViewDataSource,NSTableViewDelegate>
 @end
@@ -41,8 +51,8 @@ NSButton *SHButton(NSView *view,NSString *title,NSRect frame,id target,SEL actio
  NSDictionary *settings=[NSDictionary dictionaryWithContentsOfURL:[library.stateURL URLByAppendingPathComponent:@"folders.plist"]];exclude.state=settings[@"excludeGenerated"] && ![settings[@"excludeGenerated"] boolValue]?NSControlStateValueOff:NSControlStateValueOn;[view addSubview:exclude];
  SHLabel(view,NSLocalizedString(@"Hidden descendants, package contents, online-only placeholders, and Superhound’s own data are skipped. Symbolic links are listed without following them.",nil),NSMakeRect(24,176,690,32),11,YES);
  SHLabel(view,NSLocalizedString(@"Open search",@"Settings row label for the search shortcut; 160 points wide"),NSMakeRect(24,142,160,24),15,NO);
- _recorder=[[SHShortcutButton alloc] initWithFrame:NSMakeRect(189,136,170,32)];_recorder.bezelStyle=NSBezelStyleRounded;_recorder.title=NSLocalizedString(@"Record Shortcut…",@"Button in Settings that starts a shortcut recording; 170 points wide");_recorder.target=self;_recorder.action=@selector(record:);_recorder.accessibilityLabel=NSLocalizedString(@"Record global search shortcut",@"VoiceOver label of the shortcut button");[view addSubview:_recorder];
- __weak typeof(self) weak=self;_recorder.recorded=^(NSEvent *event){SHSettingsController *self=weak;[self->_hotKey recordEvent:event];self->_recorder.title=NSLocalizedString(@"Record Shortcut…",@"Button in Settings that starts a shortcut recording; 170 points wide");[self shortcutStatus];};
+ _recorder=[[SHShortcutButton alloc] initWithFrame:NSMakeRect(189,136,170,32) hotKey:hotKey];_recorder.accessibilityLabel=NSLocalizedString(@"Record global search shortcut",@"VoiceOver label of the shortcut button");[view addSubview:_recorder];
+ __weak typeof(self) weak=self;_recorder.changed=^{[weak shortcutStatus];};
  SHButton(view,NSLocalizedString(@"Retry",@"Settings button: register the shortcuts again; 100 points wide"),NSMakeRect(365,136,100,32),self,@selector(retry:));SHButton(view,NSLocalizedString(@"Keyboard Settings…",@"Settings button that opens System Settings → Keyboard; 199 points wide"),NSMakeRect(473,136,199,32),self,@selector(keyboardSettings:));
  _shortcutStatus=SHLabel(view,@"",NSMakeRect(24,91,690,40),12,NO);_shortcutStatus.accessibilityIdentifier=@"superhound.shortcut.status";
  _spotlight=[NSButton checkboxWithTitle:NSLocalizedString(@"Use ⌘Space in place of Spotlight",@"Settings check box") target:self action:@selector(spotlight:)];_spotlight.frame=NSMakeRect(24,58,690,24);_spotlight.accessibilityIdentifier=@"superhound.spotlight";[view addSubview:_spotlight];
@@ -50,8 +60,8 @@ NSButton *SHButton(NSView *view,NSString *title,NSRect frame,id target,SEL actio
  // The clipboard history row sits under the search shortcut text, with its status under it.
  for(NSView *v in view.subviews)[v setFrameOrigin:NSMakePoint(v.frame.origin.x,v.frame.origin.y+96)];
  SHLabel(view,NSLocalizedString(@"Clipboard",@"Section label: the clipboard history; Settings row label (160 points wide) and search panel band; keep it short"),NSMakeRect(24,68,160,24),15,NO);
- _historyRecorder=[[SHShortcutButton alloc] initWithFrame:NSMakeRect(189,62,170,32)];_historyRecorder.bezelStyle=NSBezelStyleRounded;_historyRecorder.title=NSLocalizedString(@"Record Shortcut…",@"Button in Settings that starts a shortcut recording; 170 points wide");_historyRecorder.target=self;_historyRecorder.action=@selector(recordHistory:);_historyRecorder.accessibilityLabel=NSLocalizedString(@"Record clipboard history shortcut",@"VoiceOver label of the shortcut button");[view addSubview:_historyRecorder];
- _historyRecorder.recorded=^(NSEvent *event){SHSettingsController *self=weak;[self->_historyKey recordEvent:event];self->_historyRecorder.title=NSLocalizedString(@"Record Shortcut…",@"Button in Settings that starts a shortcut recording; 170 points wide");[self shortcutStatus];};
+ _historyRecorder=[[SHShortcutButton alloc] initWithFrame:NSMakeRect(189,62,170,32) hotKey:historyKey];_historyRecorder.accessibilityLabel=NSLocalizedString(@"Record clipboard history shortcut",@"VoiceOver label of the shortcut button");[view addSubview:_historyRecorder];
+ _historyRecorder.changed=^{[weak shortcutStatus];};
  SHButton(view,[NSString stringWithFormat:NSLocalizedString(@"Use %@",@"Settings button that restores the default shortcut; the argument is a shortcut such as ⌥⌘V; 120 points wide"),historyKey.defaultLabel],NSMakeRect(365,62,120,32),self,@selector(defaultHistoryShortcut:));
  _historyStatus=SHLabel(view,@"",NSMakeRect(24,12,690,44),12,NO);_historyStatus.accessibilityIdentifier=@"superhound.history.shortcut.status";
  // The web search row sits under the clipboard row.
@@ -74,7 +84,7 @@ NSButton *SHButton(NSView *view,NSString *title,NSRect frame,id target,SEL actio
  [self shortcutStatus];[self updateButtons];[window center];return self;
 }
 - (void)show {[NSApp activateIgnoringOtherApps:YES];[self.window makeKeyAndOrderFront:nil];[self shortcutStatus];}
-- (void)shortcutStatus {_spotlight.state=SHSpotlightEnabled(SHHotKey.spotlightHotKeys)?NSControlStateValueOff:NSControlStateValueOn;_shortcutStatus.stringValue=_hotKey.status?:NSLocalizedString(@"Use Search in the menu bar while setting up your shortcut.",@"Search is the menu item title");_historyStatus.stringValue=_historyKey.status?:@"";}
+- (void)shortcutStatus {[_recorder showKeys];[_historyRecorder showKeys];_spotlight.state=SHSpotlightEnabled(SHHotKey.spotlightHotKeys)?NSControlStateValueOff:NSControlStateValueOn;_shortcutStatus.stringValue=_hotKey.status?:NSLocalizedString(@"Use Search in the menu bar while setting up your shortcut.",@"Search is the menu item title");_historyStatus.stringValue=_historyKey.status?:@"";}
 - (void)updateRoots:(NSArray<NSDictionary *> *)roots message:(NSString *)message {
  NSInteger selected=_table.selectedRow;NSString *identifier=selected>=0 && selected<(NSInteger)_roots.count?_roots[(NSUInteger)selected][@"id"]:nil;
  _roots=roots;[_table reloadData];for(NSUInteger i=0;i<roots.count;i++)if([roots[i][@"id"] isEqual:identifier])[_table selectRowIndexes:[NSIndexSet indexSetWithIndex:i] byExtendingSelection:NO];
@@ -99,9 +109,7 @@ void SHChooseFolders(NSWindow *window,SHLibrary *library,NSString *replacing) {
 - (void)remove:(id)sender {(void)sender;if(self.selectedRoot)[_library removeRoot:self.selectedRoot];}
 - (void)refresh:(id)sender {(void)sender;[_library refresh];}
 - (void)exclude:(NSButton *)sender {[_library setExcludeGenerated:sender.state==NSControlStateValueOn];}
-- (void)record:(id)sender {(void)sender;_recorder.recording=YES;_recorder.title=NSLocalizedString(@"Press shortcut…",@"Button in Settings while it records a shortcut; 170 points wide");[self.window makeFirstResponder:_recorder];}
 - (void)retry:(id)sender {(void)sender;[_hotKey registerSaved];[_historyKey registerSaved];[self shortcutStatus];}
-- (void)recordHistory:(id)sender {(void)sender;_historyRecorder.recording=YES;_historyRecorder.title=NSLocalizedString(@"Press shortcut…",@"Button in Settings while it records a shortcut; 170 points wide");[self.window makeFirstResponder:_historyRecorder];}
 - (void)defaultHistoryShortcut:(id)sender {(void)sender;[_historyKey useDefault];[self shortcutStatus];}
 - (void)spotlight:(NSButton *)sender {
  BOOL saved=[_hotKey replaceSpotlight:sender.state==NSControlStateValueOn];[self shortcutStatus];

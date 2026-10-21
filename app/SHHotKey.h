@@ -10,6 +10,8 @@
 // The app's other shortcut; recordEvent: and useDefault refuse its keys.
 @property(nonatomic,weak) SHHotKey *other;
 - (BOOL)registerSaved;
+// Stops the shortcut until the next registerSaved, so a recorder in this app can receive its keys.
+- (void)pause;
 - (BOOL)recordEvent:(NSEvent *)event;
 - (void)useDefault;
 - (void)openKeyboardSettings;

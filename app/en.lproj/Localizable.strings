@@ -103,9 +103,6 @@
 /* No comment */
 "Cannot open the local catalog. Check available disk space and restart." = "Cannot open the local catalog. Check available disk space and restart.";
 
-/* Welcome window button that opens Settings; 170 points wide */
-"Change Shortcuts…" = "Change Shortcuts…";
-
 /* Note at the right of the search panel when a search location is unavailable; keep it short */
 "Check Settings for coverage" = "Check Settings for coverage";
 
@@ -368,9 +365,6 @@
 
 /* State of a search location */
 "Rechecking changed location" = "Rechecking changed location";
-
-/* Button in Settings that starts a shortcut recording; 170 points wide */
-"Record Shortcut…" = "Record Shortcut…";
 
 /* VoiceOver label of the shortcut button */
 "Record clipboard history shortcut" = "Record clipboard history shortcut";

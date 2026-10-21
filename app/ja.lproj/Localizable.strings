@@ -103,9 +103,6 @@
 /* No comment */
 "Cannot open the local catalog. Check available disk space and restart." = "ローカルカタログを開けません。ディスクの空き容量を確認して、再起動してください。";
 
-/* Welcome window button that opens Settings; 170 points wide */
-"Change Shortcuts…" = "ショートカットを変更…";
-
 /* Note at the right of the search panel when a search location is unavailable; keep it short */
 "Check Settings for coverage" = "設定で検索範囲を確認";
 
@@ -368,9 +365,6 @@
 
 /* State of a search location */
 "Rechecking changed location" = "変更された場所を再確認中";
-
-/* Button in Settings that starts a shortcut recording; 170 points wide */
-"Record Shortcut…" = "ショートカットを記録…";
 
 /* VoiceOver label of the shortcut button */
 "Record clipboard history shortcut" = "クリップボード履歴のショートカットを記録";

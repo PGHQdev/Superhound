@@ -32,6 +32,7 @@ static OSStatus Invoked(EventHandlerCallRef next,EventRef event,void *context){
  return [self saveCode:event.keyCode modifiers:mods label:label];
 }
 - (void)useDefault {[self saveCode:_code modifiers:_modifiers label:_defaultLabel];}
+- (void)pause {if(_key){UnregisterEventHotKey(_key);_key=NULL;}}
 - (BOOL)registered {return _key!=NULL;}
 - (BOOL)commandSpace {NSUserDefaults *d=NSUserDefaults.standardUserDefaults;return [d integerForKey:[self key:@"Code"]]==kVK_Space && [d integerForKey:[self key:@"Modifiers"]]==cmdKey;}
 - (void)leaveCommandSpace {if(self.commandSpace)[self saveCode:kVK_Space modifiers:optionKey label:@"⌥Space"];}

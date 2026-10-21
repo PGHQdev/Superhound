@@ -3,7 +3,6 @@
 #import "SHHotKey.h"
 // The first-use window: the shortcuts, the search locations with the folder permissions, and a first search.
 @interface SHWelcomeController : NSWindowController
-@property(nonatomic,copy) void (^openSettings)(void);
 @property(nonatomic,copy) void (^openSearch)(void);
 - (instancetype)initWithLibrary:(SHLibrary *)library hotKey:(SHHotKey *)hotKey historyKey:(SHHotKey *)historyKey;
 // count: the searchable items; indexing: YES while a search location is still indexing.

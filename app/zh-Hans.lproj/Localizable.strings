@@ -103,9 +103,6 @@
 /* No comment */
 "Cannot open the local catalog. Check available disk space and restart." = "无法打开本地索引。请检查可用磁盘空间，然后重新启动。";
 
-/* Welcome window button that opens Settings; 170 points wide */
-"Change Shortcuts…" = "更改快捷键…";
-
 /* Note at the right of the search panel when a search location is unavailable; keep it short */
 "Check Settings for coverage" = "请在“设置”中查看覆盖范围";
 
@@ -368,9 +365,6 @@
 
 /* State of a search location */
 "Rechecking changed location" = "正在重新检查已更改的位置";
-
-/* Button in Settings that starts a shortcut recording; 170 points wide */
-"Record Shortcut…" = "录制快捷键…";
 
 /* VoiceOver label of the shortcut button */
 "Record clipboard history shortcut" = "录制剪贴板历史记录快捷键";

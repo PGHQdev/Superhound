@@ -5,7 +5,7 @@
 @end
 @implementation SHWelcomeController {
  SHLibrary *_library;SHHotKey *_hotKey,*_historyKey;NSArray<NSDictionary *> *_folders;NSArray<NSArray *> *_rows;
- NSTableView *_table;NSTextField *_shortcuts,*_spotlightNote,*_empty,*_try,*_progress,*_done;NSButton *_spotlight;NSImageView *_check;BOOL _shown,_tried;
+ NSTableView *_table;SHShortcutButton *_recorder,*_historyRecorder;NSTextField *_shortcuts,*_spotlightNote,*_empty,*_try,*_progress,*_done;NSButton *_spotlight;NSImageView *_check;BOOL _shown,_tried;
 }
 // Step text is 20 points right of the step titles; buttons sit 4 points left of the text, as in Settings.
 static const CGFloat Width=640,Text=Width-44-24;
@@ -20,7 +20,11 @@ static CGFloat RowHeight(NSArray *row){CGFloat height=0;for(NSUInteger i=1;i<row
  _shortcuts=SHLabel(view,@"",NSMakeRect(44,0,Text,20),13,NO);_shortcuts.accessibilityIdentifier=@"superhound.welcome.shortcuts";
  _spotlight=[NSButton checkboxWithTitle:NSLocalizedString(@"Use ⌘Space in place of Spotlight",@"Settings check box") target:self action:@selector(spotlight:)];_spotlight.frame=NSMakeRect(44,0,Text,24);_spotlight.accessibilityIdentifier=@"superhound.welcome.spotlight";[view addSubview:_spotlight];
  _spotlightNote=SHLabel(view,NSLocalizedString(@"Turns off Spotlight’s ⌘Space shortcut and opens Superhound with ⌘Space. To give ⌘Space back to Spotlight, turn this off, or choose Uninstall Superhound… in the menu bar.",@"Uninstall Superhound… is a menu item title"),NSMakeRect(64,0,Text-20,30),11,YES);
- NSButton *change=SHButton(view,NSLocalizedString(@"Change Shortcuts…",@"Welcome window button that opens Settings; 170 points wide"),NSMakeRect(40,0,170,32),self,@selector(settings:));
+ // The recorders sit at x 200, 4 points left of a 160-point label column after the step text, as in Settings.
+ NSTextField *searchLabel=SHLabel(view,NSLocalizedString(@"Open search",@"Settings row label for the search shortcut; 160 points wide"),NSMakeRect(44,0,152,20),13,NO),*historyLabel=SHLabel(view,NSLocalizedString(@"Clipboard",@"Section label: the clipboard history; Settings row label (160 points wide) and search panel band; keep it short"),NSMakeRect(44,0,152,20),13,NO);
+ _recorder=[[SHShortcutButton alloc] initWithFrame:NSMakeRect(200,0,170,32) hotKey:hotKey];_recorder.accessibilityLabel=NSLocalizedString(@"Record global search shortcut",@"VoiceOver label of the shortcut button");[view addSubview:_recorder];
+ _historyRecorder=[[SHShortcutButton alloc] initWithFrame:NSMakeRect(200,0,170,32) hotKey:historyKey];_historyRecorder.accessibilityLabel=NSLocalizedString(@"Record clipboard history shortcut",@"VoiceOver label of the shortcut button");[view addSubview:_historyRecorder];
+ __weak typeof(self) weak=self;_recorder.changed=_historyRecorder.changed=^{[weak refresh];};
  NSTextField *step2=SHLabel(view,NSLocalizedString(@"2. Your folders",@"Welcome window step title"),NSMakeRect(24,0,Width-48,22),15,NO);
  NSTextField *apps=SHLabel(view,NSLocalizedString(@"Apps are included automatically. Files are searched only inside folders you select. File contents stay unread.",nil),NSMakeRect(44,0,Text,34),13,YES);
  NSScrollView *scroll=[[NSScrollView alloc] initWithFrame:NSMakeRect(44,0,Text,100)];scroll.hasVerticalScroller=YES;scroll.borderType=NSBezelBorder;
@@ -36,7 +40,7 @@ static CGFloat RowHeight(NSArray *row){CGFloat height=0;for(NSUInteger i=1;i<row
  _progress=SHLabel(view,NSLocalizedString(@"Preparing catalog…",@"Status in Settings while the app starts"),NSMakeRect(222,0,Width-24-222,20),12,YES);_progress.accessibilityIdentifier=@"superhound.welcome.progress";
  _check=[NSImageView imageViewWithImage:[[NSImage imageWithSystemSymbolName:@"checkmark.circle.fill" accessibilityDescription:nil] imageWithSymbolConfiguration:[NSImageSymbolConfiguration configurationWithPointSize:15 weight:NSFontWeightRegular]]];_check.frame=NSMakeRect(44,0,18,18);_check.contentTintColor=NSColor.systemGreenColor;_check.accessibilityElement=NO;[view addSubview:_check];
  _done=SHLabel(view,NSLocalizedString(@"Done. Superhound learns what you open.",@"Welcome window line after the first opened search result"),NSMakeRect(68,0,Text-24,20),13,NO);_done.accessibilityIdentifier=@"superhound.welcome.done";
- _rows=@[@[@20,heading],@[@2,intro],@[@18,step1],@[@4,_shortcuts],@[@8,_spotlight],@[@2,_spotlightNote],@[@8,change],@[@18,step2],@[@4,apps],@[@8,scroll,_empty],@[@8,add],@[@6,permissions],@[@18,step3],@[@4,_try],@[@8,search,_progress],@[@10,_done,_check]];
+ _rows=@[@[@20,heading],@[@2,intro],@[@18,step1],@[@4,_shortcuts],@[@8,searchLabel,_recorder],@[@4,historyLabel,_historyRecorder],@[@8,_spotlight],@[@2,_spotlightNote],@[@18,step2],@[@4,apps],@[@8,scroll,_empty],@[@8,add],@[@6,permissions],@[@18,step3],@[@4,_try],@[@8,search,_progress],@[@10,_done,_check]];
  _spotlight.hidden=_spotlightNote.hidden=YES;[self refresh];[window center];return self;
 }
 // The Spotlight switch shows when the search shortcut is ⌘Space and Spotlight still has ⌘Space; it stays while the window is open, so a click does not move the rows.
@@ -47,7 +51,7 @@ static CGFloat RowHeight(NSArray *row){CGFloat height=0;for(NSUInteger i=1;i<row
 // Shortcut changes in Settings show when the window becomes key again.
 - (void)windowDidBecomeKey:(NSNotification *)notification {(void)notification;[self refresh];}
 - (void)refresh {
- _spotlight.state=SHSpotlightEnabled(SHHotKey.spotlightHotKeys)?NSControlStateValueOff:NSControlStateValueOn;
+ [_recorder showKeys];[_historyRecorder showKeys];_spotlight.state=SHSpotlightEnabled(SHHotKey.spotlightHotKeys)?NSControlStateValueOff:NSControlStateValueOn;
  _shortcuts.stringValue=!_hotKey.registered?(_hotKey.status?:@""):!_historyKey.registered?(_historyKey.status?:@""):[NSString stringWithFormat:NSLocalizedString(@"Press %@ to search. Press %@ for the clipboard history.",@"Welcome window text; the arguments are shortcuts such as ⌘Space and ⌥⌘V"),_hotKey.label,_historyKey.label];
  _try.stringValue=[NSString stringWithFormat:NSLocalizedString(@"Press %@ and type part of an app name. Typos work, such as safri.",@"Welcome window text; the argument is a shortcut such as ⌘Space; safri is a typing error for Safari, keep it as it is"),_hotKey.label];
  _empty.hidden=_folders.count>0;_done.hidden=_check.hidden=!_tried;[self layout];
@@ -71,7 +75,6 @@ static CGFloat RowHeight(NSArray *row){CGFloat height=0;for(NSUInteger i=1;i<row
  BOOL saved=[_hotKey replaceSpotlight:sender.state==NSControlStateValueOn];[self refresh];
  if(!saved){_shortcuts.stringValue=NSLocalizedString(@"macOS did not save the Spotlight shortcut. Change it in Keyboard Settings….",@"Keyboard Settings… is the button title");[self layout];}
 }
-- (void)settings:(id)sender {(void)sender;if(self.openSettings)self.openSettings();}
 - (void)add:(id)sender {(void)sender;SHChooseFolders(self.window,_library,nil);}
 - (void)search:(id)sender {(void)sender;if(self.openSearch)self.openSearch();}
 @end

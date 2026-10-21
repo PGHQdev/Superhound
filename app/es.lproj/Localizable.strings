@@ -103,9 +103,6 @@
 /* No comment */
 "Cannot open the local catalog. Check available disk space and restart." = "No se puede abrir el catálogo local. Comprueba el espacio disponible en el disco y reinicia.";
 
-/* Welcome window button that opens Settings; 170 points wide */
-"Change Shortcuts…" = "Cambiar en Ajustes…";
-
 /* Note at the right of the search panel when a search location is unavailable; keep it short */
 "Check Settings for coverage" = "Revisa la cobertura en Ajustes";
 
@@ -368,9 +365,6 @@
 
 /* State of a search location */
 "Rechecking changed location" = "Revisando la ubicación modificada";
-
-/* Button in Settings that starts a shortcut recording; 170 points wide */
-"Record Shortcut…" = "Nueva función rápida…";
 
 /* VoiceOver label of the shortcut button */
 "Record clipboard history shortcut" = "Grabar la función rápida del historial del portapapeles";
