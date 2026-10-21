@@ -124,7 +124,7 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  // The system search bezel has a fixed height that clips 22-point text, so the field draws no bezel.
  NSImageView *glass=[NSImageView imageViewWithImage:[[NSImage imageWithSystemSymbolName:@"magnifyingglass" accessibilityDescription:nil] imageWithSymbolConfiguration:[NSImageSymbolConfiguration configurationWithPointSize:18 weight:NSFontWeightRegular]]];glass.frame=NSMakeRect(16,Bottom+MaxRows+12,28,32);glass.autoresizingMask=NSViewMinYMargin;glass.contentTintColor=NSColor.secondaryLabelColor;[view addSubview:glass];
  _field=[[NSTextField alloc] initWithFrame:NSMakeRect(52,Bottom+MaxRows+12,Width-68,32)];_field.autoresizingMask=NSViewMinYMargin;_field.bordered=NO;_field.drawsBackground=NO;_field.focusRingType=NSFocusRingTypeNone;_field.usesSingleLineMode=YES;_field.cell.scrollable=YES;_field.font=[NSFont systemFontOfSize:22];_field.delegate=self;_field.accessibilityIdentifier=@"superhound.search.input";_field.accessibilityLabel=NSLocalizedString(@"Search apps and selected folders",@"VoiceOver label of the search field");[view addSubview:_field];
- _section=[NSTextField labelWithString:@""];_section.font=[NSFont systemFontOfSize:12 weight:NSFontWeightMedium];_section.textColor=NSColor.secondaryLabelColor;_section.lineBreakMode=NSLineBreakByTruncatingTail;_section.accessibilityIdentifier=@"superhound.search.status";[view addSubview:_section];
+ _section=[NSTextField labelWithString:@""];_section.font=[NSFont systemFontOfSize:12 weight:NSFontWeightMedium];_section.textColor=NSColor.secondaryLabelColor;_section.lineBreakMode=NSLineBreakByWordWrapping;_section.cell.wraps=YES;_section.cell.truncatesLastVisibleLine=YES;_section.maximumNumberOfLines=2;_section.accessibilityIdentifier=@"superhound.search.status";[view addSubview:_section];
  _note=[NSTextField labelWithString:@""];_note.font=[NSFont systemFontOfSize:12];_note.textColor=NSColor.tertiaryLabelColor;_note.alignment=NSTextAlignmentRight;_note.lineBreakMode=NSLineBreakByTruncatingHead;[view addSubview:_note];
  NSScrollView *scroll=_scroll=[[NSScrollView alloc] initWithFrame:NSMakeRect(8,Bottom,Width-16,MaxRows)];scroll.hasVerticalScroller=NO;scroll.drawsBackground=NO;
  _table=[[SHResultsTable alloc] initWithFrame:scroll.bounds];
@@ -150,11 +150,13 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
 // Apps, settings panes, and commands take one line; files and the rest take two.
 - (CGFloat)tableView:(NSTableView *)tableView heightOfRow:(NSInteger)row {(void)tableView;return row<(NSInteger)_results.count && SHLaunchable(_results[(NSUInteger)row])?40:48;}
 - (NSTableRowView *)tableView:(NSTableView *)tableView rowViewForRow:(NSInteger)row {(void)tableView;(void)row;return SHRowView.new;}
-- (CGFloat)fittingHeight {CGFloat rows=0;for(NSInteger i=0;i<_table.numberOfRows;i++)rows+=[self tableView:_table heightOfRow:i];return MIN(Top+(_section.hidden?0:Band)+MIN(rows,MaxRows)+Bottom,_top-_floor);}
+// An error that does not fit one line takes a second line, so the end of a long message stays visible.
+- (CGFloat)bandHeight {return _section.hidden?0:_error && [_section.stringValue sizeWithAttributes:@{NSFontAttributeName:_section.font}].width>Width-32?Band+15:Band;}
+- (CGFloat)fittingHeight {CGFloat rows=0;for(NSInteger i=0;i<_table.numberOfRows;i++)rows+=[self tableView:_table heightOfRow:i];return MIN(Top+self.bandHeight+MIN(rows,MaxRows)+Bottom,_top-_floor);}
 // The label band and the rows follow the current height at once, also while a shrink waits.
 - (void)place {
- CGFloat height=NSHeight(self.window.frame),band=_section.hidden?0:Band,note=_note.stringValue.length?MIN(ceil(_note.fittingSize.width),(Width-32)/2):0;
- _note.frame=NSMakeRect(Width-16-note,height-Top-band+5,note,16);_section.frame=NSMakeRect(16,height-Top-band+5,Width-32-note-(note?12:0),16);_scroll.frame=NSMakeRect(8,Bottom,Width-16,MAX(0,height-Top-band-Bottom));}
+ CGFloat height=NSHeight(self.window.frame),band=self.bandHeight,note=_note.stringValue.length?MIN(ceil(_note.fittingSize.width),(Width-32)/2):0;
+ _note.frame=NSMakeRect(Width-16-note,height-Top-band+5,note,16);_section.frame=NSMakeRect(16,height-Top-band+5,Width-32-note-(note?12:0),MAX(16,band-10));_scroll.frame=NSMakeRect(8,Bottom,Width-16,MAX(0,height-Top-band-Bottom));}
 // A taller panel grows at once; a shorter one waits for results to settle, so fast typing does not make it jump.
 - (void)fit {
  [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(resize) object:nil];
