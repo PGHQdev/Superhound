@@ -112,7 +112,8 @@
 /* No comment */
 "Clear the clipboard history?" = "クリップボード履歴を消去しますか？";
 
-/* Section label: the clipboard history; Settings row label and search panel band; keep it short */
+/* Section label: the clipboard history; Settings row label (160 points wide) and search panel band; keep it short
+   Section label: the clipboard history; Settings row label and search panel band; keep it short */
 "Clipboard" = "クリップボード";
 
 /* Menu bar menu item that opens the clipboard history; keep it short */
@@ -239,7 +240,7 @@
 /* Settings button that opens System Settings → Keyboard; 199 points wide */
 "Keyboard Settings…" = "キーボード設定…";
 
-/* Settings row label; 115 points wide */
+/* Settings row label; 160 points wide */
 "Language" = "言語";
 
 /* Alert after a language change; the argument is Superhound */
@@ -293,7 +294,7 @@
 /* Error in the search panel; the argument is the system error text */
 "Open at Login could not be changed. %@" = "「ログイン時に開く」を変更できませんでした。%@";
 
-/* Settings row label for the search shortcut; 115 points wide */
+/* Settings row label for the search shortcut; 160 points wide */
 "Open search" = "検索を開く";
 
 /* State of a search location */
@@ -653,7 +654,7 @@
 /* Row detail; Return is the key name */
 "Web address · Return to open in your browser" = "Webアドレス · Returnでブラウザに表示";
 
-/* Settings row label; 115 points wide */
+/* Settings row label; 160 points wide */
 "Web search" = "Web検索";
 
 /* VoiceOver label of the search engine menu */

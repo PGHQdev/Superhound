@@ -112,7 +112,8 @@
 /* No comment */
 "Clear the clipboard history?" = "要清除剪贴板历史记录吗？";
 
-/* Section label: the clipboard history; Settings row label and search panel band; keep it short */
+/* Section label: the clipboard history; Settings row label (160 points wide) and search panel band; keep it short
+   Section label: the clipboard history; Settings row label and search panel band; keep it short */
 "Clipboard" = "剪贴板";
 
 /* Menu bar menu item that opens the clipboard history; keep it short */
@@ -239,7 +240,7 @@
 /* Settings button that opens System Settings → Keyboard; 199 points wide */
 "Keyboard Settings…" = "键盘设置…";
 
-/* Settings row label; 115 points wide */
+/* Settings row label; 160 points wide */
 "Language" = "语言";
 
 /* Alert after a language change; the argument is Superhound */
@@ -293,7 +294,7 @@
 /* Error in the search panel; the argument is the system error text */
 "Open at Login could not be changed. %@" = "无法更改“登录时打开”。%@";
 
-/* Settings row label for the search shortcut; 115 points wide */
+/* Settings row label for the search shortcut; 160 points wide */
 "Open search" = "打开搜索";
 
 /* State of a search location */
@@ -653,7 +654,7 @@
 /* Row detail; Return is the key name */
 "Web address · Return to open in your browser" = "网址 · 按Return键在浏览器中打开";
 
-/* Settings row label; 115 points wide */
+/* Settings row label; 160 points wide */
 "Web search" = "网页搜索";
 
 /* VoiceOver label of the search engine menu */
