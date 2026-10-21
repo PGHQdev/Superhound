@@ -14,7 +14,7 @@ codesign -d -r- .build/Superhound.app 2>&1 | grep -q 'certificate root' || { ech
 out=".build/release/$version"
 rm -rf "$out"
 mkdir -p "$out"
-ditto -c -k --keepParent .build/Superhound.app "$out/Superhound.zip"
+ditto -c -k --norsrc --noextattr --noacl --keepParent .build/Superhound.app "$out/Superhound.zip"
 sha="$(shasum -a 256 "$out/Superhound.zip" | cut -d' ' -f1)"
 cat <<EOF
 
