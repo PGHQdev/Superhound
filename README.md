@@ -19,6 +19,8 @@ Press one shortcut. Type a few letters. Your app, file, answer, or emoji is alre
 
 **[Install](#-install)** · **[Website](https://superhound.app)** · **[Docs](https://superhound.app/docs)** · **[Get a license](https://superhound.app/buy)**
 
+<a href="https://www.producthunt.com/products/superhound?embed=true&amp;utm_source=badge-featured&amp;utm_medium=badge&amp;utm_campaign=badge-superhound" target="_blank" rel="noopener noreferrer"><picture><source media="(prefers-color-scheme: dark)" srcset="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1287375&amp;theme=dark&amp;t=1792555482711"><img alt="Superhound - Spotlight, but it actually finds things | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1287375&amp;theme=light&amp;t=1792555482711"></picture></a>
+
 </div>
 
 <br>
