@@ -55,6 +55,15 @@
 /* The first argument is the number of failed disks, the second the number of all disks */
 "%lu of %lu disks could not be ejected. An app may be using them." = "%2$lu个磁盘中有%1$lu个无法推出。可能有App正在使用它们。";
 
+/* Welcome window step title */
+"1. Your shortcut" = "1. 快捷键";
+
+/* Welcome window step title */
+"2. Your folders" = "2. 文件夹";
+
+/* Welcome window step title */
+"3. Your first search" = "3. 第一次搜索";
+
 /* No comment */
 "A command has no location in Finder." = "命令在访达中没有位置。";
 
@@ -93,6 +102,9 @@
 
 /* No comment */
 "Cannot open the local catalog. Check available disk space and restart." = "无法打开本地索引。请检查可用磁盘空间，然后重新启动。";
+
+/* Welcome window button that opens Settings; 170 points wide */
+"Change Shortcuts…" = "更改快捷键…";
 
 /* Note at the right of the search panel when a search location is unavailable; keep it short */
 "Check Settings for coverage" = "请在“设置”中查看覆盖范围";
@@ -188,6 +200,9 @@
 /* Action menu item for a clipboard history item */
 "Delete from History" = "从历史记录中删除";
 
+/* Welcome window line after the first opened search result */
+"Done. Superhound learns what you open." = "完成。Superhound会记住你打开的内容。";
+
 /* Alert button */
 "Don’t Relaunch" = "不重新开启";
 
@@ -233,6 +248,9 @@
 
 /* Note at the right of the search panel; keep it short */
 "Indexing 1 location" = "正在索引1个位置";
+
+/* Welcome window status; the argument is a number */
+"Indexing… %@ items so far" = "正在索引… 目前已有%@个项目";
 
 /* Alert button */
 "Install and Relaunch" = "安装并重新打开";
@@ -288,6 +306,9 @@
 /* Menu item and footer hint verb: open the selected result; keep it short */
 "Open" = "打开";
 
+/* Welcome window button; 170 points wide */
+"Open Search Panel" = "打开搜索面板";
+
 /* Action menu item with a submenu of apps */
 "Open With" = "打开方式";
 
@@ -318,6 +339,12 @@
 /* Status in Settings while the app starts */
 "Preparing search…" = "正在准备搜索…";
 
+/* Welcome window text; the argument is a shortcut such as ⌘Space; safri is a typing error for Safari, keep it as it is */
+"Press %@ and type part of an app name. Typos work, such as safri." = "按%@，然后输入App名称的一部分。拼写错误也能找到，例如safri。";
+
+/* Welcome window text; the arguments are shortcuts such as ⌘Space and ⌥⌘V */
+"Press %@ to search. Press %@ for the clipboard history." = "按%1$@搜索。按%2$@打开剪贴板历史记录。";
+
 /* Button in Settings while it records a shortcut; 170 points wide */
 "Press shortcut…" = "按下快捷键…";
 
@@ -332,6 +359,9 @@
 
 /* State of a search location after its scan */
 "Ready" = "就绪";
+
+/* Welcome window status; the argument is a number */
+"Ready: %@ items" = "就绪：%@个项目";
 
 /* No comment */
 "Rebuilding a damaged or older catalog. Your selected folders are preserved." = "正在重建已损坏或较旧的索引。你所选的文件夹会被保留。";
@@ -597,6 +627,9 @@
 /* No comment */
 "This version is not newer than the installed one." = "此版本并不比已安装的版本新。";
 
+/* Welcome window text under the heading */
+"Three steps to your first search." = "三步完成第一次搜索。";
+
 /* System command name in search results: switch between dark and light appearance */
 "Toggle Dark Mode" = "切换深色模式";
 
@@ -666,6 +699,12 @@
 /* Row detail; Return is the key name */
 "Web search · Return to open in your browser" = "网页搜索 · 按Return键在浏览器中打开";
 
+/* Welcome window title and heading */
+"Welcome to Superhound" = "欢迎使用Superhound";
+
+/* Menu bar menu item that opens the Welcome window; keep it short */
+"Welcome…" = "欢迎…";
+
 /* The argument is the installed version number */
 "You have version %@. Superhound downloads the update, checks its signature, and opens again." = "你当前的版本为%@。Superhound会下载更新、检查其签名，然后重新打开。";
 
@@ -683,6 +722,9 @@
 
 /* VoiceOver kind of a result: a symbolic link or alias; a noun */
 "link" = "链接";
+
+/* Welcome window note; Allow is the button title in the macOS permission window; Accessibility is the System Settings item */
+"macOS asks once for access to folders such as Documents. Click Allow so Superhound can find your files. macOS also asks for Accessibility access the first time you paste from the clipboard history." = "macOS会询问一次是否允许访问“文稿”等文件夹。请点按“允许”，以便Superhound找到你的文件。首次从剪贴板历史记录粘贴时，macOS还会请求“辅助功能”权限。";
 
 /* Error in the search panel; Privacy & Security → Automation is the place in System Settings */
 "macOS blocked this command. Allow Superhound in Privacy & Security → Automation." = "macOS阻止了此命令。请在“隐私与安全性”→“自动化”中允许Superhound。";

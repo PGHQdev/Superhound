@@ -18,7 +18,7 @@ static OSStatus Invoked(EventHandlerCallRef next,EventRef event,void *context){
 - (BOOL)registerSaved {
  NSAssert(NSThread.isMainThread,@"hotkeys require main thread");if(_key){UnregisterEventHotKey(_key);_key=NULL;}
  UInt32 code=(UInt32)[NSUserDefaults.standardUserDefaults integerForKey:[self key:@"Code"]],mods=(UInt32)[NSUserDefaults.standardUserDefaults integerForKey:[self key:@"Modifiers"]];
- OSStatus result=_error=RegisterEventHotKey(code,mods,(EventHotKeyID){'SHND',_identifier},GetApplicationEventTarget(),kEventHotKeyExclusive,&_key);
+ OSStatus result=_error=RegisterEventHotKey(code,mods,(EventHotKeyID){'SHND',_identifier},GetApplicationEventTarget(),kEventHotKeyExclusive,&_key);if(result!=noErr)_key=NULL;
  _status=result==noErr?[NSString stringWithFormat:NSLocalizedString(@"%@ registered. Try it from another app and confirm only Superhound opens.",@"Settings status; the argument is a shortcut such as ⌘Space"),self.label]:result==eventHotKeyExistsErr?[NSString stringWithFormat:NSLocalizedString(@"%@ is in use by another app. Use %@ in the menu bar, or choose other keys.",@"Settings status; the first argument is a shortcut such as ⌘Space, the second a menu item name such as Search"),self.label,_menu]:[NSString stringWithFormat:NSLocalizedString(@"%@ is unavailable (error %d). Use %@ in the menu bar, change the competing shortcut, then Retry.",@"Settings status; the first argument is a shortcut, the second an error number, the third a menu item name such as Search; Retry is a button title"),self.label,(int)result,_menu];
  return result==noErr;
 }
@@ -32,7 +32,10 @@ static OSStatus Invoked(EventHandlerCallRef next,EventRef event,void *context){
  return [self saveCode:event.keyCode modifiers:mods label:label];
 }
 - (void)useDefault {[self saveCode:_code modifiers:_modifiers label:_defaultLabel];}
-- (void)leaveCommandSpace {NSUserDefaults *d=NSUserDefaults.standardUserDefaults;if([d integerForKey:[self key:@"Code"]]==kVK_Space && [d integerForKey:[self key:@"Modifiers"]]==cmdKey)[self saveCode:kVK_Space modifiers:optionKey label:@"⌥Space"];}
+- (BOOL)registered {return _key!=NULL;}
+- (BOOL)commandSpace {NSUserDefaults *d=NSUserDefaults.standardUserDefaults;return [d integerForKey:[self key:@"Code"]]==kVK_Space && [d integerForKey:[self key:@"Modifiers"]]==cmdKey;}
+- (void)leaveCommandSpace {if(self.commandSpace)[self saveCode:kVK_Space modifiers:optionKey label:@"⌥Space"];}
+- (BOOL)replaceSpotlight:(BOOL)replace {if(![SHHotKey setSpotlightEnabled:!replace])return NO;if(replace)[self useDefault];else [self leaveCommandSpace];return YES;}
 + (NSDictionary *)spotlightHotKeys {CFPreferencesAppSynchronize(CFSTR("com.apple.symbolichotkeys"));id keys=CFBridgingRelease(CFPreferencesCopyAppValue(CFSTR("AppleSymbolicHotKeys"),CFSTR("com.apple.symbolichotkeys")));return [keys isKindOfClass:NSDictionary.class]?keys:@{};}
 // The saved setting alone applies at the next login; this private call applies it now and can change in a later macOS.
 + (BOOL)setSpotlightEnabled:(BOOL)enabled {

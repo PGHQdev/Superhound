@@ -55,6 +55,15 @@
 /* The first argument is the number of failed disks, the second the number of all disks */
 "%lu of %lu disks could not be ejected. An app may be using them." = "No se han podido expulsar %1$lu de %2$lu discos. Puede que una app los esté usando.";
 
+/* Welcome window step title */
+"1. Your shortcut" = "1. Tu función rápida";
+
+/* Welcome window step title */
+"2. Your folders" = "2. Tus carpetas";
+
+/* Welcome window step title */
+"3. Your first search" = "3. Tu primera búsqueda";
+
 /* No comment */
 "A command has no location in Finder." = "Un comando no tiene ubicación en el Finder.";
 
@@ -93,6 +102,9 @@
 
 /* No comment */
 "Cannot open the local catalog. Check available disk space and restart." = "No se puede abrir el catálogo local. Comprueba el espacio disponible en el disco y reinicia.";
+
+/* Welcome window button that opens Settings; 170 points wide */
+"Change Shortcuts…" = "Cambiar en Ajustes…";
 
 /* Note at the right of the search panel when a search location is unavailable; keep it short */
 "Check Settings for coverage" = "Revisa la cobertura en Ajustes";
@@ -188,6 +200,9 @@
 /* Action menu item for a clipboard history item */
 "Delete from History" = "Eliminar del historial";
 
+/* Welcome window line after the first opened search result */
+"Done. Superhound learns what you open." = "Listo. Superhound aprende lo que abres.";
+
 /* Alert button */
 "Don’t Relaunch" = "No reiniciar";
 
@@ -233,6 +248,9 @@
 
 /* Note at the right of the search panel; keep it short */
 "Indexing 1 location" = "Indexando 1 ubicación";
+
+/* Welcome window status; the argument is a number */
+"Indexing… %@ items so far" = "Indexando… %@ ítems por ahora";
 
 /* Alert button */
 "Install and Relaunch" = "Instalar y reiniciar";
@@ -288,6 +306,9 @@
 /* Menu item and footer hint verb: open the selected result; keep it short */
 "Open" = "Abrir";
 
+/* Welcome window button; 170 points wide */
+"Open Search Panel" = "Abrir la búsqueda";
+
 /* Action menu item with a submenu of apps */
 "Open With" = "Abrir con";
 
@@ -318,6 +339,12 @@
 /* Status in Settings while the app starts */
 "Preparing search…" = "Preparando la búsqueda…";
 
+/* Welcome window text; the argument is a shortcut such as ⌘Space; safri is a typing error for Safari, keep it as it is */
+"Press %@ and type part of an app name. Typos work, such as safri." = "Pulsa %@ y escribe parte del nombre de una app. Las erratas también funcionan, como «safri».";
+
+/* Welcome window text; the arguments are shortcuts such as ⌘Space and ⌥⌘V */
+"Press %@ to search. Press %@ for the clipboard history." = "Pulsa %@ para buscar. Pulsa %@ para el historial del portapapeles.";
+
 /* Button in Settings while it records a shortcut; 170 points wide */
 "Press shortcut…" = "Pulsar función rápida…";
 
@@ -332,6 +359,9 @@
 
 /* State of a search location after its scan */
 "Ready" = "Lista";
+
+/* Welcome window status; the argument is a number */
+"Ready: %@ items" = "Lista: %@ ítems";
 
 /* No comment */
 "Rebuilding a damaged or older catalog. Your selected folders are preserved." = "Reconstruyendo un catálogo dañado o antiguo. Se conservan las carpetas que has seleccionado.";
@@ -597,6 +627,9 @@
 /* No comment */
 "This version is not newer than the installed one." = "Esta versión no es más reciente que la instalada.";
 
+/* Welcome window text under the heading */
+"Three steps to your first search." = "Tres pasos hasta tu primera búsqueda.";
+
 /* System command name in search results: switch between dark and light appearance */
 "Toggle Dark Mode" = "Activar/desactivar modo oscuro";
 
@@ -666,6 +699,12 @@
 /* Row detail; Return is the key name */
 "Web search · Return to open in your browser" = "Búsqueda web · Retorno para abrir en el navegador";
 
+/* Welcome window title and heading */
+"Welcome to Superhound" = "Te damos la bienvenida a Superhound";
+
+/* Menu bar menu item that opens the Welcome window; keep it short */
+"Welcome…" = "Bienvenida…";
+
 /* The argument is the installed version number */
 "You have version %@. Superhound downloads the update, checks its signature, and opens again." = "Tienes la versión %@. Superhound descargará la actualización, comprobará su firma y se volverá a abrir.";
 
@@ -683,6 +722,9 @@
 
 /* VoiceOver kind of a result: a symbolic link or alias; a noun */
 "link" = "enlace";
+
+/* Welcome window note; Allow is the button title in the macOS permission window; Accessibility is the System Settings item */
+"macOS asks once for access to folders such as Documents. Click Allow so Superhound can find your files. macOS also asks for Accessibility access the first time you paste from the clipboard history." = "macOS pide acceso una sola vez a carpetas como Documentos. Haz clic en Permitir para que Superhound encuentre tus archivos. macOS también pide acceso a Accesibilidad la primera vez que pegas desde el historial del portapapeles.";
 
 /* Error in the search panel; Privacy & Security → Automation is the place in System Settings */
 "macOS blocked this command. Allow Superhound in Privacy & Security → Automation." = "macOS ha bloqueado este comando. Activa Superhound en Privacidad y seguridad → Automatización.";
