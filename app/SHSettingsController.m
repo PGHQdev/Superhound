@@ -1,6 +1,7 @@
 #import "SHSettingsController.h"
 #import "SHSpotlight.h"
 #import "SHWeb.h"
+#import "SHUpdater.h"
 @interface SHShortcutButton : NSButton
 @property(copy) void (^recorded)(NSEvent *);
 @property BOOL recording;
@@ -19,9 +20,11 @@
 static NSTextField *Label(NSView *view,NSString *text,NSRect frame,CGFloat size,BOOL secondary) {
  NSTextField *label=[NSTextField wrappingLabelWithString:text];label.frame=frame;label.font=[NSFont systemFontOfSize:size];if(secondary)label.textColor=NSColor.secondaryLabelColor;[view addSubview:label];return label;
 }
+// The app's languages: the code for AppleLanguages and the name in that language.
+static NSArray<NSArray<NSString *> *> *Languages(void){return @[@[@"en",@"English"],@[@"ja",@"日本語"],@[@"de",@"Deutsch"],@[@"fr",@"Français"],@[@"es",@"Español"],@[@"zh-Hans",@"简体中文"],@[@"pt-BR",@"Português (Brasil)"]];}
 static NSButton *Button(NSView *view,NSString *title,NSRect frame,id target,SEL action) {NSButton *button=[NSButton buttonWithTitle:title target:target action:action];button.frame=frame;[view addSubview:button];return button;}
 - (instancetype)initWithLibrary:(SHLibrary *)library hotKey:(SHHotKey *)hotKey historyKey:(SHHotKey *)historyKey {
- NSWindow *window=[[NSWindow alloc] initWithContentRect:NSMakeRect(0,0,740,812) styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable|NSWindowStyleMaskMiniaturizable backing:NSBackingStoreBuffered defer:NO];
+ NSWindow *window=[[NSWindow alloc] initWithContentRect:NSMakeRect(0,0,740,856) styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable|NSWindowStyleMaskMiniaturizable backing:NSBackingStoreBuffered defer:NO];
  if(!(self=[super initWithWindow:window]))return nil;
  _library=library;_hotKey=hotKey;_historyKey=historyKey;_roots=@[];window.title=NSLocalizedString(@"Superhound Settings",@"Settings window title");window.releasedWhenClosed=NO;window.accessibilityIdentifier=@"superhound.settings";
  NSView *view=window.contentView;
@@ -62,6 +65,12 @@ static NSButton *Button(NSView *view,NSString *title,NSRect frame,id target,SEL 
  NSButton *complete=[NSButton checkboxWithTitle:NSLocalizedString(@"Complete the top result as you type",@"Settings check box") target:self action:@selector(complete:)];complete.frame=NSMakeRect(24,34,690,24);complete.accessibilityIdentifier=@"superhound.completion";
  complete.state=[NSUserDefaults.standardUserDefaults boolForKey:@"inlineCompletion"]?NSControlStateValueOn:NSControlStateValueOff;[view addSubview:complete];
  Label(view,NSLocalizedString(@"The rest of the top result’s name appears after your text, selected. Tab or → keeps it; any other key replaces it.",@"Tab is the key name"),NSMakeRect(44,6,670,26),11,YES);
+ // The language row sits at the bottom. Each language shows its own name; System Default follows the macOS language order.
+ for(NSView *v in view.subviews)[v setFrameOrigin:NSMakePoint(v.frame.origin.x,v.frame.origin.y+44)];
+ Label(view,NSLocalizedString(@"Language",@"Settings row label; 115 points wide"),NSMakeRect(24,20,115,24),15,NO);
+ NSPopUpButton *languages=[[NSPopUpButton alloc] initWithFrame:NSMakeRect(144,16,300,28) pullsDown:NO];languages.target=self;languages.action=@selector(language:);languages.accessibilityIdentifier=@"superhound.language";languages.accessibilityLabel=NSLocalizedString(@"Language",@"Settings row label; 115 points wide");
+ [languages addItemWithTitle:NSLocalizedString(@"System Default",@"First item of the language menu: use the macOS language order")];NSString *own=[[NSUserDefaults.standardUserDefaults persistentDomainForName:NSBundle.mainBundle.bundleIdentifier][@"AppleLanguages"] firstObject];
+ for(NSArray *l in Languages()){[languages addItemWithTitle:l[1]];if([own isKindOfClass:NSString.class] && ([own isEqual:l[0]] || [own hasPrefix:[l[0] stringByAppendingString:@"-"]]))[languages selectItemAtIndex:languages.numberOfItems-1];}[view addSubview:languages];
  [self shortcutStatus];[self updateButtons];[window center];return self;
 }
 - (void)show {[NSApp activateIgnoringOtherApps:YES];[self.window makeKeyAndOrderFront:nil];[self shortcutStatus];}
@@ -102,5 +111,12 @@ static NSButton *Button(NSView *view,NSString *title,NSRect frame,id target,SEL 
 }
 - (void)complete:(NSButton *)sender {[NSUserDefaults.standardUserDefaults setBool:sender.state==NSControlStateValueOn forKey:@"inlineCompletion"];}
 - (void)engine:(NSPopUpButton *)sender {[NSUserDefaults.standardUserDefaults setObject:SHWeb.engines[(NSUInteger)sender.indexOfSelectedItem][@"id"] forKey:@"searchEngine"];}
+// AppKit reads the language only at launch, so a change offers to relaunch, with the alert text of the macOS Language & Region pane.
+- (void)language:(NSPopUpButton *)sender {
+ NSInteger i=sender.indexOfSelectedItem;if(i<=0)[NSUserDefaults.standardUserDefaults removeObjectForKey:@"AppleLanguages"];else [NSUserDefaults.standardUserDefaults setObject:@[Languages()[(NSUInteger)i-1][0]] forKey:@"AppleLanguages"];
+ NSAlert *alert=NSAlert.new;alert.messageText=[NSString stringWithFormat:NSLocalizedString(@"Language setting for %@ has changed. Do you want to relaunch the app now?",@"Alert after a language change; the argument is Superhound"),@"Superhound"];
+ [alert addButtonWithTitle:NSLocalizedString(@"Relaunch Now",@"Alert button")];[alert addButtonWithTitle:NSLocalizedString(@"Don’t Relaunch",@"Alert button")];
+ [alert beginSheetModalForWindow:self.window completionHandler:^(NSModalResponse response){if(response==NSAlertFirstButtonReturn)SHRelaunch(NSBundle.mainBundle.bundleURL);}];
+}
 - (void)keyboardSettings:(id)sender {(void)sender;[_hotKey openKeyboardSettings];}
 @end

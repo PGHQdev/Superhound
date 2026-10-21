@@ -1,6 +1,11 @@
 #import "SHUpdater.h"
 @implementation SHUpdater {NSURLSession *_session;NSTimer *_timer;SecRequirementRef _requirement;}
 static void Tell(NSString *title,NSString *text){[NSApp activateIgnoringOtherApps:YES];NSAlert *alert=NSAlert.new;alert.messageText=title;alert.informativeText=text;[alert runModal];}
+BOOL SHRelaunch(NSURL *url) {
+ // A shell waits until this process ends, then opens the app at the same path.
+ NSTask *task=NSTask.new;task.executableURL=[NSURL fileURLWithPath:@"/bin/sh"];task.arguments=@[@"-c",@"while /bin/kill -0 \"$0\" 2>/dev/null; do /bin/sleep 0.2; done; /usr/bin/open \"$1\"",[NSString stringWithFormat:@"%d",NSProcessInfo.processInfo.processIdentifier],url.path];
+ if(![task launchAndReturnError:nil])return NO;[NSApp terminate:nil];return YES;
+}
 static NSString *Version(void){return NSBundle.mainBundle.infoDictionary[@"CFBundleShortVersionString"]?:@"";}
 - (instancetype)init {
  if((self=[super init])){
@@ -59,9 +64,7 @@ static NSString *Version(void){return NSBundle.mainBundle.infoDictionary[@"CFBun
   CFRelease(requirement);
   dispatch_async(dispatch_get_main_queue(),^{
    self.busy=NO;if(message){Tell(NSLocalizedString(@"Superhound is not updated",nil),message);return;}
-   // A shell waits until this process ends, then opens the new app at the same path.
-   NSTask *task=NSTask.new;task.executableURL=[NSURL fileURLWithPath:@"/bin/sh"];task.arguments=@[@"-c",@"while /bin/kill -0 \"$0\" 2>/dev/null; do /bin/sleep 0.2; done; /usr/bin/open \"$1\"",[NSString stringWithFormat:@"%d",NSProcessInfo.processInfo.processIdentifier],installed.path];
-   if([task launchAndReturnError:nil])[NSApp terminate:nil];else Tell(NSLocalizedString(@"Superhound is updated",nil),NSLocalizedString(@"Quit Superhound and open it again to use the new version.",nil));
+   if(!SHRelaunch(installed))Tell(NSLocalizedString(@"Superhound is updated",nil),NSLocalizedString(@"Quit Superhound and open it again to use the new version.",nil));
   });
  }] resume];
 }

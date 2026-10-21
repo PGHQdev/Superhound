@@ -187,6 +187,9 @@
 /* Action menu item for a clipboard history item */
 "Delete from History" = "Eliminar del historial";
 
+/* Alert button */
+"Don’t Relaunch" = "No reiniciar";
+
 /* Standard Edit menu title */
 "Edit" = "Edición";
 
@@ -235,6 +238,12 @@
 
 /* Settings button that opens System Settings → Keyboard; 199 points wide */
 "Keyboard Settings…" = "Ajustes del teclado…";
+
+/* Settings row label; 115 points wide */
+"Language" = "Idioma";
+
+/* Alert after a language change; the argument is Superhound */
+"Language setting for %@ has changed. Do you want to relaunch the app now?" = "El ajuste de idioma de la app %@ ha cambiado. ¿Quieres reiniciarla ahora?";
 
 /* Alert button: ask again later */
 "Later" = "Más tarde";
@@ -340,6 +349,9 @@
 
 /* Menu item and Settings button: scan the search locations again */
 "Refresh Catalog" = "Actualizar catálogo";
+
+/* Alert button */
+"Relaunch Now" = "Reiniciar ahora";
 
 /* Alert button that opens the release notes web page */
 "Release Notes" = "Notas de la versión";
@@ -481,6 +493,9 @@
 
 /* Tooltip of the menu bar icon */
 "Superhound — Search apps and files" = "Superhound — Buscar apps y archivos";
+
+/* First item of the language menu: use the macOS language order */
+"System Default" = "Ajuste por omisión del sistema";
 
 /* Row detail of a System Settings pane; the name of the macOS app */
 "System Settings" = "Ajustes del Sistema";

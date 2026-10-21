@@ -187,6 +187,9 @@
 /* Action menu item for a clipboard history item */
 "Delete from History" = "从历史记录中删除";
 
+/* Alert button */
+"Don’t Relaunch" = "不重新开启";
+
 /* Standard Edit menu title */
 "Edit" = "编辑";
 
@@ -235,6 +238,12 @@
 
 /* Settings button that opens System Settings → Keyboard; 199 points wide */
 "Keyboard Settings…" = "键盘设置…";
+
+/* Settings row label; 115 points wide */
+"Language" = "语言";
+
+/* Alert after a language change; the argument is Superhound */
+"Language setting for %@ has changed. Do you want to relaunch the app now?" = "%@的语言设置已更改。你要立即重新开启该App吗？";
 
 /* Alert button: ask again later */
 "Later" = "以后";
@@ -340,6 +349,9 @@
 
 /* Menu item and Settings button: scan the search locations again */
 "Refresh Catalog" = "刷新索引";
+
+/* Alert button */
+"Relaunch Now" = "立即重新开启";
 
 /* Alert button that opens the release notes web page */
 "Release Notes" = "发布说明";
@@ -481,6 +493,9 @@
 
 /* Tooltip of the menu bar icon */
 "Superhound — Search apps and files" = "Superhound——搜索App和文件";
+
+/* First item of the language menu: use the macOS language order */
+"System Default" = "系统默认";
 
 /* Row detail of a System Settings pane; the name of the macOS app */
 "System Settings" = "系统设置";

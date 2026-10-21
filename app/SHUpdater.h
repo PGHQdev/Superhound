@@ -2,6 +2,8 @@
 #import "SHUpdate.h"
 // Asks superhound.app for the latest release once a day, and installs a newer one when the user chooses it. The request carries no
 // license key and no device ID. The defaults key updateCheckAutomatically (default YES) turns the daily check off; licenseServer replaces the server.
+// Opens the app at url after this process ends, then quits; returns NO and keeps running when the shell cannot start.
+BOOL SHRelaunch(NSURL *url);
 @interface SHUpdater : NSObject
 // NO for a build without a certificate signature, such as a build from source: it cannot check that an update has the same signature.
 @property(nonatomic,readonly) BOOL supported;
