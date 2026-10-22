@@ -235,7 +235,7 @@
 "Folder settings could not be saved. Check available disk space." = "Die Ordnereinstellungen konnten nicht gesichert werden. Prüfe den freien Speicherplatz.";
 
 /* About window credits */
-"Free to evaluate. License price: $15 once, for 3 Macs, at superhound.app." = "Kostenlos testbar. Lizenzpreis: $15 einmalig, für 3 Macs, auf superhound.app.";
+"Free, with every feature. A license, $15 once for 3 Macs at superhound.app, supports development." = "Kostenlos, mit allen Funktionen. Eine Lizenz für $15 einmalig, für 3 Macs, auf superhound.app unterstützt die Entwicklung.";
 
 /* Button that opens the purchase page */
 "Get a License" = "Lizenz holen";
@@ -502,7 +502,7 @@
 "Superhound is already licensed" = "Superhound ist bereits lizenziert";
 
 /* No comment */
-"Superhound is free to evaluate, and all features keep working. License price: $15 once, for 3 Macs." = "Superhound ist kostenlos testbar, und alle Funktionen bleiben nutzbar. Lizenzpreis: $15 einmalig, für 3 Macs.";
+"Superhound is free, and all features keep working. A license, $15 once for 3 Macs, supports development." = "Superhound ist kostenlos, und alle Funktionen bleiben nutzbar. Eine Lizenz für $15 einmalig, für 3 Macs, unterstützt die Entwicklung.";
 
 /* No comment */
 "Superhound is licensed" = "Superhound ist lizenziert";
@@ -512,9 +512,6 @@
 
 /* No comment */
 "Superhound is not updated" = "Superhound wurde nicht aktualisiert";
-
-/* No comment */
-"Superhound is unlicensed" = "Superhound ist nicht lizenziert";
 
 /* No comment */
 "Superhound is up to date" = "Superhound ist auf dem neuesten Stand";
@@ -530,6 +527,9 @@
 
 /* Tooltip of the menu bar icon */
 "Superhound — Search apps and files" = "Superhound – Apps und Dateien durchsuchen";
+
+/* Title of the alert that asks for a license every tenth opening */
+"Support Superhound" = "Superhound unterstützen";
 
 /* First item of the language menu: use the macOS language order */
 "System Default" = "Systemstandard";

@@ -235,7 +235,7 @@
 "Folder settings could not be saved. Check available disk space." = "Folder settings could not be saved. Check available disk space.";
 
 /* About window credits */
-"Free to evaluate. License price: $15 once, for 3 Macs, at superhound.app." = "Free to evaluate. License price: $15 once, for 3 Macs, at superhound.app.";
+"Free, with every feature. A license, $15 once for 3 Macs at superhound.app, supports development." = "Free, with every feature. A license, $15 once for 3 Macs at superhound.app, supports development.";
 
 /* Button that opens the purchase page */
 "Get a License" = "Get a License";
@@ -502,7 +502,7 @@
 "Superhound is already licensed" = "Superhound is already licensed";
 
 /* No comment */
-"Superhound is free to evaluate, and all features keep working. License price: $15 once, for 3 Macs." = "Superhound is free to evaluate, and all features keep working. License price: $15 once, for 3 Macs.";
+"Superhound is free, and all features keep working. A license, $15 once for 3 Macs, supports development." = "Superhound is free, and all features keep working. A license, $15 once for 3 Macs, supports development.";
 
 /* No comment */
 "Superhound is licensed" = "Superhound is licensed";
@@ -512,9 +512,6 @@
 
 /* No comment */
 "Superhound is not updated" = "Superhound is not updated";
-
-/* No comment */
-"Superhound is unlicensed" = "Superhound is unlicensed";
 
 /* No comment */
 "Superhound is up to date" = "Superhound is up to date";
@@ -530,6 +527,9 @@
 
 /* Tooltip of the menu bar icon */
 "Superhound — Search apps and files" = "Superhound — Search apps and files";
+
+/* Title of the alert that asks for a license every tenth opening */
+"Support Superhound" = "Support Superhound";
 
 /* First item of the language menu: use the macOS language order */
 "System Default" = "System Default";

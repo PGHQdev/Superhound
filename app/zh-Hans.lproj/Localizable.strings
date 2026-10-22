@@ -235,7 +235,7 @@
 "Folder settings could not be saved. Check available disk space." = "无法存储文件夹设置。请检查可用磁盘空间。";
 
 /* About window credits */
-"Free to evaluate. License price: $15 once, for 3 Macs, at superhound.app." = "可免费试用。许可证价格：一次性付费$15，适用于3台Mac，可在superhound.app购买。";
+"Free, with every feature. A license, $15 once for 3 Macs at superhound.app, supports development." = "免费，包含所有功能。许可证（一次性付费$15，适用于3台Mac，可在superhound.app购买）用于支持开发。";
 
 /* Button that opens the purchase page */
 "Get a License" = "获取许可证";
@@ -502,7 +502,7 @@
 "Superhound is already licensed" = "Superhound已获得许可";
 
 /* No comment */
-"Superhound is free to evaluate, and all features keep working. License price: $15 once, for 3 Macs." = "Superhound可免费试用，所有功能均可继续使用。许可证价格：一次性付费$15，适用于3台Mac。";
+"Superhound is free, and all features keep working. A license, $15 once for 3 Macs, supports development." = "Superhound免费，所有功能均可继续使用。许可证（一次性付费$15，适用于3台Mac）用于支持开发。";
 
 /* No comment */
 "Superhound is licensed" = "Superhound已获得许可";
@@ -512,9 +512,6 @@
 
 /* No comment */
 "Superhound is not updated" = "Superhound未更新";
-
-/* No comment */
-"Superhound is unlicensed" = "Superhound未获得许可";
 
 /* No comment */
 "Superhound is up to date" = "Superhound已是最新版本";
@@ -530,6 +527,9 @@
 
 /* Tooltip of the menu bar icon */
 "Superhound — Search apps and files" = "Superhound——搜索App和文件";
+
+/* Title of the alert that asks for a license every tenth opening */
+"Support Superhound" = "支持Superhound";
 
 /* First item of the language menu: use the macOS language order */
 "System Default" = "系统默认";

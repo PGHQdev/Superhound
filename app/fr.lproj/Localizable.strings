@@ -235,7 +235,7 @@
 "Folder settings could not be saved. Check available disk space." = "Impossible d’enregistrer les réglages des dossiers. Vérifiez l’espace disque disponible.";
 
 /* About window credits */
-"Free to evaluate. License price: $15 once, for 3 Macs, at superhound.app." = "Évaluation gratuite. Prix de la licence : $15 en paiement unique, pour 3 Mac, sur superhound.app.";
+"Free, with every feature. A license, $15 once for 3 Macs at superhound.app, supports development." = "Gratuit, avec toutes les fonctionnalités. Une licence, $15 en paiement unique pour 3 Mac sur superhound.app, soutient le développement.";
 
 /* Button that opens the purchase page */
 "Get a License" = "Obtenir une licence";
@@ -502,7 +502,7 @@
 "Superhound is already licensed" = "Superhound dispose déjà d’une licence";
 
 /* No comment */
-"Superhound is free to evaluate, and all features keep working. License price: $15 once, for 3 Macs." = "L’évaluation de Superhound est gratuite et toutes les fonctionnalités restent disponibles. Prix de la licence : $15 en paiement unique, pour 3 Mac.";
+"Superhound is free, and all features keep working. A license, $15 once for 3 Macs, supports development." = "Superhound est gratuit et toutes les fonctionnalités restent disponibles. Une licence, $15 en paiement unique pour 3 Mac, soutient le développement.";
 
 /* No comment */
 "Superhound is licensed" = "Superhound dispose d’une licence";
@@ -512,9 +512,6 @@
 
 /* No comment */
 "Superhound is not updated" = "Superhound n’a pas été mis à jour";
-
-/* No comment */
-"Superhound is unlicensed" = "Superhound n’a pas de licence";
 
 /* No comment */
 "Superhound is up to date" = "Superhound est à jour";
@@ -530,6 +527,9 @@
 
 /* Tooltip of the menu bar icon */
 "Superhound — Search apps and files" = "Superhound — Rechercher des apps et des fichiers";
+
+/* Title of the alert that asks for a license every tenth opening */
+"Support Superhound" = "Soutenir Superhound";
 
 /* First item of the language menu: use the macOS language order */
 "System Default" = "Réglages par défaut du système";
