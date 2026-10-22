@@ -54,14 +54,14 @@ Open any app, even with a typo. Find your files. Get back anything you copied.
 | | Type | Press Return to |
 |---|---|---|
 | 🚀 **Open apps and files** | `term`, `safri`, `notes.txt` | Open it |
-| ⚙️ **Go to System Settings** | `storage`, `displays` | Open the pane |
+| ⚙️ **Go to System Settings** | `storage`, `displays`, or `settings` for all panes | Open the pane |
 | 🧮 **Calculate** | `48*12`, `15% of 240`, `240 + 15%` | Copy the answer |
 | 📏 **Convert units** | `5 km to mi`, `72f to c` | Copy the answer |
 | 🎨 **Convert colours** | `#ff5733`, `rgb(255 87 51)`, `hsl(11 100% 60%)` | Copy it as hex or rgb; ⌘K has every form |
 | 🌐 **Open websites** | `github.com`, `localhost:3000` | Open it in your browser |
 | 🔍 **Search the web** | Anything, in the last row | Search it with Google, or the engine you choose in **Settings…** |
-| 😀 **Find emoji** | `fire`, `happy`, `japan` | Copy the emoji |
-| 💤 **Run commands** | `sleep`, `restart`, `mute`, `dark`, `empty trash` | Run it |
+| 😀 **Find emoji** | `fire`, `happy`, `japan`, or `emoji` for all | Copy the emoji |
+| 💤 **Run commands** | `sleep`, `restart`, `mute`, `dark`, `empty trash`, or `commands` for all | Run it |
 | 📋 **Paste from clipboard history** | Press ⌥⌘V | Paste it |
 
 ## 📦 Install
