@@ -46,7 +46,7 @@ static CGFloat RowHeight(NSArray *row){CGFloat height=0;for(NSUInteger i=1;i<row
 // The Spotlight switch shows when the search shortcut is ⌘Space and Spotlight still has ⌘Space; it stays while the window is open, so a click does not move the rows.
 - (void)show {
  _shown=YES;_spotlight.hidden=_spotlightNote.hidden=!(_hotKey.commandSpace && SHSpotlightEnabled(SHHotKey.spotlightHotKeys));
- [self refresh];[NSApp activateIgnoringOtherApps:YES];[self.window makeKeyAndOrderFront:nil];
+ [_table reloadData];[self refresh];[NSApp activateIgnoringOtherApps:YES];[self.window makeKeyAndOrderFront:nil];
 }
 // Shortcut changes in Settings show when the window becomes key again.
 - (void)windowDidBecomeKey:(NSNotification *)notification {(void)notification;[self refresh];}
@@ -64,7 +64,8 @@ static CGFloat RowHeight(NSArray *row){CGFloat height=0;for(NSUInteger i=1;i<row
  CGFloat y=total;for(NSArray *row in _rows){if([row[1] isHidden])continue;CGFloat height=RowHeight(row);y-=[row[0] doubleValue]+height;for(NSUInteger i=1;i<row.count;i++){NSView *v=row[i];[v setFrameOrigin:NSMakePoint(NSMinX(v.frame),round(y+(height-NSHeight(v.frame))/2))];}}
 }
 - (void)updateRoots:(NSArray<NSDictionary *> *)roots count:(NSUInteger)count indexing:(BOOL)indexing {
- _folders=[roots filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:@"apps == NO"]];[_table reloadData];
+ // As in Settings, a closed window reloads its list only when it opens.
+ _folders=[roots filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:@"apps == NO"]];if(self.window.isVisible || self.window.isMiniaturized)[_table reloadData];
  NSString *items=[NSNumberFormatter localizedStringFromNumber:@(count) numberStyle:NSNumberFormatterDecimalStyle];
  _progress.stringValue=[NSString stringWithFormat:indexing?NSLocalizedString(@"Indexing… %@ items so far",@"Welcome window status; the argument is a number"):NSLocalizedString(@"Ready: %@ items",@"Welcome window status; the argument is a number"),items];[self refresh];
 }

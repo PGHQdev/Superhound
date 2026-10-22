@@ -83,11 +83,12 @@ NSButton *SHButton(NSView *view,NSString *title,NSRect frame,id target,SEL actio
  for(NSArray *l in Languages()){[languages addItemWithTitle:l[1]];if([own isKindOfClass:NSString.class] && ([own isEqual:l[0]] || [own hasPrefix:[l[0] stringByAppendingString:@"-"]]))[languages selectItemAtIndex:languages.numberOfItems-1];}[view addSubview:languages];
  [self shortcutStatus];[self updateButtons];[window center];return self;
 }
-- (void)show {[NSApp activateIgnoringOtherApps:YES];[self.window makeKeyAndOrderFront:nil];[self shortcutStatus];}
+- (void)show {[_table reloadData];[_table deselectAll:nil];[NSApp activateIgnoringOtherApps:YES];[self.window makeKeyAndOrderFront:nil];[self shortcutStatus];}
 - (void)shortcutStatus {[_recorder showKeys];[_historyRecorder showKeys];_spotlight.state=SHSpotlightEnabled(SHHotKey.spotlightHotKeys)?NSControlStateValueOff:NSControlStateValueOn;_shortcutStatus.stringValue=_hotKey.status?:NSLocalizedString(@"Use Search in the menu bar while setting up your shortcut.",@"Search is the menu item title");_historyStatus.stringValue=_historyKey.status?:@"";}
 - (void)updateRoots:(NSArray<NSDictionary *> *)roots message:(NSString *)message {
  NSInteger selected=_table.selectedRow;NSString *identifier=selected>=0 && selected<(NSInteger)_roots.count?_roots[(NSUInteger)selected][@"id"]:nil;
- _roots=roots;[_table reloadData];for(NSUInteger i=0;i<roots.count;i++)if([roots[i][@"id"] isEqual:identifier])[_table selectRowIndexes:[NSIndexSet indexSetWithIndex:i] byExtendingSelection:NO];
+ // A closed window keeps the roots and reloads when it opens (a minimized window counts as open, since the Dock restores it without show): each reload leaves AppKit dependency records behind, and index updates come often.
+ _roots=roots;if(self.window.isVisible || self.window.isMiniaturized){[_table reloadData];for(NSUInteger i=0;i<roots.count;i++)if([roots[i][@"id"] isEqual:identifier])[_table selectRowIndexes:[NSIndexSet indexSetWithIndex:i] byExtendingSelection:NO];}
  _message.stringValue=message;[self updateButtons];
 }
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView {(void)tableView;return (NSInteger)_roots.count;}
