@@ -68,11 +68,27 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
 - (void)updateTrackingAreas {[super updateTrackingAreas];if(_area)[self removeTrackingArea:_area];_area=[[NSTrackingArea alloc] initWithRect:NSZeroRect options:NSTrackingMouseEnteredAndExited|NSTrackingActiveAlways|NSTrackingInVisibleRect owner:self userInfo:nil];[self addTrackingArea:_area];}
 - (void)mouseEntered:(NSEvent *)event {(void)event;_hovered=YES;self.needsDisplay=YES;}
 - (void)mouseExited:(NSEvent *)event {(void)event;_hovered=NO;self.needsDisplay=YES;}
+- (void)prepareForReuse {[super prepareForReuse];_hovered=NO;}
 - (NSBackgroundStyle)interiorBackgroundStyle {return NSBackgroundStyleNormal;}
 - (void)drawBackgroundInRect:(NSRect)rect {(void)rect;if(!_hovered || self.selected)return;[[NSColor colorWithWhite:1 alpha:0.06] set];[[NSBezierPath bezierPathWithRoundedRect:self.bounds xRadius:8 yRadius:8] fill];}
 - (void)drawSelectionInRect:(NSRect)rect {
  (void)rect;[[NSColor colorWithWhite:1 alpha:0.16] set];[[NSBezierPath bezierPathWithRoundedRect:self.bounds xRadius:8 yRadius:8] fill];
  NSDictionary *glyph=@{NSFontAttributeName:[NSFont systemFontOfSize:13],NSForegroundColorAttributeName:NSColor.secondaryLabelColor};NSSize size=[@"↩" sizeWithAttributes:glyph];[@"↩" drawAtPoint:NSMakePoint(NSWidth(self.bounds)-8-size.width,(NSHeight(self.bounds)-size.height)/2) withAttributes:glyph];
+}
+@end
+// The views of one result row. The table reuses rows and cells: new ones for each search leave AppKit dependency records behind, and memory grows with each search.
+@interface SHResultCell : NSTableCellView
+@property(nonatomic,readonly) NSTextField *glyph,*info;
+@end
+@implementation SHResultCell
+- (instancetype)init {
+ if((self=[super initWithFrame:NSZeroRect])){
+  self.identifier=@"result";NSImageView *icon=NSImageView.new;icon.contentTintColor=NSColor.secondaryLabelColor;self.imageView=icon;NSTextField *name=[NSTextField labelWithString:@""];self.textField=name;
+  _glyph=[NSTextField labelWithString:@""];_glyph.font=[NSFont systemFontOfSize:22];_glyph.alignment=NSTextAlignmentCenter;
+  _info=[NSTextField labelWithString:@""];_info.font=[NSFont systemFontOfSize:12];_info.textColor=NSColor.secondaryLabelColor;
+  for(NSView *view in @[icon,_glyph,name,_info])[self addSubview:view];
+ }
+ return self;
 }
 @end
 // The logo and name open the menu bar menu on mouse down, as a pop-up button does; a hand pointer and a brighter tint show that they take a click.
@@ -149,7 +165,7 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
 - (void)applyTransparency {_tint.layer.backgroundColor=(NSWorkspace.sharedWorkspace.accessibilityDisplayShouldReduceTransparency?[NSColor colorWithWhite:0.13 alpha:1]:[NSColor colorWithWhite:0 alpha:0.35]).CGColor;}
 // Apps, settings panes, and commands take one line; files and the rest take two.
 - (CGFloat)tableView:(NSTableView *)tableView heightOfRow:(NSInteger)row {(void)tableView;return row<(NSInteger)_results.count && SHLaunchable(_results[(NSUInteger)row])?40:48;}
-- (NSTableRowView *)tableView:(NSTableView *)tableView rowViewForRow:(NSInteger)row {(void)tableView;(void)row;return SHRowView.new;}
+- (NSTableRowView *)tableView:(NSTableView *)tableView rowViewForRow:(NSInteger)row {(void)row;SHRowView *view=[tableView makeViewWithIdentifier:@"row" owner:self];if(!view){view=SHRowView.new;view.identifier=@"row";}return view;}
 // An error that does not fit one line takes a second line, so the end of a long message stays visible.
 - (CGFloat)bandHeight {return _section.hidden?0:_error && [_section.stringValue sizeWithAttributes:@{NSFontAttributeName:_section.font}].width>Width-32?Band+15:Band;}
 - (CGFloat)fittingHeight {CGFloat rows=0;for(NSInteger i=0;i<_table.numberOfRows;i++)rows+=[self tableView:_table heightOfRow:i];return MIN(Top+self.bandHeight+MIN(rows,MaxRows)+Bottom,_top-_floor);}
@@ -312,18 +328,18 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
 }
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView {(void)tableView;return (NSInteger)_results.count;}
 - (NSView *)tableView:(NSTableView *)tableView viewForTableColumn:(NSTableColumn *)column row:(NSInteger)row {
- (void)tableView;(void)column;
+ (void)column;
  NSDictionary *result=_results[(NSUInteger)row];NSString *path=result[@"path"],*kind=result[@"type"];BOOL emoji=[kind isEqual:@"emoji"],clip=[kind isEqual:@"clipboard"],web=[kind isEqual:@"url"] || [kind isEqual:@"web"],answer=emoji || clip || web || [kind isEqual:@"answer"],compact=SHLaunchable(result),located=!answer && !compact;
- CGFloat height=compact?40:48;NSTableCellView *cell=[[NSTableCellView alloc] initWithFrame:NSMakeRect(0,0,Width-16,height)];
+ CGFloat height=compact?40:48;SHResultCell *cell=[tableView makeViewWithIdentifier:@"result" owner:self]?:SHResultCell.new;cell.frame=NSMakeRect(0,0,Width-16,height);
  // Every row has the same 28-point icon box; file icons scale with their proportions and symbols keep one size.
  NSString *symbol=emoji?nil:clip?@"doc.on.clipboard":[kind isEqual:@"web"]?@"magnifyingglass":web?@"globe":answer?@"equal.circle":result[@"symbol"];
- NSImageView *icon=[[NSImageView alloc] initWithFrame:NSMakeRect(8,(height-28)/2,28,28)];icon.imageScaling=symbol?NSImageScaleNone:NSImageScaleProportionallyUpOrDown;icon.image=symbol?[[NSImage imageWithSystemSymbolName:symbol accessibilityDescription:nil] imageWithSymbolConfiguration:[NSImageSymbolConfiguration configurationWithPointSize:17 weight:NSFontWeightRegular]]:emoji?nil:[_icons objectForKey:path];icon.contentTintColor=NSColor.secondaryLabelColor;if(result[@"color"])icon.image=Swatch(result[@"color"]);cell.imageView=icon;[cell addSubview:icon];
- if(emoji){NSTextField *glyph=[NSTextField labelWithString:result[@"emoji"]];glyph.frame=NSMakeRect(4,(height-30)/2,36,30);glyph.font=[NSFont systemFontOfSize:22];glyph.alignment=NSTextAlignmentCenter;[cell addSubview:glyph];}
+ NSImageView *icon=cell.imageView;icon.frame=NSMakeRect(8,(height-28)/2,28,28);icon.imageScaling=symbol?NSImageScaleNone:NSImageScaleProportionallyUpOrDown;icon.image=symbol?[[NSImage imageWithSystemSymbolName:symbol accessibilityDescription:nil] imageWithSymbolConfiguration:[NSImageSymbolConfiguration configurationWithPointSize:17 weight:NSFontWeightRegular]]:emoji?nil:[_icons objectForKey:path];if(result[@"color"])icon.image=Swatch(result[@"color"]);
+ cell.glyph.hidden=!emoji;if(emoji){cell.glyph.stringValue=result[@"emoji"];cell.glyph.frame=NSMakeRect(4,(height-30)/2,36,30);}
  // An app shows its folder only when another result has the same name.
  BOOL shared=NO;for(NSDictionary *other in _results)if(other!=result && [other[@"name"] caseInsensitiveCompare:result[@"name"]]==NSOrderedSame)shared=YES;
  NSString *detail=emoji?NSLocalizedString(@"Emoji · Return to copy",@"Row detail; Return is the key name"):clip?Copied(result):[kind isEqual:@"web"]?NSLocalizedString(@"Web search · Return to open in your browser",@"Row detail; Return is the key name"):web?NSLocalizedString(@"Web address · Return to open in your browser",@"Row detail; Return is the key name"):answer?[NSString stringWithFormat:NSLocalizedString(@"%@ · Return to copy",@"Row detail of a calculation, conversion, or colour; the argument is the typed input such as 2+2; Return is the key name"),result[@"detail"]]:[kind isEqual:@"settings"]?NSLocalizedString(@"System Settings",@"Row detail of a System Settings pane; the name of the macOS app"):[kind isEqual:@"command"]?NSLocalizedString(@"Command",@"Row detail of a system command such as Lock Screen; a noun"):[kind isEqual:@"app"] && !shared?@"":Context(result,_results);
- NSTextField *name=[NSTextField labelWithAttributedString:Marked(result[@"name"],[kind isEqual:@"web"]?@"":self.query)];cell.textField=name;[cell addSubview:name];
- NSTextField *info=[NSTextField labelWithString:detail];info.font=[NSFont systemFontOfSize:12];info.textColor=NSColor.secondaryLabelColor;info.lineBreakMode=located || [kind isEqual:@"app"]?NSLineBreakByTruncatingHead:NSLineBreakByTruncatingTail;[cell addSubview:info];
+ NSTextField *name=cell.textField;name.attributedStringValue=Marked(result[@"name"],[kind isEqual:@"web"]?@"":self.query);
+ NSTextField *info=cell.info;info.stringValue=detail;info.lineBreakMode=located || [kind isEqual:@"app"]?NSLineBreakByTruncatingHead:NSLineBreakByTruncatingTail;info.alignment=NSTextAlignmentNatural;
  if(compact){CGFloat width=detail.length?MIN(ceil(info.intrinsicContentSize.width),Text/2):0;name.frame=NSMakeRect(44,(height-18)/2,Text-width-(width?8:0),18);info.frame=NSMakeRect(44+Text-width,(height-16)/2,width,16);info.alignment=NSTextAlignmentRight;}
  else {name.frame=NSMakeRect(44,24,Text,18);info.frame=NSMakeRect(44,7,Text,16);}
  // VoiceOver still hears the kind that the row no longer prints.
