@@ -134,6 +134,9 @@
 /* Row detail of a system command such as Lock Screen; a noun */
 "Command" = "Befehl";
 
+/* Word that lists all system commands when typed in the search field, and the label above that list; one word */
+"Commands" = "Befehle";
+
 /* Settings check box */
 "Complete the top result as you type" = "Top-Treffer beim Tippen vervollständigen";
 
@@ -208,6 +211,9 @@
 
 /* System command name in search results */
 "Eject All Disks" = "Alle Datenträger auswerfen";
+
+/* Word that lists all emoji when typed in the search field, and the label above that list; one word */
+"Emoji" = "Emoji";
 
 /* Row detail; Return is the key name */
 "Emoji · Return to copy" = "Emoji · ↩ zum Kopieren";
@@ -437,6 +443,9 @@
 
 /* Shown in place of a search location whose path is unknown */
 "Selected folder" = "Ausgewählter Ordner";
+
+/* Word that lists all System Settings panes when typed in the search field, and the label above that list; one word */
+"Settings" = "Einstellungen";
 
 /* Tooltip of the logo in the panel footer, which opens the app menu */
 "Settings and more" = "Einstellungen und mehr";

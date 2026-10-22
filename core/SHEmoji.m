@@ -32,6 +32,7 @@ static NSArray<NSString *> *Words(NSString *text) {
  }
  return self;
 }
+- (NSArray<NSDictionary *> *)list {return [_items valueForKey:@"result"];}
 - (void)waitUntilLoaded {dispatch_group_wait(_loading,DISPATCH_TIME_FOREVER);[NSRunLoop.mainRunLoop runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.05]];}
 - (NSArray<NSDictionary *> *)search:(NSString *)query limit:(NSUInteger)limit {
  NSArray<NSString *> *terms=Words(query);NSString *whole=[terms componentsJoinedByString:@" "];

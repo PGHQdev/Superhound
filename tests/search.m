@@ -116,6 +116,17 @@ int main(void) { @autoreleasepool {
  SHSearchSnapshot *masked=[original snapshotByExcludingRoots:[NSSet setWithObject:@"removed"]];
  original=nil;assert(masked.count==1);assert([masked search:@"needle" cancelled:nil].count==1);
  assert([[[masked search:@"needle" cancelled:nil] firstObject][@"id"] isEqual:@2]);
+ // A category word typed in full names its group; entriesOfType lists the group in name order, with kept entries such as commands and without excluded roots.
+ for(NSString *q in @[@"commands",@" Commands ",@"COMMANDS"])assert([SHCategory(q) isEqual:@"command"]);
+ assert([SHCategory(@"settings") isEqual:@"settings"] && [SHCategory(@"Emoji") isEqual:@"emoji"]);
+ for(NSString *q in @[@"",@"command",@"comm",@"setting",@"settings.json",@"system settings",@"emojis"])assert(!SHCategory(q));
+ assert([SHCategoryName(@"command") isEqual:@"Commands"] && [SHCategoryName(@"settings") isEqual:@"Settings"] && [SHCategoryName(@"emoji") isEqual:@"Emoji"]);
+ NSMutableArray *grouped=[SHCommands.entries mutableCopy];[grouped addObjectsFromArray:@[E(1,@"Wi-Fi",@"/s/Wi-Fi.appex",@"settings"),E(2,@"Bluetooth",@"/s/Bluetooth.appex",@"settings"),E(3,@"System Settings",@"/apps/System Settings.app",@"app"),@{@"id":@4,@"root":@"removed",@"name":@"Sound",@"path":@"/r/Sound.appex",@"relative":@"Sound.appex",@"type":@"settings"}]];
+ SHSearchSnapshot *groups=[[SHSearchSnapshot alloc] initWithEntries:grouped generation:1];
+ assert(([[[groups entriesOfType:@"settings"] valueForKey:@"name"] isEqual:@[@"Bluetooth",@"Sound",@"Wi-Fi"]]));
+ assert(([[[[groups snapshotByExcludingRoots:[NSSet setWithObject:@"removed"]] entriesOfType:@"settings"] valueForKey:@"name"] isEqual:@[@"Bluetooth",@"Wi-Fi"]]));
+ NSArray *listed=[groups entriesOfType:@"command"];assert(listed.count==SHCommands.entries.count);for(NSDictionary *c in SHCommands.entries)assert([listed containsObject:c]);
+ assert([listed.firstObject[@"name"] isEqual:@"Eject All Disks"] && [groups entriesOfType:@"emoji"].count==0 && [groups entriesOfType:@"app"].count==1);
 
  for (int k=0;k<20000;k++) {
   uint32_t a[64],b[64]; uint8_t boundaries[64]; size_t n=arc4random_uniform(64),m=arc4random_uniform(64);

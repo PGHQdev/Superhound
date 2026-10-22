@@ -134,6 +134,9 @@
 /* Row detail of a system command such as Lock Screen; a noun */
 "Command" = "Comando";
 
+/* Word that lists all system commands when typed in the search field, and the label above that list; one word */
+"Commands" = "Comandos";
+
 /* Settings check box */
 "Complete the top result as you type" = "Completar el primer resultado al escribir";
 
@@ -208,6 +211,9 @@
 
 /* System command name in search results */
 "Eject All Disks" = "Expulsar todos los discos";
+
+/* Word that lists all emoji when typed in the search field, and the label above that list; one word */
+"Emoji" = "Emoji";
 
 /* Row detail; Return is the key name */
 "Emoji · Return to copy" = "Emoji · Retorno para copiar";
@@ -437,6 +443,9 @@
 
 /* Shown in place of a search location whose path is unknown */
 "Selected folder" = "Carpeta seleccionada";
+
+/* Word that lists all System Settings panes when typed in the search field, and the label above that list; one word */
+"Settings" = "Ajustes";
 
 /* Tooltip of the logo in the panel footer, which opens the app menu */
 "Settings and more" = "Ajustes y más";

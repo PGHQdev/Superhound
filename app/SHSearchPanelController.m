@@ -224,12 +224,12 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
 }
 // The error stays in the status line until the query changes; a search that is still in progress does not replace it.
 - (void)showError:(NSString *)error {_error=error;if(!self.window.isVisible)[self show:_history];[self updateStatus];NSAccessibilityPostNotification(_section,NSAccessibilityValueChangedNotification);}
-// The band above the rows names the list for an empty query, and otherwise shows only an error or no matches; the indexing note sits at its right.
+// The band above the rows names the list for an empty query or a category word with its count, and otherwise shows only an error or no matches; the indexing note sits at its right.
 - (void)updateStatus {
  // The web search row alone still counts as no matches.
- NSUInteger found=0;for(NSDictionary *r in _results)if(![r[@"type"] isEqual:@"web"])found++;
+ NSString *category=_history?nil:SHCategory(self.query);NSUInteger found=0,members=0;for(NSDictionary *r in _results){if(![r[@"type"] isEqual:@"web"])found++;if([r[@"type"] isEqual:category])members++;}
  BOOL empty=!self.query.length,none=!found && !_pending;
- NSString *label=_error?:_history && !_clipboard.count?NSLocalizedString(@"The clipboard history is empty",@"Label above the result list"):empty?(_history?NSLocalizedString(@"Clipboard",@"Section label: the clipboard history; Settings row label and search panel band; keep it short"):NSLocalizedString(@"Suggested",@"Section label above the apps shown before the user types")):none?(_indexing && !_history?NSLocalizedString(@"No matches yet. Still indexing.",@"Label above the result list while a search location is still indexing; keep it short"):NSLocalizedString(@"No matches",@"Label above the result list")):nil;
+ NSString *label=_error?:_history && !_clipboard.count?NSLocalizedString(@"The clipboard history is empty",@"Label above the result list"):empty?(_history?NSLocalizedString(@"Clipboard",@"Section label: the clipboard history; Settings row label and search panel band; keep it short"):NSLocalizedString(@"Suggested",@"Section label above the apps shown before the user types")):members && !_pending?[NSString stringWithFormat:@"%@ · %@",SHCategoryName(category),Count(members)]:none?(_indexing && !_history?NSLocalizedString(@"No matches yet. Still indexing.",@"Label above the result list while a search location is still indexing; keep it short"):NSLocalizedString(@"No matches",@"Label above the result list")):nil;
  _section.hidden=_note.hidden=!label;_section.stringValue=label?:@"";_section.textColor=_error?NSColor.labelColor:NSColor.secondaryLabelColor;
  _note.stringValue=_error?@"":_history?(!_clipboard.count?NSLocalizedString(@"Text you copy in any app comes here",@"Note at the right of the clipboard history panel; keep it short"):empty?[NSString stringWithFormat:_clipboard.count==1?NSLocalizedString(@"%@ item · Kept on this Mac only",@"Note at the right of the clipboard history panel; the argument is 1"):NSLocalizedString(@"%@ items · Kept on this Mac only",@"Note at the right of the clipboard history panel; the argument is a number other than 1"),Count(_clipboard.count)]:@""):_coverage?:@"";
  [self fit];
@@ -275,14 +275,24 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
   NSUInteger lead=0;while(lead<results.count && (SHLaunchable(results[lead]) || [chosen containsObject:results[lead][@"path"]]))lead++;
   // The result named like the address leads with the rows above it, also when it is a plain file.
   if(address && named!=NSNotFound)lead=MAX(lead,named+1);
-  NSUInteger shown=MIN((NSUInteger)3,otherEmoji.count),limit=web?7:8,reserve=address && named!=NSNotFound?1:0;
-  for(NSUInteger i=0;i<lead && rows.count+shown+clips.count+reserve<limit;i++)[rows addObject:results[i]];
-  if(address && named!=NSNotFound)[rows addObject:address];
-  for(NSUInteger i=0;i<shown;i++)[rows addObject:otherEmoji[i]];
-  for(NSDictionary *clip in clips)if(rows.count<limit)[rows addObject:clip];
-  for(NSUInteger i=lead;i<results.count && rows.count<limit;i++)[rows addObject:results[i]];
-  // With few other results, more emoji fill the free rows.
-  for(NSUInteger i=shown;i<otherEmoji.count && rows.count<limit;i++)[rows addObject:otherEmoji[i]];
+  NSString *category=SHCategory(query);NSArray<NSDictionary *> *group=!category?nil:[category isEqual:@"emoji"]?self->_emoji.list:[self->_queries.snapshot entriesOfType:category];
+  if(group.count){
+   // A category word lists its whole group, with no row limit, after the results chosen before and the matching applications outside the group; the other matches follow it.
+   NSSet *members=[NSSet setWithArray:[group valueForKey:@"path"]];NSMutableSet *added=[NSMutableSet setWithArray:[rows valueForKey:@"path"]];
+   void (^add)(NSDictionary *)=^(NSDictionary *r){if(![added containsObject:r[@"path"]]){[added addObject:r[@"path"]];[rows addObject:r];}};
+   for(NSUInteger i=0;i<lead;i++)if([chosen containsObject:results[i][@"path"]] || ![members containsObject:results[i][@"path"]])add(results[i]);
+   if(address && named!=NSNotFound)[rows addObject:address];
+   for(NSDictionary *e in group)add(e);for(NSDictionary *e in otherEmoji)add(e);for(NSDictionary *clip in clips)add(clip);for(NSUInteger i=lead;i<results.count;i++)add(results[i]);
+  }else{
+   NSUInteger shown=MIN((NSUInteger)3,otherEmoji.count),limit=web?7:8,reserve=address && named!=NSNotFound?1:0;
+   for(NSUInteger i=0;i<lead && rows.count+shown+clips.count+reserve<limit;i++)[rows addObject:results[i]];
+   if(address && named!=NSNotFound)[rows addObject:address];
+   for(NSUInteger i=0;i<shown;i++)[rows addObject:otherEmoji[i]];
+   for(NSDictionary *clip in clips)if(rows.count<limit)[rows addObject:clip];
+   for(NSUInteger i=lead;i<results.count && rows.count<limit;i++)[rows addObject:results[i]];
+   // With few other results, more emoji fill the free rows.
+   for(NSUInteger i=shown;i<otherEmoji.count && rows.count<limit;i++)[rows addObject:otherEmoji[i]];
+  }
   if(web)[rows addObject:web];
   self->_pending=NO;[self present:rows];
   if(self->_queuedOpen){BOOL reveal=self->_queuedOpen.boolValue;self->_queuedOpen=nil;[self openSelected:reveal];}

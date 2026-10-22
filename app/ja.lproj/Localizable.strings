@@ -134,6 +134,9 @@
 /* Row detail of a system command such as Lock Screen; a noun */
 "Command" = "コマンド";
 
+/* Word that lists all system commands when typed in the search field, and the label above that list; one word */
+"Commands" = "コマンド";
+
 /* Settings check box */
 "Complete the top result as you type" = "入力中に最上位の結果を補完";
 
@@ -208,6 +211,9 @@
 
 /* System command name in search results */
 "Eject All Disks" = "すべてのディスクを取り出す";
+
+/* Word that lists all emoji when typed in the search field, and the label above that list; one word */
+"Emoji" = "絵文字";
 
 /* Row detail; Return is the key name */
 "Emoji · Return to copy" = "絵文字 · Returnでコピー";
@@ -437,6 +443,9 @@
 
 /* Shown in place of a search location whose path is unknown */
 "Selected folder" = "選択したフォルダ";
+
+/* Word that lists all System Settings panes when typed in the search field, and the label above that list; one word */
+"Settings" = "設定";
 
 /* Tooltip of the logo in the panel footer, which opens the app menu */
 "Settings and more" = "設定など";

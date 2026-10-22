@@ -10,6 +10,14 @@ NSString *SHCompletion(NSString *name,NSString *typed) {
  if(!typed.length)return nil;NSRange range=[name rangeOfString:typed options:NSCaseInsensitiveSearch|NSDiacriticInsensitiveSearch|NSWidthInsensitiveSearch|NSAnchoredSearch];
  return range.location==0?[name substringFromIndex:NSMaxRange(range)]:nil;
 }
+NSString *SHCategoryName(NSString *category) {
+ return [category isEqual:@"command"]?NSLocalizedString(@"Commands",@"Word that lists all system commands when typed in the search field, and the label above that list; one word"):[category isEqual:@"settings"]?NSLocalizedString(@"Settings",@"Word that lists all System Settings panes when typed in the search field, and the label above that list; one word"):NSLocalizedString(@"Emoji",@"Word that lists all emoji when typed in the search field, and the label above that list; one word");
+}
+NSString *SHCategory(NSString *query) {
+ NSString *typed=SHFold([query stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet]);
+ for(NSArray *c in @[@[@"command",@"commands"],@[@"settings",@"settings"],@[@"emoji",@"emoji"]])if([typed isEqual:c[1]] || [typed isEqual:SHFold(SHCategoryName(c[0]))])return c[0];
+ return nil;
+}
 // Names are usually unique; aliases and parent paths commonly repeat across entries.
 // Store those shared texts once and keep compact indexes in each record.
 // Fields of a catalog entry stay as UTF-8 in one buffer and become a dictionary only for a result; other entries keep their dictionary.
@@ -157,6 +165,11 @@ static BOOL SameText(SHText a,SHText b) {return a.length==b.length && !memcmp(a.
  if(a.pathTerms!=b.pathTerms)return a.pathTerms<b.pathTerms;
  if(a.compactness!=b.compactness)return a.compactness<b.compactness;
  return a.index<b.index;
+}
+- (NSArray<NSDictionary *> *)entriesOfType:(NSString *)type {
+ NSUInteger index=[_types indexOfObject:type];NSMutableArray *found=NSMutableArray.array;
+ for(NSUInteger i=0;i<_size;i++){SHRecord r=_records[i];if((r.flags&Kept?[_kept[@(i)][@"type"] isEqual:type]:r.type==index) && ![_excludedRoots containsObject:_roots[r.root]])[found addObject:[self entryAt:i]];}
+ return found;
 }
 - (NSArray<NSDictionary *> *)search:(NSString *)query cancelled:(BOOL (^)(void))cancelled {return [self search:query preferred:nil cancelled:cancelled];}
 - (NSUInteger)indexOfName:(NSString *)name path:(NSString *)path {
