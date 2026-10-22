@@ -9,7 +9,7 @@
 [![Apple Silicon](https://img.shields.io/badge/Apple%20Silicon-native-111111?style=flat-square)](#-install)
 [![Works offline](https://img.shields.io/badge/works-offline-34c759?style=flat-square)](#-privacy)
 [![Native Objective-C and C](https://img.shields.io/badge/native-Objective--C%20%26%20C-438eff?style=flat-square)](#-why-superhound)
-[![Free to evaluate, license $10 at launch](https://img.shields.io/badge/free%20to%20evaluate-%2410%20at%20launch-ff9500?style=flat-square)](https://superhound.app)
+[![Free, with every feature](https://img.shields.io/badge/free-every%20feature-ff9500?style=flat-square)](https://superhound.app)
 [![License: AGPL-3.0](https://img.shields.io/github/license/PGHQdev/Superhound?style=flat-square&color=555555)](LICENSE)
 
 ### The ultrafast Spotlight alternative for your Mac
@@ -46,7 +46,7 @@ Open any app, even with a typo. Find your files. Get back anything you copied.
 | 🪶 **Light** | A 0.7 MB download and 1.4 MB on disk. 39 MB of RAM after launch, with 48,000 files indexed. Under 0.2% CPU when idle. |
 | 🔒 **Private** | Works offline. Reads file names, never file contents. No account, no tracking. |
 | 🧠 **Smart** | Forgives typos, ignores accents, and learns which results you open. |
-| 💸 **Fair** | Free to evaluate, with every feature and no time limit. License price: $10 once at launch (regular price $15), for 3 Macs. No subscription. |
+| 💸 **Free** | Every feature, with no time limit. A license, $10 once at launch (regular price $15) for 3 Macs, supports development. No subscription. |
 
 ## 🆚 Superhound and Raycast
 
@@ -89,7 +89,7 @@ The command downloads Superhound, checks it against the published SHA-256 checks
 
 When it is done, Terminal shows **Superhound is installed.**, a hound appears in your menu bar, and a Welcome window helps you choose a shortcut, add your folders, and try a first search. At first, Superhound searches apps only; it finds your files after you add their folders.
 
-Superhound is free to evaluate, with every feature and no time limit. The panel shows **Activate license**, and a reminder every tenth time you open it. License price: **$10 once at launch** (regular price $15), **for 3 Macs**, with a 14-day refund, at [superhound.app](https://superhound.app/buy). To activate, choose **Enter License…** from the menu bar.
+Superhound is free, with every feature and no time limit. The panel shows **Activate license**, and a reminder every tenth time you open it. A license supports development: **$10 once at launch** (regular price $15), **for 3 Macs**, with a 14-day refund, at [superhound.app](https://superhound.app/buy). To activate, choose **Enter License…** from the menu bar.
 
 <details>
 <summary><b>What the install script checks, and why Terminal</b></summary>
@@ -168,7 +168,7 @@ Yes. Superhound opens apps, files, and System Settings panes like Spotlight, and
 
 <br>
 
-Superhound is free to evaluate, with every feature and no time limit. It shows a reminder every tenth time you open the panel. License price: $10 once at launch (regular price $15), for 3 Macs. Refunds are open for 14 days, for any reason.
+Nothing. Every feature works with no time limit. It shows a reminder every tenth time you open the panel. A license supports development and removes the reminder: $10 once at launch (regular price $15), for 3 Macs. Refunds are open for 14 days, for any reason.
 
 </details>
 
