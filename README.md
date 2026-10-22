@@ -48,6 +48,20 @@ Open any app, even with a typo. Find your files. Get back anything you copied.
 | 🧠 **Smart** | Forgives typos, ignores accents, and learns which results you open. |
 | 💸 **Fair** | Free to evaluate, with every feature and no time limit. License price: $10 once at launch (regular price $15), for 3 Macs. No subscription. |
 
+## 🆚 Superhound and Raycast
+
+| | Superhound | Raycast |
+|---|---|---|
+| 📦 **Download** | 0.7 MB | 112 MB |
+| 💾 **App on disk** | 1.4 MB | 219 MB |
+| 🪶 **RAM when idle** | 39 to 57 MB | 54 to 108 MB |
+| 📡 **Network in 13 idle minutes** | None | 9 MB received, 40 KB sent |
+| 🗂️ **Data folder** | 22 MB, including the index of 48,435 files | 123 MB, with no extensions |
+| 🔓 **Source code** | Open source, AGPL-3.0 | Closed source; its extensions are open source (MIT) |
+| 🍎 **Needs macOS** | 15 or later | 13 or later; Raycast 2 needs 26 |
+
+Measured on 2026-10-23 on a MacBook Air with Apple M1, 16 GB of memory, and macOS 15.7.3, one run each. The Raycast numbers are for Raycast 1.104.32 with no extensions. Superhound used 39 MB of RAM after launch and 57 MB after 78 minutes. Raycast used 54 MB for its first 12 minutes, then 108 MB. Raycast does more: extensions, AI chat, snippets, and window management. See [Superhound as a Raycast alternative](https://superhound.app/raycast-alternative).
+
 ## 🔎 What you can do
 
 | | Type | Press Return to |
