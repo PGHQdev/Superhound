@@ -1,6 +1,6 @@
 <div align="center">
 
-<a href="https://superhound.app"><img src="docs/media/banner.png" alt="Superhound: the ultrafast Spotlight alternative for Mac. 10 ms for 100k items, under 45 MB of RAM when idle, native, 1 MB app." width="100%"></a>
+<a href="https://superhound.app"><img src="docs/media/banner.png" alt="Superhound: the ultrafast Spotlight alternative for Mac. 10 ms for 100k items, open source, native, 1 MB app." width="100%"></a>
 
 <br>
 
@@ -9,7 +9,6 @@
 [![Apple Silicon](https://img.shields.io/badge/Apple%20Silicon-native-111111?style=flat-square)](#-install)
 [![Works offline](https://img.shields.io/badge/works-offline-34c759?style=flat-square)](#-privacy)
 [![Native Objective-C and C](https://img.shields.io/badge/native-Objective--C%20%26%20C-438eff?style=flat-square)](#-why-superhound)
-[![RAM consumption less than 45 MB when idle](https://img.shields.io/badge/RAM%20when%20idle-%3C%2045%20MB-34c759?style=flat-square)](#-why-superhound)
 [![Free to evaluate, license $10 at launch](https://img.shields.io/badge/free%20to%20evaluate-%2410%20at%20launch-ff9500?style=flat-square)](https://superhound.app)
 [![License: AGPL-3.0](https://img.shields.io/github/license/PGHQdev/Superhound?style=flat-square&color=555555)](LICENSE)
 
@@ -44,7 +43,7 @@ Open any app, even with a typo. Find your files. Get back anything you copied.
 |---|---|
 | ⚡ **Ultrafast** | Ranks 100,000 names in about 10 ms. Results are on screen about 23 ms after a key press. |
 | 🛠️ **Native** | Objective-C and C on AppKit, with a search matcher in C. No Electron, no web views, no third-party dependencies. |
-| 🪶 **Light** | RAM consumption less than 45 MB when idle. About 1 MB on disk. Under 0.2% CPU when idle. |
+| 🪶 **Light** | A 0.7 MB download and 1.4 MB on disk. 39 MB of RAM after launch, with 48,000 files indexed. Under 0.2% CPU when idle. |
 | 🔒 **Private** | Works offline. Reads file names, never file contents. No account, no tracking. |
 | 🧠 **Smart** | Forgives typos, ignores accents, and learns which results you open. |
 | 💸 **Fair** | Free to evaluate, with every feature and no time limit. License price: $10 once at launch (regular price $15), for 3 Macs. No subscription. |
@@ -346,8 +345,8 @@ Measured on an Apple M1 with macOS 15.
 
 | Measure | Result |
 |---|---|
-| App size | 1.0 MB (983 KiB); the program itself is 464 KB |
-| RAM consumption when idle | 32 to 38 MB from 1 to 8.5 minutes after launch; 28 to 42 MiB (29 to 44 MB) over 20 minutes in an earlier build. The launch scan peaks higher, at 74 MB. |
+| App size | 1.4 MB on disk (1,364 KiB); the program itself is 553 KB. The download is 0.67 MB. |
+| RAM consumption when idle | 39 MB after launch and 57 MB after 78 minutes, in version 0.5.2 with 48,435 files indexed. The launch scan peaks higher, at 70 to 103 MB. The index grows with the number of files. |
 | CPU when idle | 0.14% of one core over 120 seconds, panel closed |
 | Ranking time across 100,000 names | 9.6 ms median, 20.3 ms at the 95th percentile |
 | Key press to results on screen | 22.55 ms median over 127 searches, with 47,121 items |
