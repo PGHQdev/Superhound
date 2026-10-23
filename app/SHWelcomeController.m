@@ -77,5 +77,5 @@ static CGFloat RowHeight(NSArray *row){CGFloat height=0;for(NSUInteger i=1;i<row
  if(!saved){_shortcuts.stringValue=NSLocalizedString(@"macOS did not save the Spotlight shortcut. Change it in Keyboard Settings….",@"Keyboard Settings… is the button title");[self layout];}
 }
 - (void)add:(id)sender {(void)sender;SHChooseFolders(self.window,_library,nil);}
-- (void)search:(id)sender {(void)sender;if(self.openSearch)self.openSearch();}
+- (void)search:(id)sender {(void)sender;[self.window close];if(self.openSearch)self.openSearch();}
 @end
