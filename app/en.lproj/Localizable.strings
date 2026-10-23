@@ -91,6 +91,10 @@
 /* No comment */
 "Apps are included automatically. Files are searched only inside folders you select. File contents stay unread." = "Apps are included automatically. Files are searched only inside folders you select. File contents stay unread.";
 
+/* Link in the panel footer of an unlicensed copy, after a heart, and the title of the reminder every tenth opening; it opens the license key window; keep it short
+   Title of the alert that asks for a license every tenth opening */
+"Become a Supporter" = "Become a Supporter";
+
 /* Alert button */
 "Cancel" = "Cancel";
 
@@ -228,17 +232,17 @@
 /* No comment */
 "Enter the license key from your email. A license covers 3 Macs." = "Enter the license key from your email. A license covers 3 Macs.";
 
-/* Tooltip of the Support Superhound link in the panel footer */
-"Enter your license key, or get a license." = "Enter your license key, or get a license.";
+/* Tooltip of the Become a Supporter link in the panel footer */
+"Enter your license key, or get a Supporter License." = "Enter your license key, or get a Supporter License.";
 
 /* No comment */
 "Folder settings could not be saved. Check available disk space." = "Folder settings could not be saved. Check available disk space.";
 
 /* About window credits */
-"Free, with every feature. A license, $15 once for 3 Macs at superhound.app, supports development." = "Free, with every feature. A license, $15 once for 3 Macs at superhound.app, supports development.";
+"Free, with every feature. A Supporter License, $15 once for 3 Macs at superhound.app, supports development." = "Free, with every feature. A Supporter License, $15 once for 3 Macs at superhound.app, supports development.";
 
 /* Button that opens the purchase page */
-"Get a License" = "Get a License";
+"Get a Supporter License" = "Get a Supporter License";
 
 /* No comment */
 "Hidden descendants, package contents, online-only placeholders, and Superhound’s own data are skipped. Symbolic links are listed without following them." = "Hidden descendants, package contents, online-only placeholders, and Superhound’s own data are skipped. Symbolic links are listed without following them.";
@@ -272,9 +276,6 @@
 
 /* Placeholder of the license key field */
 "License key" = "License key";
-
-/* About window credits */
-"Licensed for this Mac." = "Licensed for this Mac.";
 
 /* System command name in search results */
 "Lock Screen" = "Lock Screen";
@@ -502,7 +503,7 @@
 "Superhound is already licensed" = "Superhound is already licensed";
 
 /* No comment */
-"Superhound is free, and all features keep working. A license, $15 once for 3 Macs, supports development." = "Superhound is free, and all features keep working. A license, $15 once for 3 Macs, supports development.";
+"Superhound is free, and all features keep working. A Supporter License, $15 once for 3 Macs, supports development." = "Superhound is free, and all features keep working. A Supporter License, $15 once for 3 Macs, supports development.";
 
 /* No comment */
 "Superhound is licensed" = "Superhound is licensed";
@@ -525,9 +526,11 @@
 /* Tooltip of the menu bar icon */
 "Superhound — Search apps and files" = "Superhound — Search apps and files";
 
-/* Link in the panel footer of an unlicensed copy, after a heart; it opens the license key window; keep it short
-   Title of the alert that asks for a license every tenth opening */
-"Support Superhound" = "Support Superhound";
+/* Label in the panel footer of a licensed copy, after a heart; keep it short */
+"Supporter" = "Supporter";
+
+/* About window credits */
+"Supporter License for this Mac." = "Supporter License for this Mac.";
 
 /* First item of the language menu: use the macOS language order */
 "System Default" = "System Default";
@@ -537,6 +540,9 @@
 
 /* Note at the right of the clipboard history panel; keep it short */
 "Text you copy in any app comes here" = "Text you copy in any app comes here";
+
+/* Tooltip of the Supporter label in the panel footer */
+"Thank you for supporting Superhound." = "Thank you for supporting Superhound.";
 
 /* No comment */
 "Thank you for your purchase." = "Thank you for your purchase.";

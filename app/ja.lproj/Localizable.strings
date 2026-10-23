@@ -225,17 +225,17 @@
 /* Menu bar menu item; keep it short */
 "Enter License…" = "ライセンスを入力…";
 
-/* Tooltip of the Support Superhound link in the panel footer */
-"Enter your license key, or get a license." = "ライセンスキーを入力するか、ライセンスを入手してください。";
+/* Tooltip of the Become a Supporter link in the panel footer */
+"Enter your license key, or get a Supporter License." = "ライセンスキーを入力するか、サポーターライセンスを入手してください。";
 
 /* No comment */
 "Folder settings could not be saved. Check available disk space." = "フォルダ設定を保存できませんでした。ディスクの空き容量を確認してください。";
 
 /* About window credits */
-"Free, with every feature. A license, $15 once for 3 Macs at superhound.app, supports development." = "すべての機能を無料で使えます。ライセンス（$15の1回払い、Mac 3台分、superhound.appで購入）は開発の支援になります。";
+"Free, with every feature. A Supporter License, $15 once for 3 Macs at superhound.app, supports development." = "すべての機能を無料で使えます。サポーターライセンス（$15の1回払い、Mac 3台分、superhound.appで購入）は開発の支援になります。";
 
 /* Button that opens the purchase page */
-"Get a License" = "ライセンスを入手";
+"Get a Supporter License" = "サポーターライセンスを入手";
 
 /* No comment */
 "Hidden descendants, package contents, online-only placeholders, and Superhound’s own data are skipped. Symbolic links are listed without following them." = "非表示の項目、パッケージの内容、オンライン専用のプレースホルダ、Superhound自身のデータはスキップされます。シンボリックリンクはリンク先をたどらずに一覧に含まれます。";
@@ -271,7 +271,7 @@
 "License key" = "ライセンスキー";
 
 /* About window credits */
-"Licensed for this Mac." = "このMacのライセンスは有効です。";
+"Supporter License for this Mac." = "このMacのサポーターライセンスは有効です。";
 
 /* System command name in search results */
 "Lock Screen" = "画面をロック";
@@ -499,7 +499,7 @@
 "Superhound is already licensed" = "Superhoundのライセンスはすでに有効です";
 
 /* No comment */
-"Superhound is free, and all features keep working. A license, $15 once for 3 Macs, supports development." = "Superhoundは無料で、すべての機能を使い続けられます。ライセンス（$15の1回払い、Mac 3台分）は開発の支援になります。";
+"Superhound is free, and all features keep working. A Supporter License, $15 once for 3 Macs, supports development." = "Superhoundは無料で、すべての機能を使い続けられます。サポーターライセンス（$15の1回払い、Mac 3台分）は開発の支援になります。";
 
 /* No comment */
 "Superhound is licensed" = "Superhoundのライセンスは有効です";
@@ -525,8 +525,9 @@
 /* Tooltip of the menu bar icon */
 "Superhound — Search apps and files" = "Superhound — アプリとファイルを検索";
 
-/* Title of the alert that asks for a license every tenth opening */
-"Support Superhound" = "Superhoundを支援";
+/* Link in the panel footer of an unlicensed copy, after a heart, and the title of the reminder every tenth opening; it opens the license key window; keep it short
+   Title of the alert that asks for a license every tenth opening */
+"Become a Supporter" = "サポーターになる";
 
 /* First item of the language menu: use the macOS language order */
 "System Default" = "システムデフォルト";
@@ -743,3 +744,9 @@
 
 /* No comment */
 "superhound.app sent an answer that Superhound cannot read. Try again later." = "superhound.appから、Superhoundが読み取れない応答が返されました。あとでもう一度お試しください。";
+
+/* Label in the panel footer of a licensed copy, after a heart; keep it short */
+"Supporter" = "サポーター";
+
+/* Tooltip of the Supporter label in the panel footer */
+"Thank you for supporting Superhound." = "Superhoundを支援していただきありがとうございます。";

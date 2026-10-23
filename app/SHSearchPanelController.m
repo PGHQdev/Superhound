@@ -122,7 +122,7 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  NSMutableSet *_loadingIcons;
  dispatch_queue_t _iconQueue;
  NSURL *_preview;
- NSButton *_unlicensed,*_updateLink;
+ NSButton *_support,*_updateLink;
  SHBrandButton *_menuButton;
  NSView *_tint;
  CGFloat _top,_floor;
@@ -155,11 +155,9 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  _logo=[NSImageView imageViewWithImage:[NSBundle.mainBundle imageForResource:@"LogoTemplate"]?:NSImage.new];_logo.image.template=YES;_logo.imageScaling=NSImageScaleProportionallyUpOrDown;_logo.contentTintColor=NSColor.secondaryLabelColor;_logo.accessibilityElement=NO;[view addSubview:_logo];
  _brand=[NSTextField labelWithString:@"Superhound"];_brand.font=[NSFont systemFontOfSize:12 weight:NSFontWeightMedium];_brand.textColor=NSColor.secondaryLabelColor;_brand.accessibilityElement=NO;[view addSubview:_brand];
  _menuButton=[[SHBrandButton alloc] initWithFrame:NSZeroRect];_menuButton.bordered=NO;_menuButton.transparent=YES;_menuButton.title=@"";_menuButton.target=self;_menuButton.action=@selector(showMenu:);_menuButton.toolTip=NSLocalizedString(@"Settings and more",@"Tooltip of the logo in the panel footer, which opens the app menu");_menuButton.accessibilityLabel=NSLocalizedString(@"Superhound menu",@"VoiceOver label of the logo in the panel footer, which opens the app menu");_menuButton.hovered=^(BOOL hovered){[weak hover:hovered];};[view addSubview:_menuButton];
- NSButton *unlicensed=_unlicensed=[NSButton buttonWithTitle:@"" target:self action:@selector(enterLicense:)];unlicensed.bordered=NO;unlicensed.attributedTitle=[[NSAttributedString alloc] initWithString:NSLocalizedString(@"Support Superhound",@"Link in the panel footer of an unlicensed copy, after a heart; it opens the license key window; keep it short") attributes:@{NSFontAttributeName:[NSFont systemFontOfSize:12],NSForegroundColorAttributeName:NSColor.systemYellowColor}];
- unlicensed.image=[[NSImage imageWithSystemSymbolName:@"heart.fill" accessibilityDescription:nil] imageWithSymbolConfiguration:[NSImageSymbolConfiguration configurationWithPointSize:10 weight:NSFontWeightRegular]];unlicensed.imagePosition=NSImageLeading;unlicensed.imageHugsTitle=YES;unlicensed.contentTintColor=NSColor.systemYellowColor;
- unlicensed.toolTip=NSLocalizedString(@"Enter your license key, or get a license.",@"Tooltip of the Support Superhound link in the panel footer");unlicensed.accessibilityLabel=NSLocalizedString(@"Support Superhound",@"Link in the panel footer of an unlicensed copy, after a heart; it opens the license key window; keep it short");[view addSubview:unlicensed];
+ _support=[NSButton buttonWithTitle:@"" target:self action:nil];_support.bordered=NO;_support.image=[[NSImage imageWithSystemSymbolName:@"heart.fill" accessibilityDescription:nil] imageWithSymbolConfiguration:[NSImageSymbolConfiguration configurationWithPointSize:10 weight:NSFontWeightRegular]];_support.imagePosition=NSImageLeading;_support.imageHugsTitle=YES;_support.contentTintColor=NSColor.systemYellowColor;[view addSubview:_support];
  _updateLink=[NSButton buttonWithTitle:@"" target:self action:@selector(openUpdate:)];_updateLink.bordered=NO;_updateLink.hidden=YES;[view addSubview:_updateLink];
- [self layoutFooter];
+ self.licensed=NO;
  return self;
 }
 // Reduce Transparency gets an opaque charcoal panel.
@@ -180,15 +178,21 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  CGFloat height=self.fittingHeight;if(height>=NSHeight(self.window.frame) || !self.window.isVisible)[self resize];else {[self place];[self performSelector:@selector(resize) withObject:nil afterDelay:0.15];}
 }
 - (void)resize {if(!_top)return;NSRect frame=self.window.frame;CGFloat height=self.fittingHeight;if(height!=NSHeight(frame) || NSMaxY(frame)!=_top){[self.window setFrame:NSMakeRect(NSMinX(frame),_top-height,Width,height) display:YES];[self.window invalidateShadow];}[self place];}
-// Right to left: the logo and name, Support Superhound, and Update to; the key hints take the rest and drop Close when they do not fit.
+// Right to left: the logo and name, Supporter or Become a Supporter, and Update to; the key hints take the rest and drop Close when they do not fit.
 - (void)layoutFooter {
  CGFloat width=ceil(_brand.fittingSize.width),left=Width-16-width;Seat(_brand,left,width);left-=6+14;_logo.frame=NSMakeRect(left,12,14,14);_menuButton.frame=NSMakeRect(left-4,6,Width-16-left+8,28);
- for(NSButton *link in @[_unlicensed,_updateLink])if(!link.hidden){width=ceil(link.fittingSize.width);left-=18+width;Seat(link,left,width);}
+ for(NSButton *link in @[_support,_updateLink])if(!link.hidden){width=ceil(link.fittingSize.width);left-=18+width;Seat(link,left,width);}
  NSString *action=_history?NSLocalizedString(@"Paste",@"Menu item and footer hint verb: paste the text"):NSLocalizedString(@"Open",@"Menu item and footer hint verb: open the selected result; keep it short"),*actions=NSLocalizedString(@"Actions",@"Footer hint next to ⌘K: show the action menu; keep it short");_help.attributedStringValue=Hints(@[@"↩",action,@"⌘K",actions,@"Esc",NSLocalizedString(@"Close",@"Footer hint next to Esc: close the panel; keep it short")]);
  if(_help.fittingSize.width>left-18-16)_help.attributedStringValue=Hints(@[@"↩",action,@"⌘K",actions]);
  Seat(_help,16,left-18-16);
 }
-- (void)setLicensed:(BOOL)licensed {_licensed=licensed;_unlicensed.hidden=licensed;[self hover:NO];[self layoutFooter];}
+// A licensed copy shows Supporter as a thank-you; an unlicensed one shows Become a Supporter, which opens the license key window.
+- (void)setLicensed:(BOOL)licensed {
+ _licensed=licensed;NSString *title=licensed?NSLocalizedString(@"Supporter",@"Label in the panel footer of a licensed copy, after a heart; keep it short"):NSLocalizedString(@"Become a Supporter",@"Link in the panel footer of an unlicensed copy, after a heart, and the title of the reminder every tenth opening; it opens the license key window; keep it short");
+ _support.attributedTitle=[[NSAttributedString alloc] initWithString:title attributes:@{NSFontAttributeName:[NSFont systemFontOfSize:12],NSForegroundColorAttributeName:NSColor.systemYellowColor}];_support.accessibilityLabel=title;_support.action=licensed?nil:@selector(enterLicense:);
+ _support.toolTip=licensed?NSLocalizedString(@"Thank you for supporting Superhound.",@"Tooltip of the Supporter label in the panel footer"):NSLocalizedString(@"Enter your license key, or get a Supporter License.",@"Tooltip of the Become a Supporter link in the panel footer");
+ [self hover:NO];[self layoutFooter];
+}
 - (void)setUpdate:(NSString *)update {
  _update=[update copy];_updateLink.hidden=!update;
  if(update){_updateLink.attributedTitle=[[NSAttributedString alloc] initWithString:[NSString stringWithFormat:NSLocalizedString(@"Update to %@",@"Link in the panel footer; the argument is a version number such as 0.5.0; keep it short"),update] attributes:@{NSFontAttributeName:[NSFont systemFontOfSize:12],NSForegroundColorAttributeName:NSColor.controlAccentColor}];_updateLink.toolTip=[NSString stringWithFormat:NSLocalizedString(@"Superhound %@ is available. Click to install it.",@"Tooltip of the Update to link; the argument is a version number"),update];_updateLink.accessibilityLabel=_updateLink.toolTip;}
@@ -225,8 +229,8 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
 // Every tenth opening asks for a license. Return does nothing, so a fast Return press cannot open the purchase page.
 - (void)remind {
  NSUserDefaults *d=NSUserDefaults.standardUserDefaults;NSInteger opens=[d integerForKey:@"unlicensedOpens"]+1;[d setInteger:opens forKey:@"unlicensedOpens"];if(opens%10)return;
- NSAlert *alert=NSAlert.new;alert.messageText=NSLocalizedString(@"Support Superhound",@"Title of the alert that asks for a license every tenth opening");alert.informativeText=NSLocalizedString(@"Superhound is free, and all features keep working. A license, $15 once for 3 Macs, supports development.",nil);
- NSButton *buy=[alert addButtonWithTitle:NSLocalizedString(@"Get a License",@"Button that opens the purchase page")];buy.keyEquivalent=@"";NSButton *later=[alert addButtonWithTitle:NSLocalizedString(@"Not Now",@"Alert button")];later.keyEquivalent=@"\e";
+ NSAlert *alert=NSAlert.new;alert.messageText=NSLocalizedString(@"Become a Supporter",@"Title of the alert that asks for a license every tenth opening");alert.informativeText=NSLocalizedString(@"Superhound is free, and all features keep working. A Supporter License, $15 once for 3 Macs, supports development.",nil);
+ NSButton *buy=[alert addButtonWithTitle:NSLocalizedString(@"Get a Supporter License",@"Button that opens the purchase page")];buy.keyEquivalent=@"";NSButton *later=[alert addButtonWithTitle:NSLocalizedString(@"Not Now",@"Alert button")];later.keyEquivalent=@"\e";
  [alert beginSheetModalForWindow:self.window completionHandler:^(NSModalResponse response){if(response==NSAlertFirstButtonReturn)[self buy:nil];else [self.window makeFirstResponder:self->_field];}];
 }
 - (void)dismiss:(BOOL)restore {

@@ -30,7 +30,7 @@ static NSInteger Ask(NSString *title,NSString *text,NSString *action,NSView *acc
  if(_busy)return;
  NSTextField *field=[[NSTextField alloc] initWithFrame:NSMakeRect(0,0,320,24)];field.stringValue=key?:@"";field.placeholderString=NSLocalizedString(@"License key",@"Placeholder of the license key field");
  [NSApp activateIgnoringOtherApps:YES];NSAlert *alert=NSAlert.new;alert.messageText=NSLocalizedString(@"Activate Superhound",nil);alert.informativeText=NSLocalizedString(@"Enter the license key from your email. A license covers 3 Macs.",nil);alert.accessoryView=field;
- [alert addButtonWithTitle:NSLocalizedString(@"Activate",@"Alert button: activate the license key")];[alert addButtonWithTitle:NSLocalizedString(@"Cancel",@"Alert button")];[alert addButtonWithTitle:NSLocalizedString(@"Get a License",@"Button that opens the purchase page")];alert.window.initialFirstResponder=field;
+ [alert addButtonWithTitle:NSLocalizedString(@"Activate",@"Alert button: activate the license key")];[alert addButtonWithTitle:NSLocalizedString(@"Cancel",@"Alert button")];[alert addButtonWithTitle:NSLocalizedString(@"Get a Supporter License",@"Button that opens the purchase page")];alert.window.initialFirstResponder=field;
  _busy=YES;NSInteger answer=[alert runModal];_busy=NO;
  if(answer==NSAlertThirdButtonReturn){[NSWorkspace.sharedWorkspace openURL:[NSURL URLWithString:@"https://superhound.app/buy"]];return;}
  // A key has no spaces or line breaks, so remove the ones that a copy from an email adds, also inside the key.

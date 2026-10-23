@@ -225,17 +225,17 @@
 /* Menu bar menu item; keep it short */
 "Enter License…" = "输入许可证…";
 
-/* Tooltip of the Support Superhound link in the panel footer */
-"Enter your license key, or get a license." = "输入你的许可证密钥，或获取许可证。";
+/* Tooltip of the Become a Supporter link in the panel footer */
+"Enter your license key, or get a Supporter License." = "输入你的许可证密钥，或获取支持者许可证。";
 
 /* No comment */
 "Folder settings could not be saved. Check available disk space." = "无法存储文件夹设置。请检查可用磁盘空间。";
 
 /* About window credits */
-"Free, with every feature. A license, $15 once for 3 Macs at superhound.app, supports development." = "免费，包含所有功能。许可证（一次性付费$15，适用于3台Mac，可在superhound.app购买）用于支持开发。";
+"Free, with every feature. A Supporter License, $15 once for 3 Macs at superhound.app, supports development." = "免费，包含所有功能。支持者许可证（一次性付费$15，适用于3台Mac，可在superhound.app购买）用于支持开发。";
 
 /* Button that opens the purchase page */
-"Get a License" = "获取许可证";
+"Get a Supporter License" = "获取支持者许可证";
 
 /* No comment */
 "Hidden descendants, package contents, online-only placeholders, and Superhound’s own data are skipped. Symbolic links are listed without following them." = "会跳过隐藏的子项、包内容、仅在线存储的占位项以及Superhound自身的数据。符号链接会被列出，但不会跟随其目标。";
@@ -271,7 +271,7 @@
 "License key" = "许可证密钥";
 
 /* About window credits */
-"Licensed for this Mac." = "已为此Mac获得许可。";
+"Supporter License for this Mac." = "此Mac已有支持者许可证。";
 
 /* System command name in search results */
 "Lock Screen" = "锁定屏幕";
@@ -499,7 +499,7 @@
 "Superhound is already licensed" = "Superhound已获得许可";
 
 /* No comment */
-"Superhound is free, and all features keep working. A license, $15 once for 3 Macs, supports development." = "Superhound免费，所有功能均可继续使用。许可证（一次性付费$15，适用于3台Mac）用于支持开发。";
+"Superhound is free, and all features keep working. A Supporter License, $15 once for 3 Macs, supports development." = "Superhound免费，所有功能均可继续使用。支持者许可证（一次性付费$15，适用于3台Mac）用于支持开发。";
 
 /* No comment */
 "Superhound is licensed" = "Superhound已获得许可";
@@ -525,8 +525,9 @@
 /* Tooltip of the menu bar icon */
 "Superhound — Search apps and files" = "Superhound——搜索App和文件";
 
-/* Title of the alert that asks for a license every tenth opening */
-"Support Superhound" = "支持Superhound";
+/* Link in the panel footer of an unlicensed copy, after a heart, and the title of the reminder every tenth opening; it opens the license key window; keep it short
+   Title of the alert that asks for a license every tenth opening */
+"Become a Supporter" = "成为支持者";
 
 /* First item of the language menu: use the macOS language order */
 "System Default" = "系统默认";
@@ -743,3 +744,9 @@
 
 /* No comment */
 "superhound.app sent an answer that Superhound cannot read. Try again later." = "Superhound无法读取superhound.app发送的回复。请稍后再试。";
+
+/* Label in the panel footer of a licensed copy, after a heart; keep it short */
+"Supporter" = "支持者";
+
+/* Tooltip of the Supporter label in the panel footer */
+"Thank you for supporting Superhound." = "感谢你支持Superhound。";

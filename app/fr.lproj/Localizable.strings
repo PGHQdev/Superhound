@@ -225,17 +225,17 @@
 /* Menu bar menu item; keep it short */
 "Enter License…" = "Saisir la licence…";
 
-/* Tooltip of the Support Superhound link in the panel footer */
-"Enter your license key, or get a license." = "Saisissez votre clé de licence ou obtenez une licence.";
+/* Tooltip of the Become a Supporter link in the panel footer */
+"Enter your license key, or get a Supporter License." = "Saisissez votre clé de licence ou obtenez une licence Supporter.";
 
 /* No comment */
 "Folder settings could not be saved. Check available disk space." = "Impossible d’enregistrer les réglages des dossiers. Vérifiez l’espace disque disponible.";
 
 /* About window credits */
-"Free, with every feature. A license, $15 once for 3 Macs at superhound.app, supports development." = "Gratuit, avec toutes les fonctionnalités. Une licence, $15 en paiement unique pour 3 Mac sur superhound.app, soutient le développement.";
+"Free, with every feature. A Supporter License, $15 once for 3 Macs at superhound.app, supports development." = "Gratuit, avec toutes les fonctionnalités. Une licence Supporter, $15 en paiement unique pour 3 Mac sur superhound.app, soutient le développement.";
 
 /* Button that opens the purchase page */
-"Get a License" = "Obtenir une licence";
+"Get a Supporter License" = "Obtenir une licence Supporter";
 
 /* No comment */
 "Hidden descendants, package contents, online-only placeholders, and Superhound’s own data are skipped. Symbolic links are listed without following them." = "Les éléments masqués, le contenu des paquets, les fichiers disponibles uniquement en ligne et les données de Superhound sont ignorés. Les liens symboliques sont listés sans être suivis.";
@@ -271,7 +271,7 @@
 "License key" = "Clé de licence";
 
 /* About window credits */
-"Licensed for this Mac." = "Sous licence pour ce Mac.";
+"Supporter License for this Mac." = "Licence Supporter pour ce Mac.";
 
 /* System command name in search results */
 "Lock Screen" = "Verrouiller l’écran";
@@ -499,7 +499,7 @@
 "Superhound is already licensed" = "Superhound dispose déjà d’une licence";
 
 /* No comment */
-"Superhound is free, and all features keep working. A license, $15 once for 3 Macs, supports development." = "Superhound est gratuit et toutes les fonctionnalités restent disponibles. Une licence, $15 en paiement unique pour 3 Mac, soutient le développement.";
+"Superhound is free, and all features keep working. A Supporter License, $15 once for 3 Macs, supports development." = "Superhound est gratuit et toutes les fonctionnalités restent disponibles. Une licence Supporter, $15 en paiement unique pour 3 Mac, soutient le développement.";
 
 /* No comment */
 "Superhound is licensed" = "Superhound dispose d’une licence";
@@ -525,8 +525,9 @@
 /* Tooltip of the menu bar icon */
 "Superhound — Search apps and files" = "Superhound — Rechercher des apps et des fichiers";
 
-/* Title of the alert that asks for a license every tenth opening */
-"Support Superhound" = "Soutenir Superhound";
+/* Link in the panel footer of an unlicensed copy, after a heart, and the title of the reminder every tenth opening; it opens the license key window; keep it short
+   Title of the alert that asks for a license every tenth opening */
+"Become a Supporter" = "Devenir supporter";
 
 /* First item of the language menu: use the macOS language order */
 "System Default" = "Réglages par défaut du système";
@@ -743,3 +744,9 @@
 
 /* No comment */
 "superhound.app sent an answer that Superhound cannot read. Try again later." = "superhound.app a envoyé une réponse que Superhound ne peut pas lire. Réessayez plus tard.";
+
+/* Label in the panel footer of a licensed copy, after a heart; keep it short */
+"Supporter" = "Supporter";
+
+/* Tooltip of the Supporter label in the panel footer */
+"Thank you for supporting Superhound." = "Merci de soutenir Superhound.";
