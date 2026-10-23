@@ -16,7 +16,7 @@
 
 Open any app, even with a typo. Find your files. Get back anything you copied.
 
-**[Install](#-install)** · **[Website](https://superhound.app)** · **[Docs](https://superhound.app/docs)** · **[Releases](https://github.com/PGHQdev/Superhound/releases)** · **[Get a license](https://superhound.app/buy)**
+**[Install](#-install)** · **[Website](https://superhound.app)** · **[Docs](https://superhound.app/docs)** · **[Releases](https://github.com/PGHQdev/Superhound/releases)** · **[Become a Supporter](https://superhound.app/buy)**
 
 </div>
 
@@ -46,7 +46,7 @@ Open any app, even with a typo. Find your files. Get back anything you copied.
 | 🪶 **Light** | A 0.7 MB download and 1.4 MB on disk. 39 MB of RAM after launch, with 48,000 files indexed. Under 0.2% CPU when idle. |
 | 🔒 **Private** | Works offline. Reads file names, never file contents. No account, no tracking. |
 | 🧠 **Smart** | Forgives typos, ignores accents, and learns which results you open. |
-| 💸 **Free** | Every feature, with no time limit. A license, $10 once at launch (regular price $15) for 3 Macs, supports development. No subscription. |
+| 💸 **Free** | Every feature, with no time limit. A Supporter License, $10 once at launch (regular price $15) for 3 Macs, supports development. No subscription. |
 
 ## 🆚 Superhound and Raycast
 
@@ -89,7 +89,7 @@ The command downloads Superhound, checks it against the published SHA-256 checks
 
 When it is done, Terminal shows **Superhound is installed.**, a hound appears in your menu bar, and a Welcome window helps you choose a shortcut, add your folders, and try a first search. At first, Superhound searches apps only; it finds your files after you add their folders.
 
-Superhound is free, with every feature and no time limit. The panel shows **Activate license**, and a reminder every tenth time you open it. A license supports development: **$10 once at launch** (regular price $15), **for 3 Macs**, with a 14-day refund, at [superhound.app](https://superhound.app/buy). To activate, choose **Enter License…** from the menu bar.
+Superhound is free, with every feature and no time limit. The panel shows **♥ Become a Supporter**, and a reminder every tenth time you open it. A Supporter License supports development: **$10 once at launch** (regular price $15), **for 3 Macs**, with a 14-day refund, at [superhound.app](https://superhound.app/buy). To activate, choose **Enter License…** from the menu bar.
 
 <details>
 <summary><b>What the install script checks, and why Terminal</b></summary>
@@ -168,7 +168,7 @@ Yes. Superhound opens apps, files, and System Settings panes like Spotlight, and
 
 <br>
 
-Nothing. Every feature works with no time limit. It shows a reminder every tenth time you open the panel. A license supports development and removes the reminder: $10 once at launch (regular price $15), for 3 Macs. Refunds are open for 14 days, for any reason.
+Nothing. Every feature works with no time limit. It shows a reminder every tenth time you open the panel. A Supporter License supports development, removes the reminder, and shows **♥ Supporter** in the panel: $10 once at launch (regular price $15), for 3 Macs. Refunds are open for 14 days, for any reason.
 
 </details>
 
@@ -267,7 +267,7 @@ It does not keep:
 
 <br>
 
-To activate, click **Activate license** at the bottom of the panel, or choose **Enter License…** in the menu bar. To move a license to another Mac, choose **Deactivate License…** on the old Mac first. To get your key again, go to [superhound.app/license](https://superhound.app/license).
+To activate, click **Become a Supporter** at the bottom of the panel, or choose **Enter License…** in the menu bar. To move a license to another Mac, choose **Deactivate License…** on the old Mac first. To get your key again, go to [superhound.app/license](https://superhound.app/license).
 
 </details>
 
