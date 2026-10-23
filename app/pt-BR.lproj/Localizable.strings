@@ -82,9 +82,6 @@
 /* No comment */
 "Activate Superhound" = "Ativar o Superhound";
 
-/* Link in the panel footer; keep it short */
-"Activate license" = "Ativar licença";
-
 /* Settings button; 120 points wide */
 "Add Folder…" = "Incluir Pasta…";
 
@@ -228,7 +225,7 @@
 /* Menu bar menu item; keep it short */
 "Enter License…" = "Inserir Licença…";
 
-/* Tooltip of the Activate license link */
+/* Tooltip of the Support Superhound link in the panel footer */
 "Enter your license key, or get a license." = "Insira sua chave de licença ou obtenha uma licença.";
 
 /* No comment */

@@ -82,9 +82,6 @@
 /* No comment */
 "Activate Superhound" = "Activate Superhound";
 
-/* Link in the panel footer; keep it short */
-"Activate license" = "Activate license";
-
 /* Settings button; 120 points wide */
 "Add Folder…" = "Add Folder…";
 
@@ -231,7 +228,7 @@
 /* No comment */
 "Enter the license key from your email. A license covers 3 Macs." = "Enter the license key from your email. A license covers 3 Macs.";
 
-/* Tooltip of the Activate license link */
+/* Tooltip of the Support Superhound link in the panel footer */
 "Enter your license key, or get a license." = "Enter your license key, or get a license.";
 
 /* No comment */
@@ -528,7 +525,8 @@
 /* Tooltip of the menu bar icon */
 "Superhound — Search apps and files" = "Superhound — Search apps and files";
 
-/* Title of the alert that asks for a license every tenth opening */
+/* Link in the panel footer of an unlicensed copy, after a heart; it opens the license key window; keep it short
+   Title of the alert that asks for a license every tenth opening */
 "Support Superhound" = "Support Superhound";
 
 /* First item of the language menu: use the macOS language order */

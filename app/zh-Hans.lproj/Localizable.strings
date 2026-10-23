@@ -82,9 +82,6 @@
 /* No comment */
 "Activate Superhound" = "激活Superhound";
 
-/* Link in the panel footer; keep it short */
-"Activate license" = "激活许可证";
-
 /* Settings button; 120 points wide */
 "Add Folder…" = "添加文件夹…";
 
@@ -228,7 +225,7 @@
 /* Menu bar menu item; keep it short */
 "Enter License…" = "输入许可证…";
 
-/* Tooltip of the Activate license link */
+/* Tooltip of the Support Superhound link in the panel footer */
 "Enter your license key, or get a license." = "输入你的许可证密钥，或获取许可证。";
 
 /* No comment */

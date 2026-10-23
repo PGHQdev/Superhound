@@ -155,8 +155,9 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  _logo=[NSImageView imageViewWithImage:[NSBundle.mainBundle imageForResource:@"LogoTemplate"]?:NSImage.new];_logo.image.template=YES;_logo.imageScaling=NSImageScaleProportionallyUpOrDown;_logo.contentTintColor=NSColor.secondaryLabelColor;_logo.accessibilityElement=NO;[view addSubview:_logo];
  _brand=[NSTextField labelWithString:@"Superhound"];_brand.font=[NSFont systemFontOfSize:12 weight:NSFontWeightMedium];_brand.textColor=NSColor.secondaryLabelColor;_brand.accessibilityElement=NO;[view addSubview:_brand];
  _menuButton=[[SHBrandButton alloc] initWithFrame:NSZeroRect];_menuButton.bordered=NO;_menuButton.transparent=YES;_menuButton.title=@"";_menuButton.target=self;_menuButton.action=@selector(showMenu:);_menuButton.toolTip=NSLocalizedString(@"Settings and more",@"Tooltip of the logo in the panel footer, which opens the app menu");_menuButton.accessibilityLabel=NSLocalizedString(@"Superhound menu",@"VoiceOver label of the logo in the panel footer, which opens the app menu");_menuButton.hovered=^(BOOL hovered){[weak hover:hovered];};[view addSubview:_menuButton];
- NSButton *unlicensed=_unlicensed=[NSButton buttonWithTitle:@"" target:self action:@selector(enterLicense:)];unlicensed.bordered=NO;unlicensed.attributedTitle=[[NSAttributedString alloc] initWithString:NSLocalizedString(@"Activate license",@"Link in the panel footer; keep it short") attributes:@{NSFontAttributeName:[NSFont systemFontOfSize:12],NSForegroundColorAttributeName:NSColor.secondaryLabelColor}];
- unlicensed.toolTip=NSLocalizedString(@"Enter your license key, or get a license.",@"Tooltip of the Activate license link");unlicensed.accessibilityLabel=NSLocalizedString(@"Activate license",@"Link in the panel footer; keep it short");[view addSubview:unlicensed];
+ NSButton *unlicensed=_unlicensed=[NSButton buttonWithTitle:@"" target:self action:@selector(enterLicense:)];unlicensed.bordered=NO;unlicensed.attributedTitle=[[NSAttributedString alloc] initWithString:NSLocalizedString(@"Support Superhound",@"Link in the panel footer of an unlicensed copy, after a heart; it opens the license key window; keep it short") attributes:@{NSFontAttributeName:[NSFont systemFontOfSize:12],NSForegroundColorAttributeName:NSColor.systemYellowColor}];
+ unlicensed.image=[[NSImage imageWithSystemSymbolName:@"heart.fill" accessibilityDescription:nil] imageWithSymbolConfiguration:[NSImageSymbolConfiguration configurationWithPointSize:10 weight:NSFontWeightRegular]];unlicensed.imagePosition=NSImageLeading;unlicensed.imageHugsTitle=YES;unlicensed.contentTintColor=NSColor.systemYellowColor;
+ unlicensed.toolTip=NSLocalizedString(@"Enter your license key, or get a license.",@"Tooltip of the Support Superhound link in the panel footer");unlicensed.accessibilityLabel=NSLocalizedString(@"Support Superhound",@"Link in the panel footer of an unlicensed copy, after a heart; it opens the license key window; keep it short");[view addSubview:unlicensed];
  _updateLink=[NSButton buttonWithTitle:@"" target:self action:@selector(openUpdate:)];_updateLink.bordered=NO;_updateLink.hidden=YES;[view addSubview:_updateLink];
  [self layoutFooter];
  return self;
@@ -179,7 +180,7 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  CGFloat height=self.fittingHeight;if(height>=NSHeight(self.window.frame) || !self.window.isVisible)[self resize];else {[self place];[self performSelector:@selector(resize) withObject:nil afterDelay:0.15];}
 }
 - (void)resize {if(!_top)return;NSRect frame=self.window.frame;CGFloat height=self.fittingHeight;if(height!=NSHeight(frame) || NSMaxY(frame)!=_top){[self.window setFrame:NSMakeRect(NSMinX(frame),_top-height,Width,height) display:YES];[self.window invalidateShadow];}[self place];}
-// Right to left: the logo and name, Activate license, and Update to; the key hints take the rest and drop Close when they do not fit.
+// Right to left: the logo and name, Support Superhound, and Update to; the key hints take the rest and drop Close when they do not fit.
 - (void)layoutFooter {
  CGFloat width=ceil(_brand.fittingSize.width),left=Width-16-width;Seat(_brand,left,width);left-=6+14;_logo.frame=NSMakeRect(left,12,14,14);_menuButton.frame=NSMakeRect(left-4,6,Width-16-left+8,28);
  for(NSButton *link in @[_unlicensed,_updateLink])if(!link.hidden){width=ceil(link.fittingSize.width);left-=18+width;Seat(link,left,width);}
@@ -187,13 +188,14 @@ static void Copy(NSString *text){NSPasteboard *board=NSPasteboard.generalPastebo
  if(_help.fittingSize.width>left-18-16)_help.attributedStringValue=Hints(@[@"↩",action,@"⌘K",actions]);
  Seat(_help,16,left-18-16);
 }
-- (void)setLicensed:(BOOL)licensed {_licensed=licensed;_unlicensed.hidden=licensed;[self layoutFooter];}
+- (void)setLicensed:(BOOL)licensed {_licensed=licensed;_unlicensed.hidden=licensed;[self hover:NO];[self layoutFooter];}
 - (void)setUpdate:(NSString *)update {
  _update=[update copy];_updateLink.hidden=!update;
  if(update){_updateLink.attributedTitle=[[NSAttributedString alloc] initWithString:[NSString stringWithFormat:NSLocalizedString(@"Update to %@",@"Link in the panel footer; the argument is a version number such as 0.5.0; keep it short"),update] attributes:@{NSFontAttributeName:[NSFont systemFontOfSize:12],NSForegroundColorAttributeName:NSColor.controlAccentColor}];_updateLink.toolTip=[NSString stringWithFormat:NSLocalizedString(@"Superhound %@ is available. Click to install it.",@"Tooltip of the Update to link; the argument is a version number"),update];_updateLink.accessibilityLabel=_updateLink.toolTip;}
  [self layoutFooter];
 }
-- (void)hover:(BOOL)hovered {NSColor *color=hovered?NSColor.labelColor:NSColor.secondaryLabelColor;_logo.contentTintColor=color;_brand.textColor=color;}
+// A licensed copy shows the logo and name in full white; an unlicensed one shows them gray until the pointer is over them.
+- (void)hover:(BOOL)hovered {NSColor *color=hovered || _licensed?NSColor.labelColor:NSColor.secondaryLabelColor;_logo.contentTintColor=color;_brand.textColor=color;}
 // The menu opens above the logo with its right edge at the right margin; the pointer may leave during the menu, so the tint follows its place when the menu closes.
 - (void)showMenu:(id)sender {
  (void)sender;if(!_appMenu)return;[_appMenu update];NSRect frame=_menuButton.frame;
