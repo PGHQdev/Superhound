@@ -33,7 +33,8 @@ static NSInteger Ask(NSString *title,NSString *text,NSString *action,NSView *acc
  [alert addButtonWithTitle:NSLocalizedString(@"Activate",@"Alert button: activate the license key")];[alert addButtonWithTitle:NSLocalizedString(@"Cancel",@"Alert button")];[alert addButtonWithTitle:NSLocalizedString(@"Get a License",@"Button that opens the purchase page")];alert.window.initialFirstResponder=field;
  _busy=YES;NSInteger answer=[alert runModal];_busy=NO;
  if(answer==NSAlertThirdButtonReturn){[NSWorkspace.sharedWorkspace openURL:[NSURL URLWithString:@"https://superhound.app/buy"]];return;}
- NSString *entered=[field.stringValue stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];if(answer!=NSAlertFirstButtonReturn || !entered.length)return;
+ // A key has no spaces or line breaks, so remove the ones that a copy from an email adds, also inside the key.
+ NSString *entered=[[field.stringValue componentsSeparatedByCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet] componentsJoinedByString:@""];if(answer!=NSAlertFirstButtonReturn || !entered.length)return;
  [self post:@"/api/activate" body:@{@"key":entered,@"device":_license.device,@"label":[@"Mac " stringByAppendingString:[_license.device substringToIndex:8]]} reply:^(NSDictionary *answer,NSString *error){
   if(!error && ![answer[@"token"] isKindOfClass:NSString.class])error=NSLocalizedString(@"superhound.app sent an answer that Superhound cannot read.",nil);
   if(!error && ![self->_license saveKey:entered token:answer[@"token"]])error=NSLocalizedString(@"The activation from superhound.app is not valid for this Mac.",nil);
