@@ -523,7 +523,7 @@
 "Superhound menu" = "Superhound-Menü";
 
 /* No comment */
-"Superhound sends the license key and a device ID to superhound.app. The device ID is a one-way hash, so it does not identify you. A license covers 3 Macs." = "Superhound sendet den Lizenzschlüssel und eine Geräte-ID an superhound.app. Die Geräte-ID ist ein Einweg-Hash und identifiziert dich daher nicht. Eine Lizenz gilt für 3 Macs.";
+"Enter the license key from your email. A license covers 3 Macs." = "Gib den Lizenzschlüssel aus deiner E-Mail ein. Eine Lizenz gilt für 3 Macs.";
 
 /* Tooltip of the menu bar icon */
 "Superhound — Search apps and files" = "Superhound – Apps und Dateien durchsuchen";

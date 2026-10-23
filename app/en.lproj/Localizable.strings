@@ -228,6 +228,9 @@
 /* Menu bar menu item; keep it short */
 "Enter License…" = "Enter License…";
 
+/* No comment */
+"Enter the license key from your email. A license covers 3 Macs." = "Enter the license key from your email. A license covers 3 Macs.";
+
 /* Tooltip of the Activate license link */
 "Enter your license key, or get a license." = "Enter your license key, or get a license.";
 
@@ -521,9 +524,6 @@
 
 /* VoiceOver label of the logo in the panel footer, which opens the app menu */
 "Superhound menu" = "Superhound menu";
-
-/* No comment */
-"Superhound sends the license key and a device ID to superhound.app. The device ID is a one-way hash, so it does not identify you. A license covers 3 Macs." = "Superhound sends the license key and a device ID to superhound.app. The device ID is a one-way hash, so it does not identify you. A license covers 3 Macs.";
 
 /* Tooltip of the menu bar icon */
 "Superhound — Search apps and files" = "Superhound — Search apps and files";
