@@ -32,6 +32,11 @@ Open any app, even with a typo. Find your files. Get back anything you copied.
 <div align="center">
 
 <a href="https://www.producthunt.com/products/superhound?embed=true&amp;utm_source=badge-featured&amp;utm_medium=badge&amp;utm_campaign=badge-superhound" target="_blank" rel="noopener noreferrer"><picture><source media="(prefers-color-scheme: dark)" srcset="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1287375&amp;theme=dark&amp;t=1792555482711"><img alt="Superhound - Spotlight, but it actually finds things | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1287375&amp;theme=light&amp;t=1792555482711"></picture></a>
+<a href="https://macbase.app/apps/superhound?ref=badge" target="_blank" rel="noopener">
+  <img src="https://macbase.app/badge/featured-on-macbase-dark.svg"
+       alt="Superhound is featured on MacBase"
+       height="72" style="height:72px;width:auto">
+</a>
 
 </div>
 
