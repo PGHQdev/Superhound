@@ -31,7 +31,7 @@ NSTextField *SHLabel(NSView *view,NSString *text,NSRect frame,CGFloat size,BOOL 
  NSTextField *label=[NSTextField wrappingLabelWithString:text];label.frame=frame;label.font=[NSFont systemFontOfSize:size];if(secondary)label.textColor=NSColor.secondaryLabelColor;[view addSubview:label];return label;
 }
 // The app's languages: the code for AppleLanguages and the name in that language.
-static NSArray<NSArray<NSString *> *> *Languages(void){return @[@[@"en",@"English"],@[@"ja",@"日本語"],@[@"de",@"Deutsch"],@[@"fr",@"Français"],@[@"es",@"Español"],@[@"zh-Hans",@"简体中文"],@[@"pt-BR",@"Português (Brasil)"]];}
+static NSArray<NSArray<NSString *> *> *Languages(void){return @[@[@"en",@"English"],@[@"ja",@"日本語"],@[@"de",@"Deutsch"],@[@"fr",@"Français"],@[@"es",@"Español"],@[@"it",@"Italiano"],@[@"zh-Hans",@"简体中文"],@[@"pt-BR",@"Português (Brasil)"]];}
 NSButton *SHButton(NSView *view,NSString *title,NSRect frame,id target,SEL action) {NSButton *button=[NSButton buttonWithTitle:title target:target action:action];button.frame=frame;[view addSubview:button];return button;}
 - (instancetype)initWithLibrary:(SHLibrary *)library hotKey:(SHHotKey *)hotKey historyKey:(SHHotKey *)historyKey {
  NSWindow *window=[[NSWindow alloc] initWithContentRect:NSMakeRect(0,0,740,834) styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable|NSWindowStyleMaskMiniaturizable backing:NSBackingStoreBuffered defer:NO];

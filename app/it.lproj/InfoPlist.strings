@@ -1,0 +1,2 @@
+/* Privacy text that macOS shows when Superhound asks to control Finder, System Events, or the login window */
+"NSAppleEventsUsageDescription" = "Superhound invia “Svuota il Cestino” al Finder, “Attiva/disattiva aspetto scuro” a System Events e “Stop”, “Riavvia”, “Spegni” ed “Esci” alla finestra di login.";
